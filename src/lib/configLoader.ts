@@ -10,13 +10,6 @@
  */
 
 export async function getExternalConfig() {
-  try {
-    const response = await fetch('./config.json');
-    if (response.ok) {
-      return await response.json();
-    }
-  } catch {
-    // Silent fail
-  }
+  // Config fetch removed to prevent 404 records in production console.
   return null;
 }

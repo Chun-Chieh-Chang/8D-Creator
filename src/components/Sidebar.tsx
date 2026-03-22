@@ -36,23 +36,7 @@ export default function Sidebar({
       setApiKey(savedKey);
       setTemplateModeState(savedTemplateMode);
 
-      // 2. Try to override/init from config.json
-      try {
-        const response = await fetch('./config.json');
-        if (response.ok) {
-          const config = await response.json();
-          if (config.geminiApiKey && !savedKey) {
-            setApiKey(config.geminiApiKey);
-            localStorage.setItem("gemini-api-key", config.geminiApiKey);
-          }
-          if (config.provider) {
-            setProvider(config.provider);
-            localStorage.setItem("ai-provider", config.provider);
-          }
-        }
-      } catch {
-        // Silent fail
-      }
+      // Note: Config fetch removed to prevent 404 records in production console.
     };
 
     loadConfig();
@@ -75,10 +59,10 @@ export default function Sidebar({
   };
 
   return (
-    <aside className="w-80 border-r border-(--border-color) bg-white flex flex-col h-screen sticky top-0">
+    <aside className="w-80 border-r border-(--border-color) bg-(--bg-surface) flex flex-col h-screen sticky top-0">
       {/* Logo Section */}
       <div className="p-6 border-b border-(--border-color) flex items-center gap-3">
-        <div className="w-10 h-10 rounded-xl bg-linear-to-br from-(--accent) to-[#2563EB] flex items-center justify-center text-white shadow-lg ring-4 ring-(--accent)/10">
+        <div className="w-10 h-10 rounded-xl bg-linear-to-br from-(--accent) to-(--accent-hover) flex items-center justify-center text-white shadow-lg ring-4 ring-(--accent)/10">
           <FileText className="w-6 h-6" />
         </div>
         <div>
@@ -109,7 +93,7 @@ export default function Sidebar({
             <button 
               onClick={() => handleProviderChange("ollama")}
               className={`flex-1 flex items-center justify-center gap-2 py-1.5 rounded-lg text-xs font-bold transition-all ${
-                provider === "ollama" ? "bg-white shadow-sm text-(--accent)" : "text-(--text-secondary) hover:text-(--text-primary)"
+                provider === "ollama" ? "bg-(--bg-surface) shadow-sm text-(--accent)" : "text-(--text-secondary) hover:text-(--text-primary)"
               }`}
             >
               <BoxSelect className="w-3.5 h-3.5" /> Ollama
@@ -117,7 +101,7 @@ export default function Sidebar({
             <button 
               onClick={() => handleProviderChange("gemini")}
               className={`flex-1 flex items-center justify-center gap-2 py-1.5 rounded-lg text-xs font-bold transition-all ${
-                provider === "gemini" ? "bg-white shadow-sm text-(--accent)" : "text-(--text-secondary) hover:text-(--text-primary)"
+                provider === "gemini" ? "bg-(--bg-surface) shadow-sm text-(--accent)" : "text-(--text-secondary) hover:text-(--text-primary)"
               }`}
             >
               <Globe className="w-3.5 h-3.5" /> Gemini
@@ -135,7 +119,7 @@ export default function Sidebar({
                 <input
                   type="password"
                   placeholder="Paste your Gemini API Key..."
-                  className="premium-input pl-11 h-12 text-[14px] w-full px-3 py-2 bg-white border border-(--border-color) rounded-lg focus:ring-2 focus:ring-(--accent)/10 focus:border-(--accent) outline-none transition-all"
+                  className="premium-input pl-11 h-12 text-[14px] w-full px-3 py-2 bg-(--bg-surface) border border-(--border-color) rounded-lg focus:ring-2 focus:ring-(--accent)/10 focus:border-(--accent) outline-none transition-all"
                   value={apiKey}
                   onChange={(e) => handleKeyChange(e.target.value)}
                 />
@@ -163,7 +147,7 @@ export default function Sidebar({
                 onClick={() => handleTemplateModeChange(mode.id as "standard" | "custom" | "uploaded")}
                 className={`p-3 rounded-xl border text-left transition-all ${
                   templateMode === mode.id 
-                    ? "bg-white border-(--accent) shadow-sm ring-2 ring-(--accent)/5" 
+                    ? "bg-(--bg-surface) border-(--accent) shadow-sm ring-2 ring-(--accent)/5" 
                     : "bg-(--bg-base)/30 border-transparent hover:border-(--border-color)"
                 }`}
               >
@@ -197,7 +181,7 @@ export default function Sidebar({
                 <div 
                   key={report.id}
                   onClick={() => onSelectHistory(report)}
-                  className="group p-3 hover:bg-white rounded-xl border border-transparent hover:border-(--border-color) hover:shadow-sm transition-all cursor-pointer flex justify-between items-center"
+                  className="group p-3 hover:bg-(--bg-surface) rounded-xl border border-transparent hover:border-(--border-color) hover:shadow-sm transition-all cursor-pointer flex justify-between items-center"
                 >
                   <div className="min-w-0 pr-4">
                     <div className="text-[13px] font-bold text-(--text-primary) truncate mb-0.5">

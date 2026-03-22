@@ -298,11 +298,20 @@ ${generatedContent}`;
   };
 
   return (
-    <div className="flex-1 h-full overflow-y-auto w-full relative scrollbar-premium">
-      <div className="max-w-4xl mx-auto px-6 py-12 md:px-12 space-y-10 pb-24">
+    <div className="flex-1 min-h-screen bg-(--bg-base) p-4 lg:p-8 flex flex-col items-center">
+      <div className="w-full max-w-4xl space-y-6">
         
-        {/* Usage Instructions Accordion */}
-        <details className="premium-card group bg-white/40 border-(--border-color) overflow-hidden transition-all duration-300">
+        {/* Usage Instructions Banner */}
+        <div className="premium-card bg-(--bg-surface)/80 backdrop-blur-md p-4 flex items-center justify-between group cursor-pointer transition-all hover:ring-2 hover:ring-(--accent)/20">
+          <div className="flex items-center gap-3">
+            <div className="p-2 rounded-lg bg-(--accent)/10">
+              <Info className="w-5 h-5 text-(--accent)" />
+            </div>
+            <h3 className="text-[15px] font-bold text-(--text-primary)">使用說明 (Usage Instructions)</h3>
+          </div>
+          <ArrowRight className="w-4 h-4 text-(--text-secondary) group-hover:rotate-90 transition-transform" />
+        </div>
+        <details className="premium-card bg-(--bg-surface)/80 backdrop-blur-md overflow-hidden transition-all duration-300">
           <summary className="px-6 py-4 flex items-center justify-between cursor-pointer list-none hover:bg-(--accent)/5 transition-colors">
             <div className="flex items-center gap-3">
               <div className="p-2 rounded-lg bg-(--accent)/10">
@@ -345,28 +354,28 @@ ${generatedContent}`;
                 ))}
               </ul>
             </div>
-          </div>
-        </details>
+          </details>
 
-        {/* Step Indicator */}
-        <div className="flex items-center justify-center gap-4 mb-8">
-          {[
-            { id: "input", label: "資訊輸入", icon: FileEdit },
-            { id: "analysis", label: "根因分析", icon: BrainCircuit },
-            { id: "final", label: "報告完成", icon: CheckCircle2 }
-          ].map((s, idx) => (
-            <div key={s.id} className="flex items-center">
-              <div className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all ${
-                step === s.id ? "bg-(--accent) text-white shadow-lg shadow-(--accent)/20" : 
-                "bg-(--bg-surface) text-(--text-secondary) opacity-60"
-              }`}>
-                <s.icon className="w-4 h-4" />
-                <span className="text-xs font-bold">{s.label}</span>
-              </div>
-              {idx < 2 && <ArrowRight className="w-4 h-4 mx-2 text-(--border-color)" />}
-            </div>
-          ))}
+        {/* Current Stage Indicator */}
+        <div className="flex items-center justify-center gap-4 py-2">
+          <div className={`flex items-center gap-2 px-4 py-2 rounded-full transition-all border ${step === "input" ? "bg-(--accent) text-white border-transparent shadow-lg shadow-(--accent)/20" : "bg-(--bg-surface)/50 text-(--text-secondary) border-(--border-color)"}`}>
+            <FileEdit className="w-4 h-4" />
+            <span className="text-xs font-bold">資訊填入</span>
+          </div>
+          <ArrowRight className="w-4 h-4 text-(--text-secondary) opacity-30" />
+          <div className={`flex items-center gap-2 px-4 py-2 rounded-full transition-all border ${step === "analysis" ? "bg-(--accent) text-white border-transparent shadow-lg shadow-(--accent)/20" : "bg-(--bg-surface)/50 text-(--text-secondary) border-(--border-color)"}`}>
+            <BrainCircuit className="w-4 h-4" />
+            <span className="text-xs font-bold">根因分析</span>
+          </div>
+          <ArrowRight className="w-4 h-4 text-(--text-secondary) opacity-30" />
+          <div className={`flex items-center gap-2 px-4 py-2 rounded-full transition-all border ${step === "final" ? "bg-(--accent) text-white border-transparent shadow-lg shadow-(--accent)/20" : "bg-(--bg-surface)/50 text-(--text-secondary) border-(--border-color)"}`}>
+            <CheckCircle2 className="w-4 h-4" />
+            <span className="text-xs font-bold">報告完成</span>
+          </div>
         </div>
+
+        {/* Main Content Area */}
+        <main className="premium-card bg-(--bg-surface) shadow-2xl overflow-visible min-h-[600px] flex flex-col relative group/card border-t-4 border-t-(--accent)">
 
         {errorMsg && (
           <div className="premium-card bg-(--error)/5 border-(--error)/20 p-4 flex items-start gap-4">
