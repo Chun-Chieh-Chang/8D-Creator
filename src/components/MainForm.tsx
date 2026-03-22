@@ -693,7 +693,8 @@ ${generatedContent}`;
             )}
           </div>
         )}
-      </div>
+      </main>
     </div>
-  );
+  </div>
+);
 }

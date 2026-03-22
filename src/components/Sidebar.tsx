@@ -1,7 +1,7 @@
 import { 
   FileText, Trash2, Clock, History,
   ShieldCheck, Key, LayoutTemplate,
-  BoxSelect, Globe
+  BoxSelect, Globe, Sun, Moon
 } from "lucide-react";
 import { ReportHistoryItem } from "@/lib/historyManager";
 import { useEffect, useState } from "react";
@@ -22,6 +22,20 @@ export default function Sidebar({
   const [provider, setProvider] = useState<"ollama" | "gemini">("ollama");
   const [apiKey, setApiKey] = useState("");
   const [templateMode, setTemplateModeState] = useState<"standard" | "custom" | "uploaded">("standard");
+  const [theme, setThemeState] = useState<"light" | "dark">(() => {
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem("theme") as "light" | "dark";
+      if (saved) return saved;
+      if (window.matchMedia("(prefers-color-scheme: dark)").matches) return "dark";
+    }
+    return "light";
+  });
+
+  useEffect(() => {
+    // Initial class sync
+    document.documentElement.classList.toggle("dark", theme === "dark");
+    document.documentElement.classList.toggle("light", theme === "light");
+  }, []);
 
   useEffect(() => {
     const loadConfig = async () => {
@@ -58,17 +72,32 @@ export default function Sidebar({
     window.dispatchEvent(new Event("templateModeChanged"));
   };
 
+  const toggleTheme = () => {
+    const newTheme = theme === "light" ? "dark" : "light";
+    setThemeState(newTheme);
+    localStorage.setItem("theme", newTheme);
+    document.documentElement.classList.toggle("dark", newTheme === "dark");
+    document.documentElement.classList.toggle("light", newTheme === "light");
+  };
+
   return (
     <aside className="w-80 border-r border-(--border-color) bg-(--bg-surface) flex flex-col h-screen sticky top-0">
-      {/* Logo Section */}
-      <div className="p-6 border-b border-(--border-color) flex items-center gap-3">
-        <div className="w-10 h-10 rounded-xl bg-linear-to-br from-(--accent) to-(--accent-hover) flex items-center justify-center text-white shadow-lg ring-4 ring-(--accent)/10">
-          <FileText className="w-6 h-6" />
+      <div className="p-6 border-b border-(--border-color) flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-linear-to-br from-(--accent) to-(--accent-hover) flex items-center justify-center text-white shadow-lg ring-4 ring-(--accent)/10">
+            <FileText className="w-6 h-6" />
+          </div>
+          <div>
+            <h1 className="text-lg font-bold tracking-tight text-(--text-primary)">AI 8D Generator</h1>
+            <p className="text-[10px] font-bold text-(--text-secondary) tracking-widest uppercase opacity-60">Quality Pro</p>
+          </div>
         </div>
-        <div>
-          <h1 className="text-lg font-bold tracking-tight text-(--text-primary)">AI 8D Generator</h1>
-          <p className="text-[10px] font-bold text-(--text-secondary) tracking-widest uppercase opacity-60">Quality Pro</p>
-        </div>
+        <button 
+          onClick={toggleTheme}
+          className="p-2.5 rounded-xl bg-(--bg-base) border border-(--border-color) text-(--text-secondary) hover:text-(--accent) hover:border-(--accent)/30 transition-all shadow-sm group/theme"
+        >
+          {theme === "light" ? <Moon className="w-4 h-4 group-hover:rotate-12 transition-transform" /> : <Sun className="w-4 h-4 group-hover:rotate-90 transition-transform text-orange-400" />}
+        </button>
       </div>
       
       <div className="flex-1 overflow-y-auto px-4 pb-8 space-y-8 mt-2 scrollbar-premium">
