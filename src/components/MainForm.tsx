@@ -298,19 +298,9 @@ ${generatedContent}`;
   };
 
   return (
-    <div className="flex-1 min-h-screen bg-(--bg-base) p-4 lg:p-8 flex flex-col items-center">
-      <div className="w-full max-w-4xl space-y-6">
+    <div className="flex-1 h-screen overflow-y-auto bg-(--bg-base) scrollbar-premium">
+      <div className="max-w-4xl mx-auto p-4 lg:p-8 pb-32 space-y-6 flex flex-col items-center">
         
-        {/* Usage Instructions Banner */}
-        <div className="premium-card bg-(--bg-surface)/80 backdrop-blur-md p-4 flex items-center justify-between group cursor-pointer transition-all hover:ring-2 hover:ring-(--accent)/20">
-          <div className="flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-(--accent)/10">
-              <Info className="w-5 h-5 text-(--accent)" />
-            </div>
-            <h3 className="text-[15px] font-bold text-(--text-primary)">使用說明 (Usage Instructions)</h3>
-          </div>
-          <ArrowRight className="w-4 h-4 text-(--text-secondary) group-hover:rotate-90 transition-transform" />
-        </div>
         <details className="premium-card bg-(--bg-surface)/80 backdrop-blur-md overflow-hidden transition-all duration-300">
           <summary className="px-6 py-4 flex items-center justify-between cursor-pointer list-none hover:bg-(--accent)/5 transition-colors">
             <div className="flex items-center gap-3">
