@@ -38,7 +38,7 @@ export default function Sidebar({
 
       // 2. Try to override/init from config.json
       try {
-        const response = await fetch('/config.json');
+        const response = await fetch('./config.json');
         if (response.ok) {
           const config = await response.json();
           if (config.geminiApiKey && !savedKey) {

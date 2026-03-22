@@ -11,7 +11,7 @@
 
 export async function getExternalConfig() {
   try {
-    const response = await fetch('/config.json');
+    const response = await fetch('./config.json');
     if (response.ok) {
       return await response.json();
     }
