@@ -1,8 +1,8 @@
 import { useEffect, useState, useRef } from "react";
 import { 
   FileEdit, Sparkles, CheckCircle2, FileDown, 
-  Loader2, Info, Send, BrainCircuit, ArrowRight, 
-  RotateCcw, Upload, X, Paperclip, FileText,
+  Loader2, Info, BrainCircuit, ArrowRight, 
+  Upload, X, Paperclip, FileText,
   Settings as SettingsIcon, LayoutTemplate
 } from "lucide-react";
 import ReactMarkdown from "react-markdown";
@@ -49,8 +49,15 @@ export default function MainForm({ onReportGenerated, selectedHistory }: MainFor
   const [isParsingFiles, setIsParsingFiles] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const templateUploadRef = useRef<HTMLInputElement>(null);
+  const chatEndRef = useRef<HTMLDivElement>(null);
 
   const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    if (step === "analysis") {
+      chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [analysisHistory, currentAnalystQuestion, step]);
 
   useEffect(() => {
     setIsMounted(true);
