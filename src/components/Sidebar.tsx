@@ -19,33 +19,36 @@ export default function Sidebar({
   onDeleteHistory, 
   onNewReport
 }: SidebarProps) {
-  const [provider, setProvider] = useState<"ollama" | "gemini">("ollama");
+  const [provider, setProvider] = useState<"ollama" | "gemini">("gemini");
   const [apiKey, setApiKey] = useState("");
   const [templateMode, setTemplateModeState] = useState<"standard" | "custom" | "uploaded">("standard");
-  const [theme, setThemeState] = useState<"light" | "dark">(() => {
-    if (typeof window !== "undefined") {
-      const saved = localStorage.getItem("theme") as "light" | "dark";
-      if (saved) return saved;
-      if (window.matchMedia("(prefers-color-scheme: dark)").matches) return "dark";
-    }
-    return "light";
-  });
+  const [theme, setThemeState] = useState<"light" | "dark">("dark");
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    // Initial class sync
-    document.documentElement.classList.toggle("dark", theme === "dark");
-    document.documentElement.classList.toggle("light", theme === "light");
+    const saved = localStorage.getItem("theme") as "light" | "dark";
+    let activeTheme = theme;
+    if (saved) {
+      activeTheme = saved;
+      setThemeState(saved);
+    } else if (window.matchMedia("(prefers-color-scheme: dark)").matches) {
+      activeTheme = "dark";
+      setThemeState("dark");
+    }
+    document.documentElement.classList.toggle("dark", activeTheme === "dark");
+    document.documentElement.classList.toggle("light", activeTheme === "light");
+    setMounted(true);
   }, []);
 
   useEffect(() => {
     const loadConfig = async () => {
       // 1. Load from localStorage first
-      const savedProvider = localStorage.getItem("ai-provider");
+      const savedProvider = localStorage.getItem("ai-provider") as "ollama" | "gemini";
       const savedKey = localStorage.getItem("gemini-api-key") || "";
       const savedTemplateMode = (localStorage.getItem("8d-template-mode") as "standard" | "custom" | "uploaded") || "standard";
       
-      if (savedProvider === "ollama" || savedProvider === "gemini") {
-        setProvider(savedProvider as "ollama" | "gemini");
+      if (savedProvider) {
+        setProvider(savedProvider);
       }
       setApiKey(savedKey);
       setTemplateModeState(savedTemplateMode);
@@ -54,7 +57,7 @@ export default function Sidebar({
     };
 
     loadConfig();
-  }, []);
+  }, [theme]);
 
   const handleProviderChange = (p: "ollama" | "gemini") => {
     setProvider(p);
@@ -94,9 +97,13 @@ export default function Sidebar({
         </div>
         <button 
           onClick={toggleTheme}
-          className="p-2.5 rounded-xl bg-(--bg-base) border border-(--border-color) text-(--text-secondary) hover:text-(--accent) hover:border-(--accent)/30 transition-all shadow-sm group/theme"
+          className="p-2.5 rounded-xl bg-(--bg-base) border border-(--border-color) text-(--text-secondary) hover:text-(--accent) hover:border-(--accent)/30 transition-all shadow-sm group/theme flex items-center justify-center w-10 h-10"
         >
-          {theme === "light" ? <Moon className="w-4 h-4 group-hover:rotate-12 transition-transform" /> : <Sun className="w-4 h-4 group-hover:rotate-90 transition-transform text-orange-400" />}
+          {mounted ? (
+            theme === "light" ? <Moon className="w-4 h-4 group-hover:rotate-12 transition-transform" /> : <Sun className="w-4 h-4 group-hover:rotate-90 transition-transform text-orange-400" />
+          ) : (
+            <div className="w-4 h-4" />
+          )}
         </button>
       </div>
       

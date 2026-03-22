@@ -1,22 +1,11 @@
 import { useEffect, useState, useRef } from "react";
 import { 
-  FileEdit, 
-  Sparkles, 
-  CheckCircle2, 
-  FileDown, 
-  Loader2, 
-  Info,
-  Send, 
-  BrainCircuit, 
-  ArrowRight, 
-  RotateCcw, 
-  Upload, 
-  X, 
-  Paperclip, 
-  FileText,
-  Settings as SettingsIcon, 
-  LayoutTemplate
+  FileEdit, Sparkles, CheckCircle2, FileDown, 
+  Loader2, Info, Send, BrainCircuit, ArrowRight, 
+  RotateCcw, Upload, X, Paperclip, FileText,
+  Settings as SettingsIcon, LayoutTemplate
 } from "lucide-react";
+import ReactMarkdown from "react-markdown";
 import { generate8DReport, generate5WhyQuestion } from "@/lib/ollamaClient";
 import { generateGeminiReport, generateGemini5Why } from "@/lib/geminiClient";
 import { exportToDocx } from "@/lib/docxExporter";
@@ -76,7 +65,7 @@ export default function MainForm({ onReportGenerated, selectedHistory }: MainFor
   if (!isMounted) return <div className="flex-1 bg-(--bg-surface) animate-pulse" />;
 
   const getAISettings = () => {
-    const provider = localStorage.getItem("ai-provider") || "ollama";
+    const provider = localStorage.getItem("ai-provider") || "gemini";
     const apiKey = localStorage.getItem("gemini-api-key") || "";
     return { provider, apiKey };
   };
@@ -299,21 +288,20 @@ ${generatedContent}`;
 
   return (
     <div className="flex-1 h-screen overflow-y-auto bg-(--bg-base) scrollbar-premium">
-      <div className="max-w-4xl mx-auto p-4 lg:p-8 pb-32 space-y-6 flex flex-col items-center">
+      <div className="max-w-[1800px] mx-auto p-4 lg:p-6 pb-32 space-y-6 flex flex-col items-center w-full">
         
         <details className="premium-card bg-(--bg-surface)/80 backdrop-blur-md overflow-hidden transition-all duration-300">
-          <summary className="px-6 py-4 flex items-center justify-between cursor-pointer list-none hover:bg-(--accent)/5 transition-colors">
+          <summary className="px-6 py-4 flex items-center justify-between cursor-pointer list-none hover:bg-(--accent)/5 transition-colors group">
             <div className="flex items-center gap-3">
               <div className="p-2 rounded-lg bg-(--accent)/10">
                 <Info className="w-5 h-5 text-(--accent)" />
               </div>
-              <h3 className="text-[15px] font-bold text-(--text-primary)">使用說明 (Usage Instructions)</h3>
+              <h3 className="text-[15px] font-bold text-(--text-primary)">如何使用 (Usage Guide)</h3>
             </div>
             <ArrowRight className="w-4 h-4 text-(--text-secondary) group-open:rotate-90 transition-transform" />
           </summary>
           <div className="px-8 pb-8 pt-4 space-y-8 animate-in fade-in slide-in-from-top-2">
             <div className="space-y-4">
-              <h4 className="text-2xl font-black text-(--text-primary)">如何使用</h4>
               <ol className="space-y-4">
                 {[
                   "在程序目錄下創建 config.json 文件 (選填，用於進階配置)",
@@ -366,7 +354,7 @@ ${generatedContent}`;
         </div>
 
         {/* Main Content Area */}
-        <main className="premium-card bg-(--bg-surface) shadow-2xl overflow-visible min-h-[600px] flex flex-col relative group/card border-t-4 border-t-(--accent)">
+        <main className="w-full flex-1 flex flex-col min-h-0">
 
         {errorMsg && (
           <div className="premium-card bg-(--error)/5 border-(--error)/20 p-4 flex items-start gap-4">
@@ -380,7 +368,7 @@ ${generatedContent}`;
 
         {/* STEP 1: INPUT */}
         {step === "input" && (
-          <div className="premium-card p-10 space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+          <div className="premium-card p-6 lg:p-10 space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500 w-full max-w-full mx-auto shadow-2xl border-t-4 border-t-(--accent)">
             
             {/* Template Specific Action Bar */}
             {(templateMode === "custom" || templateMode === "uploaded") && (
@@ -455,7 +443,7 @@ ${generatedContent}`;
               <p className="text-sm text-(--text-secondary)">請填寫基礎缺陷資訊，AI 將引導您進行後續的 5-Why 推導。</p>
             </div>
             
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
               <div>
                 <label className="input-label">發生日期</label>
                 <input type="date" name="date" value={formData.date} onChange={handleChange} className="fluent-input" />
@@ -551,80 +539,103 @@ ${generatedContent}`;
 
         {/* STEP 2: 5-WHY ANALYSIS */}
         {step === "analysis" && (
-          <div className="premium-card p-10 space-y-8 animate-in fade-in slide-in-from-right-4 duration-500">
-            <div className="flex items-center justify-between border-b border-(--border-color) pb-6 mb-6">
-              <div className="flex items-center gap-3">
-                <div className="bg-(--accent)/10 p-2 rounded-lg">
-                  <BrainCircuit className="w-6 h-6 text-(--accent)" />
-                </div>
-                <div>
-                  <h2 className="text-xl font-bold text-(--text-primary)">5-Why 交互式診斷</h2>
-                  <p className="text-xs text-(--text-secondary)">AI 專家正在引導您挖掘問題根因</p>
+          <div className="premium-card p-6 lg:p-8 space-y-6 animate-in fade-in slide-in-from-right-4 duration-500 w-full">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 h-full min-h-[600px]">
+              {/* Interaction Panel (Middle Column) */}
+              <div className="lg:col-span-12 xl:col-span-5 flex flex-col space-y-6">
+                <div className="premium-card p-6 flex-1 flex flex-col shadow-xl">
+                  <div className="flex items-center justify-between border-b border-(--border-color) pb-4 mb-4">
+                    <div className="flex items-center gap-3">
+                      <div className="bg-(--accent)/10 p-2 rounded-lg">
+                        <BrainCircuit className="w-5 h-5 text-(--accent)" />
+                      </div>
+                      <div>
+                        <h2 className="text-lg font-bold text-(--text-primary)">5-Why 診斷中</h2>
+                        <p className="text-[10px] text-(--text-secondary) font-bold uppercase tracking-wider">Interactive Assistant</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex-1 space-y-4 overflow-y-auto pr-2 custom-scrollbar min-h-[400px]">
+                    {analysisHistory.map((chat, idx) => (
+                      <div key={idx} className={`flex ${chat.role === "user" ? "justify-end" : "justify-start"}`}>
+                        <div className={`max-w-[90%] p-3 rounded-2xl ${
+                          chat.role === "user" ? 
+                          "bg-(--accent) text-white shadow-md shadow-(--accent)/20" : 
+                          "bg-(--bg-surface) border border-(--border-color) text-(--text-primary)"
+                        }`}>
+                          <p className="text-[13px] leading-relaxed whitespace-pre-wrap">{chat.content}</p>
+                        </div>
+                      </div>
+                    ))}
+                    
+                    {isGenerating && currentAnalystQuestion && (
+                      <div className="flex justify-start">
+                        <div className="max-w-[90%] p-3 rounded-2xl bg-(--bg-surface) border border-(--border-color) text-(--text-primary)">
+                          <p className="text-[13px] leading-relaxed whitespace-pre-wrap">{currentAnalystQuestion}</p>
+                          <Loader2 className="w-3 h-3 animate-spin mt-2 opacity-30" />
+                        </div>
+                      </div>
+                    )}
+                    <div ref={chatEndRef} />
+                  </div>
+
+                  <div className="mt-4 pt-4 border-t border-(--border-color)">
+                    <div className="relative group">
+                      <textarea
+                        value={userInput}
+                        onChange={(e) => setUserInput(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter" && !e.shiftKey) {
+                            e.preventDefault();
+                            handleAnalysisReply();
+                          }
+                        }}
+                        placeholder="輸入您的觀察或回答..."
+                        className="w-full bg-(--bg-base) border border-(--border-color) rounded-xl p-4 pr-12 text-[13px] focus:ring-2 focus:ring-(--accent)/20 focus:border-(--accent) transition-all resize-none min-h-[100px]"
+                        disabled={isGenerating}
+                      />
+                      <button
+                        onClick={handleAnalysisReply}
+                        disabled={!userInput.trim() || isGenerating}
+                        className="absolute right-3 bottom-3 p-2 bg-(--accent) text-white rounded-lg hover:bg-(--accent-hover) disabled:opacity-30 transition-all shadow-md shadow-(--accent)/20"
+                      >
+                        <ArrowRight className="w-4 h-4" />
+                      </button>
+                    </div>
+                    <div className="flex justify-between items-center mt-3">
+                      <p className="text-[10px] text-(--text-secondary)">按 Enter 發送，Shift + Enter 換行</p>
+                      <button 
+                        onClick={() => handleFinalGenerate()}
+                        className="text-[11px] font-bold text-(--accent) hover:underline"
+                      >
+                        直接生成 8D 報告 (跳過分析) →
+                      </button>
+                    </div>
+                  </div>
                 </div>
               </div>
-            </div>
 
-            <div className="space-y-6 max-h-[500px] overflow-y-auto px-2">
-              {analysisHistory.map((chat, idx) => (
-                <div key={idx} className={`flex ${chat.role === "user" ? "justify-end" : "justify-start"}`}>
-                  <div className={`max-w-[85%] p-4 rounded-2xl ${
-                    chat.role === "user" ? 
-                    "bg-(--accent) text-white" : 
-                    "bg-(--bg-base) border border-(--border-color) text-(--text-primary)"
-                  }`}>
-                    <p className="text-[14px] leading-relaxed whitespace-pre-wrap">{chat.content}</p>
+              {/* Preview Panel (Right Column) */}
+              <div className="lg:col-span-12 xl:col-span-7 flex flex-col">
+                <div className="premium-card flex-1 flex flex-col shadow-xl overflow-hidden border-t-4 border-t-(--accent)">
+                  <div className="bg-(--bg-surface) p-4 border-b border-(--border-color) flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                       <div className="p-1.5 rounded-md bg-(--accent)/10">
+                         <FileText className="w-4 h-4 text-(--accent)" />
+                       </div>
+                       <span className="text-[13px] font-bold text-(--text-primary)">即時報告預覽 (Live Preview)</span>
+                    </div>
+                    <div className="flex gap-2">
+                      <div className="w-2 h-2 rounded-full bg-red-400/20" />
+                      <div className="w-2 h-2 rounded-full bg-amber-400/20" />
+                      <div className="w-2 h-2 rounded-full bg-emerald-400/20" />
+                    </div>
+                  </div>
+                  <div className="flex-1 p-6 lg:p-10 bg-white dark:bg-(--bg-base)/50 overflow-y-auto custom-scrollbar prose dark:prose-invert max-w-none">
+                    <ReactMarkdown>{generatedContent || "# 報告生成中...\n完成 5-Why 對話或點擊跳過即可生成完整 8D 報告。"}</ReactMarkdown>
                   </div>
                 </div>
-              ))}
-              
-              {isGenerating && currentAnalystQuestion && (
-                <div className="flex justify-start">
-                  <div className="max-w-[85%] p-4 rounded-2xl bg-(--bg-base) border border-(--border-color) text-(--text-primary)">
-                    <p className="text-[14px] leading-relaxed whitespace-pre-wrap">{currentAnalystQuestion}</p>
-                    <Loader2 className="w-3 h-3 animate-spin mt-2 opacity-50" />
-                  </div>
-                </div>
-              )}
-            </div>
-
-            <div className="relative group">
-              <textarea
-                value={userInput}
-                onChange={(e) => setUserInput(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" && !e.shiftKey) {
-                    e.preventDefault();
-                    handleAnalysisReply();
-                  }
-                }}
-                disabled={isGenerating}
-                placeholder="回覆分析專家的問題..."
-                className="fluent-textarea bg-(--bg-base)! pr-12 pt-4"
-                rows={3}
-              />
-              <button 
-                onClick={handleAnalysisReply}
-                disabled={isGenerating || !userInput.trim()}
-                className="absolute bottom-4 right-4 p-2 rounded-lg bg-(--accent) text-white hover:scale-105 transition-transform disabled:opacity-30"
-              >
-                <Send className="w-4 h-4" />
-              </button>
-            </div>
-
-            <div className="flex justify-between items-center pt-4 border-t border-(--border-color) mt-6">
-              <button 
-                onClick={() => setStep("input")} 
-                className="text-(--text-secondary) hover:text-(--text-primary) flex items-center gap-2 text-sm font-medium transition-colors"
-              >
-                <RotateCcw className="w-4 h-4" /> 重新設定參數
-              </button>
-              <div className="flex gap-4">
-                <button 
-                  onClick={() => handleFinalGenerate()} 
-                  className="px-6 py-2.5 rounded-xl border border-(--accent) text-(--accent) hover:bg-(--accent) hover:text-white text-sm font-bold transition-all"
-                >
-                  跳過對話直接生成
-                </button>
               </div>
             </div>
           </div>
