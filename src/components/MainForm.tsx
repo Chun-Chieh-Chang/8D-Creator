@@ -324,7 +324,7 @@ ${generatedContent}`;
                   "下載為 Word 文檔進行存檔"
                 ].map((text, i) => (
                   <li key={i} className="flex gap-4 text-[14px] leading-relaxed text-(--text-primary)">
-                    <span className="flex-shrink-0 shrink-0 w-6 h-6 rounded-full bg-(--accent) text-white text-[10px] font-bold flex items-center justify-center mt-0.5">{i + 1}</span>
+                    <span className="shrink-0 w-6 h-6 rounded-full bg-(--accent) text-white text-[10px] font-bold flex items-center justify-center mt-0.5">{i + 1}</span>
                     <span className="whitespace-pre-line">{text}</span>
                   </li>
                 ))}
