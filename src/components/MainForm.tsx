@@ -354,7 +354,8 @@ ${generatedContent}`;
                 ))}
               </ul>
             </div>
-          </details>
+          </div>
+        </details>
 
         {/* Current Stage Indicator */}
         <div className="flex items-center justify-center gap-4 py-2">
