@@ -297,53 +297,8 @@ ${generatedContent}`;
     <div className="flex-1 h-screen overflow-y-auto bg-(--bg-base) scrollbar-premium">
       <div className="max-w-[1800px] mx-auto p-4 lg:p-6 pb-32 space-y-6 flex flex-col items-center w-full">
         
-        <details className="premium-card bg-(--bg-surface)/80 backdrop-blur-md overflow-hidden transition-all duration-300">
-          <summary className="px-6 py-4 flex items-center justify-between cursor-pointer list-none hover:bg-(--accent)/5 transition-colors group">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-(--accent)/10">
-                <Info className="w-5 h-5 text-(--accent)" />
-              </div>
-              <h3 className="text-[15px] font-bold text-(--text-primary)">如何使用 (Usage Guide)</h3>
-            </div>
-            <ArrowRight className="w-4 h-4 text-(--text-secondary) group-open:rotate-90 transition-transform" />
-          </summary>
-          <div className="px-8 pb-8 pt-4 space-y-8 animate-in fade-in slide-in-from-top-2">
-            <div className="space-y-4">
-              <ol className="space-y-4">
-                {[
-                  "在程序目錄下創建 config.json 文件 (選填，用於進階配置)",
-                  "在左側選擇模板類型：\n• AI 標準模板：使用預設的標準 8D 格式\n• AI 自定義模板：描述您想要的格式，AI 將動態生成\n• 上傳我的模板：上傳您的 Word 模板，AI 分析後按此格式生成",
-                  "填寫問題描述和其他基本信息",
-                  "點擊生成按鈕，等待 AI 生成報告",
-                  "下載為 Word 文檔進行存檔"
-                ].map((text, i) => (
-                  <li key={i} className="flex gap-4 text-[14px] leading-relaxed text-(--text-primary)">
-                    <span className="shrink-0 w-6 h-6 rounded-full bg-(--accent) text-white text-[10px] font-bold flex items-center justify-center mt-0.5">{i + 1}</span>
-                    <span className="whitespace-pre-line">{text}</span>
-                  </li>
-                ))}
-              </ol>
-            </div>
-            <div className="space-y-4 pt-4 border-t border-(--border-color)/50">
-              <h4 className="text-xl font-black text-(--text-primary)">小技巧</h4>
-              <ul className="space-y-3">
-                {[
-                  "問題描述越詳細，生成的報告越精準",
-                  "可以上傳檢驗數據、不良品照片作為 AI 參考資料",
-                  "歷史記錄會自動保存在側邊欄，方便隨時查閱"
-                ].map((text, i) => (
-                  <li key={i} className="flex items-center gap-3 text-[14px] text-(--text-secondary)">
-                    <div className="w-1.5 h-1.5 rounded-full bg-(--accent)/60" />
-                    {text}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          </div>
-        </details>
-
-        {/* Current Stage Indicator */}
-        <div className="flex items-center justify-center gap-4 py-2">
+        {/* Current Stage Indicator (Elevated to top) */}
+        <div className="flex items-center justify-center gap-4 py-2 mb-2">
           <div className={`flex items-center gap-2 px-4 py-2 rounded-full transition-all border ${step === "input" ? "bg-(--accent) text-white border-transparent shadow-lg shadow-(--accent)/20" : "bg-(--bg-surface)/50 text-(--text-secondary) border-(--border-color)"}`}>
             <FileEdit className="w-4 h-4" />
             <span className="text-xs font-bold">資訊填入</span>
@@ -450,96 +405,104 @@ ${generatedContent}`;
               <p className="text-sm text-(--text-secondary)">請填寫基礎缺陷資訊，AI 將引導您進行後續的 5-Why 推導。</p>
             </div>
             
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
-              <div>
-                <label className="input-label">發生日期</label>
-                <input type="date" name="date" value={formData.date} onChange={handleChange} className="fluent-input" />
-              </div>
-              <div>
-                <label className="input-label">不良數量</label>
-                <input type="number" name="defectQuantity" value={formData.defectQuantity} onChange={handleChange} className="fluent-input" />
-              </div>
-              <div>
-                <label className="input-label">產品/型號</label>
-                <input type="text" name="productInfo" value={formData.productInfo} onChange={handleChange} placeholder="輸入型號..." className="fluent-input" />
-              </div>
-              <div>
-                <label className="input-label">客戶名稱</label>
-                <input type="text" name="customerName" value={formData.customerName} onChange={handleChange} placeholder="輸入客戶..." className="fluent-input" />
-              </div>
-              <div className="md:col-span-2">
-                <label className="input-label">問題現象描述</label>
-                <textarea name="problemDescription" value={formData.problemDescription} onChange={handleChange} className="fluent-textarea" placeholder="描述缺陷具體現象..." />
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
+              {/* Left Column: Problem Description & Files */}
+              <div className="space-y-6">
+                <div>
+                  <h3 className="text-lg font-bold text-(--text-primary) mb-4 flex items-center gap-2">
+                    <FileEdit className="w-5 h-5 text-(--accent)" /> 問題現象描述
+                  </h3>
+                  <textarea 
+                    name="problemDescription" 
+                    value={formData.problemDescription} 
+                    onChange={handleChange} 
+                    className="fluent-textarea min-h-[300px] text-base" 
+                    placeholder="請詳細描述缺陷具體現象、發生背景、受影響範圍等..." 
+                  />
+                </div>
+
+                <div className="space-y-4">
+                  <label className="input-label flex items-center gap-2">
+                    <Paperclip className="w-4 h-4 text-(--accent)" />
+                    上傳參考資料 (Excel/PDF/Word/TXT)
+                  </label>
+                  
+                  <div 
+                    onClick={() => fileInputRef.current?.click()}
+                    className="border-2 border-dashed border-(--border-color) hover:border-(--accent) bg-(--bg-base)/30 rounded-2xl p-6 transition-all cursor-pointer group flex flex-col items-center justify-center gap-2"
+                  >
+                    <input 
+                      type="file" 
+                      ref={fileInputRef} 
+                      onChange={handleFileChange} 
+                      multiple 
+                      className="hidden" 
+                      accept=".xlsx,.xls,.docx,.pdf,.txt"
+                    />
+                    <Upload className="w-6 h-6 text-(--accent) group-hover:scale-110 transition-transform" />
+                    <p className="text-[13px] font-bold text-(--text-primary)">
+                      {isParsingFiles ? "解析中..." : "點擊或拖拽上傳文件"}
+                    </p>
+                  </div>
+
+                  {uploadedFiles.length > 0 && (
+                    <div className="grid grid-cols-1 gap-2 mt-2">
+                      {uploadedFiles.map((file, idx) => (
+                        <div key={idx} className="flex items-center justify-between p-2.5 bg-white border border-(--border-color) rounded-xl shadow-sm group">
+                          <div className="flex items-center gap-2 overflow-hidden">
+                            <FileText className="w-3.5 h-3.5 text-(--accent)" />
+                            <p className="text-[11px] font-bold text-(--text-primary) truncate">{file.name}</p>
+                          </div>
+                          <button onClick={() => removeFile(idx)} className="p-1 hover:text-red-500 transition-colors">
+                            <X className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
               </div>
 
-              {/* File Upload Section */}
-              <div className="md:col-span-2 space-y-4">
-                <label className="input-label flex items-center gap-2">
-                  <Paperclip className="w-4 h-4 text-(--accent)" />
-                  上傳相關資料 (Excel/PDF/Word/TXT)
-                </label>
-                
-                <div 
-                  onClick={() => fileInputRef.current?.click()}
-                  className="border-2 border-dashed border-(--border-color) hover:border-(--accent) bg-(--bg-base)/30 rounded-2xl p-8 transition-all cursor-pointer group flex flex-col items-center justify-center gap-3"
-                >
-                  <input 
-                    type="file" 
-                    ref={fileInputRef} 
-                    onChange={handleFileChange} 
-                    multiple 
-                    className="hidden" 
-                    accept=".xlsx,.xls,.docx,.pdf,.txt"
-                  />
-                  <div className="p-4 rounded-full bg-(--accent)/5 group-hover:bg-(--accent)/10 transition-colors">
-                    {isParsingFiles ? (
-                      <Loader2 className="w-8 h-8 text-(--accent) animate-spin" />
-                    ) : (
-                      <Upload className="w-8 h-8 text-(--accent)" />
-                    )}
-                  </div>
-                  <div className="text-center">
-                    <p className="text-[14px] font-bold text-(--text-primary)">
-                      {isParsingFiles ? "正在解析檔案內容..." : "點擊或拖拽上傳參考文件"}
-                    </p>
-                    <p className="text-[12px] text-(--text-secondary) mt-1">
-                      支援 .xlsx, .docx, .pdf, .txt 格式
-                    </p>
+              {/* Right Column: Metadata & Submit */}
+              <div className="flex flex-col space-y-6">
+                <div>
+                  <h3 className="text-lg font-bold text-(--text-primary) mb-4">基礎資料紀錄</h3>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="input-label">發生日期</label>
+                      <input type="date" name="date" value={formData.date} onChange={handleChange} className="fluent-input" />
+                    </div>
+                    <div>
+                      <label className="input-label">不良數量</label>
+                      <input type="number" name="defectQuantity" value={formData.defectQuantity} onChange={handleChange} className="fluent-input" />
+                    </div>
+                    <div className="sm:col-span-2">
+                      <label className="input-label">產品/型號</label>
+                      <input type="text" name="productInfo" value={formData.productInfo} onChange={handleChange} placeholder="輸入型號..." className="fluent-input" />
+                    </div>
+                    <div className="sm:col-span-2">
+                      <label className="input-label">客戶名稱</label>
+                      <input type="text" name="customerName" value={formData.customerName} onChange={handleChange} placeholder="輸入客戶..." className="fluent-input" />
+                    </div>
                   </div>
                 </div>
 
-                {uploadedFiles.length > 0 && (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-4 animate-in fade-in slide-in-from-top-2">
-                    {uploadedFiles.map((file, idx) => (
-                      <div key={idx} className="flex items-center justify-between p-3 bg-white border border-(--border-color) rounded-xl shadow-sm hover:shadow-md transition-shadow group">
-                        <div className="flex items-center gap-3 overflow-hidden">
-                          <div className="p-2 bg-(--accent)/5 rounded-lg">
-                            <FileText className="w-4 h-4 text-(--accent)" />
-                          </div>
-                          <p className="text-xs font-bold text-(--text-primary) truncate">{file.name}</p>
-                        </div>
-                        <button 
-                          onClick={() => removeFile(idx)}
-                          className="p-1.5 hover:bg-red-50 text-(--text-secondary) hover:text-red-500 rounded-lg transition-colors"
-                        >
-                          <X className="w-4 h-4" />
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
+                <div className="flex-1" />
 
-            <div className="flex justify-end pt-4">
-              <button 
-                onClick={startAnalysis} 
-                disabled={isGenerating || isParsingFiles}
-                className="btn-primary group h-12 px-8"
-              >
-                {isGenerating ? <Loader2 className="w-4 h-4 animate-spin" /> : <BrainCircuit className="w-5 h-5" />}
-                <span className="text-base">開始根因分析</span>
-              </button>
+                <div className="pt-6 border-t border-(--border-color)">
+                  <button 
+                    onClick={startAnalysis} 
+                    disabled={isGenerating || isParsingFiles}
+                    className="btn-primary w-full h-14 shadow-xl shadow-(--accent)/20 text-lg"
+                  >
+                    {isGenerating ? <Loader2 className="w-5 h-5 animate-spin" /> : <BrainCircuit className="w-6 h-6" />}
+                    <span>開始引導式分析</span>
+                  </button>
+                  <p className="text-[11px] text-(--text-secondary) text-center mt-3">
+                    AI 將根據您提供的資訊，協助推導 5-Why 根因與矯正措施。
+                  </p>
+                </div>
+              </div>
             </div>
           </div>
         )}

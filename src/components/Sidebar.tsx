@@ -1,7 +1,8 @@
 import { 
   FileText, Trash2, Clock, History,
   ShieldCheck, Key, LayoutTemplate,
-  BoxSelect, Globe, Sun, Moon
+  BoxSelect, Globe, Sun, Moon,
+  Info, ArrowRight
 } from "lucide-react";
 import { ReportHistoryItem } from "@/lib/historyManager";
 import { useEffect, useState } from "react";
@@ -117,6 +118,40 @@ export default function Sidebar({
           <FileText className="w-4 h-4 group-hover:rotate-12 transition-transform" />
           開啟新報告
         </button>
+
+        {/* Usage Guide (Relocated from MainForm) */}
+        <div className="px-3 py-4 bg-(--bg-base)/50 rounded-2xl border border-(--border-color)/50 space-y-4">
+          <details className="group">
+            <summary className="flex items-center justify-between cursor-pointer list-none">
+              <div className="flex items-center gap-2">
+                <Info className="w-4 h-4 text-(--accent)" />
+                <h2 className="text-[11px] font-bold text-(--text-secondary) tracking-widest uppercase">使用指南 / Help</h2>
+              </div>
+              <ArrowRight className="w-3 h-3 text-(--text-secondary) group-open:rotate-90 transition-transform" />
+            </summary>
+            <div className="pt-4 space-y-3 animate-in fade-in slide-in-from-top-1">
+              <div className="bg-(--accent)/5 p-3 rounded-xl border border-(--accent)/10">
+                <p className="text-[11px] font-medium text-(--accent) italic mb-1">Pro Tip:</p>
+                <p className="text-[11px] text-(--text-secondary) leading-relaxed">
+                  問題描述越詳細（包含發生背景、現狀），生成效果越佳。
+                </p>
+              </div>
+              <ul className="space-y-2">
+                {[
+                  "選擇 AI 引擎與 8D 模板",
+                  "填寫發生日期與產品資訊",
+                  "點擊開始引導式分析",
+                  "確認內容後導出 Word"
+                ].map((item, i) => (
+                  <li key={i} className="flex gap-2 text-[11px] text-(--text-secondary)">
+                    <span className="text-(--accent) font-bold">{i+1}.</span>
+                    <span>{item}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </details>
+        </div>
 
         {/* AI Provider Section */}
         <div className="px-3 py-4 bg-(--bg-base)/50 rounded-2xl border border-(--border-color)/50 space-y-4">
