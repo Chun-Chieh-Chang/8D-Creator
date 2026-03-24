@@ -146,13 +146,14 @@ export default function MainForm({ onReportGenerated, selectedHistory }: MainFor
       }
       
       setAnalysisHistory([{ role: "assistant", content: firstQuestion }]);
-    } catch (err: any) {
-      console.error("Analysis initialization error:", err);
+    } catch (err: unknown) {
+      const error = err as Error;
+      console.error("Analysis initialization error:", error);
       let msg = provider === "gemini" ? "Gemini 連線失敗" : "Ollama 分析初始化失敗";
-      if (err?.message?.includes("API_KEY_INVALID")) msg = "Gemini API Key 無效";
-      else if (err?.message?.includes("quota")) msg = "Gemini API 配額已達上限 (429)";
-      else if (err?.message?.includes("safety")) msg = "內容因安全過濾被阻斷 (Safety Filter)";
-      setErrorMsg(`${msg}: ${err?.message || "未知錯誤"}`);
+      if (error?.message?.includes("API_KEY_INVALID")) msg = "Gemini API Key 無效";
+      else if (error?.message?.includes("quota")) msg = "Gemini API 配額已達上限 (429)";
+      else if (error?.message?.includes("safety")) msg = "內容因安全過濾被阻斷 (Safety Filter)";
+      setErrorMsg(`${msg}: ${error?.message || "未知錯誤"}`);
     } finally {
       setIsGenerating(false);
     }
@@ -190,11 +191,12 @@ export default function MainForm({ onReportGenerated, selectedHistory }: MainFor
       } else {
         setAnalysisHistory(prev => [...prev, { role: "assistant", content: nextQuestion }]);
       }
-    } catch (err: any) {
-      console.error("Analysis reply error:", err);
+    } catch (err: unknown) {
+      const error = err as Error;
+      console.error("Analysis reply error:", error);
       let msg = "分析過程中斷";
-      if (err?.message?.includes("quota")) msg = "API 配額已達上限";
-      setErrorMsg(`${msg}: ${err?.message || "未知錯誤"}`);
+      if (error?.message?.includes("quota")) msg = "API 配額已達上限";
+      setErrorMsg(`${msg}: ${error?.message || "未知錯誤"}`);
     } finally {
       setIsGenerating(false);
     }
@@ -264,12 +266,13 @@ export default function MainForm({ onReportGenerated, selectedHistory }: MainFor
       });
       
       onReportGenerated(newHistory);
-    } catch (err: any) {
-      console.error("Final generation error:", err);
+    } catch (err: unknown) {
+      const error = err as Error;
+      console.error("Final generation error:", error);
       let msg = "最終生成失敗";
-      if (err?.message?.includes("quota")) msg = "API 配額已達上限";
-      else if (err?.message?.includes("safety")) msg = "內容因安全過濾被阻斷";
-      setErrorMsg(`${msg}: ${err?.message || "未知錯誤"}`);
+      if (error?.message?.includes("quota")) msg = "API 配額已達上限";
+      else if (error?.message?.includes("safety")) msg = "內容因安全過濾被阻斷";
+      setErrorMsg(`${msg}: ${error?.message || "未知錯誤"}`);
     } finally {
       setIsGenerating(false);
     }
@@ -347,7 +350,7 @@ ${generatedContent}`;
             {(templateMode === "custom" || templateMode === "uploaded") && (
               <div className="p-4 rounded-2xl bg-(--accent)/5 border border-(--accent)/10 flex items-center justify-between mb-2">
                 <div className="flex items-center gap-3">
-                  <div className="p-2 rounded-lg bg-white shadow-sm">
+                  <div className="p-2 rounded-lg bg-(--bg-surface) shadow-sm">
                     {templateMode === "custom" ? <SettingsIcon className="w-4 h-4 text-(--accent)" /> : <LayoutTemplate className="w-4 h-4 text-(--accent)" />}
                   </div>
                   <div>
@@ -361,14 +364,14 @@ ${generatedContent}`;
                   {templateMode === "custom" ? (
                     <button 
                       onClick={() => setShowEditor(!showEditor)}
-                      className="px-4 py-1.5 rounded-lg bg-white border border-(--border-color) text-(--accent) text-xs font-bold hover:shadow-md transition-all"
+                      className="px-4 py-1.5 rounded-lg bg-(--bg-surface) border border-(--border-color) text-(--accent) text-xs font-bold hover:shadow-md transition-all"
                     >
                       {showEditor ? "關閉編輯器" : "修改自定義格式"}
                     </button>
                   ) : (
                     <button 
                       onClick={() => templateUploadRef.current?.click()}
-                      className="px-4 py-1.5 rounded-lg bg-white border border-(--border-color) text-(--accent) text-xs font-bold hover:shadow-md transition-all"
+                      className="px-4 py-1.5 rounded-lg bg-(--bg-surface) border border-(--border-color) text-(--accent) text-xs font-bold hover:shadow-md transition-all"
                     >
                       更換模板文件
                     </button>
@@ -459,10 +462,10 @@ ${generatedContent}`;
                   {uploadedFiles.length > 0 && (
                     <div className="grid grid-cols-1 gap-2 mt-2">
                       {uploadedFiles.map((file, idx) => (
-                        <div key={idx} className="flex items-center justify-between p-2.5 bg-white border border-(--border-color) rounded-xl shadow-sm group">
+                        <div key={idx} className="flex items-center justify-between p-2.5 bg-(--bg-surface) border border-(--border-color) rounded-xl shadow-sm group">
                           <div className="flex items-center gap-2 overflow-hidden">
                             <FileText className="w-3.5 h-3.5 text-(--accent)" />
-                            <p className="text-[11px] font-bold text-(--text-primary) truncate">{file.name}</p>
+                            <p className="text-[13px] font-bold text-(--text-primary) truncate">{file.name}</p>
                           </div>
                           <button onClick={() => removeFile(idx)} className="p-1 hover:text-red-500 transition-colors">
                             <X className="w-3.5 h-3.5" />
