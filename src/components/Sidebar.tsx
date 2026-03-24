@@ -327,6 +327,13 @@ export default function Sidebar({
           </div>
         </div>
       </div>
+
+      {/* Author Info */}
+      <div className="p-4 border-t border-(--border-color)/30 bg-(--bg-surface)/50 backdrop-blur-sm">
+        <p className="text-[10px] text-(--text-secondary) font-bold uppercase tracking-widest text-center opacity-60">
+          Developed by Wesley Chang @ Mouldex, 2026.
+        </p>
+      </div>
     </aside>
   );
 }
