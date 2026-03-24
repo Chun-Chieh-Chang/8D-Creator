@@ -186,3 +186,74 @@
     background: var(--text-secondary);
   }
 }
+
+/* Print Styles for 8D Report */
+@media print {
+  /* Hide all non-essential UI elements */
+  .layout-container > *:not(main),
+  aside,
+  nav,
+  header,
+  footer,
+  .btn-primary,
+  .btn-secondary,
+  .premium-card .bg-(--bg-base),
+  .premium-card .flex.gap-3,
+  .current-stage-indicator,
+  .lucide-sparkles,
+  .StageIndicator_container__f81d4, /* Example of potential class names if using modules */
+  [class*="Sidebar"],
+  [class*="MainForm_footer"] {
+    display: none !important;
+  }
+
+  /* Reset layout for print */
+  body, 
+  .layout-container, 
+  main {
+    background: white !important;
+    color: black !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: visible !important;
+    height: auto !important;
+    width: 100% !important;
+    display: block !important;
+  }
+
+  .premium-card {
+    border: none !important;
+    box-shadow: none !important;
+    background: white !important;
+    padding: 0 !important;
+    overflow: visible !important;
+  }
+
+  .premium-card div:first-child {
+    display: none !important; /* Hide the specialized header with dots */
+  }
+
+  pre, .prose {
+    font-size: 11pt !important;
+    line-height: 1.6 !important;
+    color: black !important;
+    background: white !important;
+    white-space: pre-wrap !important;
+    word-wrap: break-word !important;
+    overflow: visible !important;
+  }
+
+  h1, h2, h3 {
+    page-break-after: avoid;
+    color: black !important;
+  }
+
+  p, pre {
+    page-break-inside: avoid;
+  }
+
+  /* Add manual page break support via HTML comments if needed */
+  .page-break {
+    page-break-before: always;
+  }
+}

@@ -3,13 +3,13 @@ import {
   FileEdit, Sparkles, CheckCircle2, FileDown, 
   Loader2, Info, BrainCircuit, ArrowRight, 
   Upload, X, Paperclip, FileText,
-  Settings as SettingsIcon, LayoutTemplate
+  Settings as SettingsIcon, LayoutTemplate, Printer
 } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import { generate8DReport, generate5WhyQuestion } from "@/lib/ollamaClient";
 import { generateGeminiReport, generateGemini5Why } from "@/lib/geminiClient";
 import { exportToDocx } from "@/lib/docxExporter";
-import { ReportHistoryItem, saveHistory, saveDraft, getDraft, clearDraft } from "@/lib/historyManager";
+import { ReportHistoryItem, saveHistory } from "@/lib/historyManager";
 import { parseFile } from "@/lib/fileParser";
 import { getActivePromptTemplate, getTemplateMode, getCustomTemplate, setCustomTemplate, setUploadedTemplate } from "@/lib/templateStore";
 
@@ -22,35 +22,16 @@ type AppStep = "input" | "analysis" | "final";
 
 export default function MainForm({ onReportGenerated, selectedHistory }: MainFormProps) {
   const [step, setStep] = useState<AppStep>(selectedHistory ? "final" : "input");
-  // Initialize state with history OR draft
-  const getInitialFormData = () => {
-    if (selectedHistory) return {
-      problemDescription: selectedHistory.problemDescription,
-      date: selectedHistory.date,
-      defectQuantity: selectedHistory.defectQuantity,
-      productInfo: selectedHistory.productInfo,
-      customerName: selectedHistory.customerName,
-    };
-    
-    // Load from draft if exists
-    const draft = getDraft();
-    return {
-      problemDescription: draft?.problemDescription || "",
-      date: draft?.date || new Date().toISOString().split("T")[0],
-      defectQuantity: draft?.defectQuantity || 1,
-      productInfo: draft?.productInfo || "",
-      customerName: draft?.customerName || "",
-    };
-  };
-
-  const [formData, setFormData] = useState(getInitialFormData());
+  const [formData, setFormData] = useState({
+    problemDescription: selectedHistory?.problemDescription || "",
+    date: selectedHistory?.date || new Date().toISOString().split("T")[0],
+    defectQuantity: selectedHistory?.defectQuantity || 1,
+    productInfo: selectedHistory?.productInfo || "",
+    customerName: selectedHistory?.customerName || "",
+  });
 
   const [isGenerating, setIsGenerating] = useState(false);
-  const [generatedContent, setGeneratedContent] = useState<string>(() => {
-    if (selectedHistory) return selectedHistory.generatedContent;
-    const draft = getDraft();
-    return draft?.generatedContent || "";
-  });
+  const [generatedContent, setGeneratedContent] = useState<string>(selectedHistory?.generatedContent || "");
   const [errorMsg, setErrorMsg] = useState("");
   
   // Template & UI State
@@ -87,16 +68,6 @@ export default function MainForm({ onReportGenerated, selectedHistory }: MainFor
     window.addEventListener("template-settings-changed", handleUpdate);
     return () => window.removeEventListener("template-settings-changed", handleUpdate);
   }, []);
-
-  // Save Draft as user types
-  useEffect(() => {
-    if (!selectedHistory && isMounted) {
-      saveDraft({
-        ...formData,
-        generatedContent
-      });
-    }
-  }, [formData, generatedContent, selectedHistory, isMounted]);
 
   if (!isMounted) return <div className="flex-1 bg-(--bg-surface) animate-pulse" />;
 
@@ -296,7 +267,6 @@ export default function MainForm({ onReportGenerated, selectedHistory }: MainFor
       });
       
       onReportGenerated(newHistory);
-      clearDraft(); // Clear draft once saved to history
     } catch (err: unknown) {
       const error = err as Error;
       console.error("Final generation error:", error);
@@ -336,6 +306,10 @@ ${generatedContent}`;
   const handleDownload = () => {
     if (!generatedContent) return;
     exportToDocx(generatedContent, "8D_Report_" + (formData.productInfo || "Draft"));
+  };
+
+  const handlePrint = () => {
+    window.print();
   };
 
   return (
@@ -684,11 +658,7 @@ ${generatedContent}`;
                   </div>
                   <div className="flex gap-3">
                     <button 
-                      onClick={() => {
-                        setStep("input");
-                        clearDraft();
-                        window.location.reload(); // Hard reset to clear all states
-                      }} 
+                      onClick={() => setStep("input")} 
                       className="px-4 py-2 text-xs font-bold text-(--text-secondary) hover:text-(--text-primary) transition-colors"
                     >
                       重新開始
@@ -698,6 +668,9 @@ ${generatedContent}`;
                       className="btn-primary h-10 px-6 bg-(--accent) text-white"
                     >
                       <Sparkles className="w-4 h-4 mr-2" /> 複製給 AI (優化版)
+                    </button>
+                    <button onClick={handlePrint} className="btn-primary h-10 px-6 bg-(--success) text-white border-none shadow-lg shadow-(--success)/20">
+                      <Printer className="w-4 h-4 mr-2" /> 匯出 PDF / 打印
                     </button>
                     <button onClick={handleDownload} className="btn-secondary h-10 px-6">
                       <FileDown className="w-4 h-4 mr-2" /> 匯出 Word
