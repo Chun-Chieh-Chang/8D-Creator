@@ -9,7 +9,7 @@ import ReactMarkdown from "react-markdown";
 import { generate8DReport, generate5WhyQuestion } from "@/lib/ollamaClient";
 import { generateGeminiReport, generateGemini5Why } from "@/lib/geminiClient";
 import { exportToDocx } from "@/lib/docxExporter";
-import { ReportHistoryItem, saveHistory } from "@/lib/historyManager";
+import { ReportHistoryItem, saveHistory, saveDraft, getDraft, clearDraft } from "@/lib/historyManager";
 import { parseFile } from "@/lib/fileParser";
 import { getActivePromptTemplate, getTemplateMode, getCustomTemplate, setCustomTemplate, setUploadedTemplate } from "@/lib/templateStore";
 
@@ -22,16 +22,35 @@ type AppStep = "input" | "analysis" | "final";
 
 export default function MainForm({ onReportGenerated, selectedHistory }: MainFormProps) {
   const [step, setStep] = useState<AppStep>(selectedHistory ? "final" : "input");
-  const [formData, setFormData] = useState({
-    problemDescription: selectedHistory?.problemDescription || "",
-    date: selectedHistory?.date || new Date().toISOString().split("T")[0],
-    defectQuantity: selectedHistory?.defectQuantity || 1,
-    productInfo: selectedHistory?.productInfo || "",
-    customerName: selectedHistory?.customerName || "",
-  });
+  // Initialize state with history OR draft
+  const getInitialFormData = () => {
+    if (selectedHistory) return {
+      problemDescription: selectedHistory.problemDescription,
+      date: selectedHistory.date,
+      defectQuantity: selectedHistory.defectQuantity,
+      productInfo: selectedHistory.productInfo,
+      customerName: selectedHistory.customerName,
+    };
+    
+    // Load from draft if exists
+    const draft = getDraft();
+    return {
+      problemDescription: draft?.problemDescription || "",
+      date: draft?.date || new Date().toISOString().split("T")[0],
+      defectQuantity: draft?.defectQuantity || 1,
+      productInfo: draft?.productInfo || "",
+      customerName: draft?.customerName || "",
+    };
+  };
+
+  const [formData, setFormData] = useState(getInitialFormData());
 
   const [isGenerating, setIsGenerating] = useState(false);
-  const [generatedContent, setGeneratedContent] = useState<string>(selectedHistory?.generatedContent || "");
+  const [generatedContent, setGeneratedContent] = useState<string>(() => {
+    if (selectedHistory) return selectedHistory.generatedContent;
+    const draft = getDraft();
+    return draft?.generatedContent || "";
+  });
   const [errorMsg, setErrorMsg] = useState("");
   
   // Template & UI State
