@@ -1,6 +1,5 @@
 // src/lib/docxExporter.ts
 import { Document, Packer, Paragraph, TextRun, HeadingLevel } from "docx";
-import { saveAs } from "file-saver";
 
 export async function exportToDocx(content: string, title: string = "8D Problem Solving Report") {
   const lines = content.split("\n");
@@ -64,24 +63,37 @@ export async function exportToDocx(content: string, title: string = "8D Problem 
 
   try {
     const blob = await Packer.toBlob(doc);
-    const fileName = `${title.replace(/\s+/g, "_")}_${new Date().toISOString().slice(0, 10)}.docx`;
     
-    // Use a more direct native download method to avoid naming issues
-    const url = URL.createObjectURL(blob);
+    // Explicitly re-wrap the blob to ensure the correct MIME type is set
+    const wordBlob = new Blob([blob], { 
+      type: "application/vnd.openxmlformats-officedocument.wordprocessingml.document" 
+    });
+    
+    // Sanitize filename: remove any characters that are unsafe for Windows (e.g. : / \ * ? " < > |)
+    const sanitizedTitle = (title || "8D_Report").replace(/[\\/:*?"<>|]/g, "_").replace(/\s+/g, "_");
+    const dateStr = new Date().toISOString().slice(0, 10);
+    const fileName = `${sanitizedTitle}_${dateStr}.docx`;
+    
+    console.log("Preparing download for:", fileName, "Size:", wordBlob.size);
+    
+    const url = URL.createObjectURL(wordBlob);
     const a = document.createElement("a");
+    a.style.display = "none";
     a.href = url;
     a.download = fileName;
+    a.rel = "noopener";
+    
     document.body.appendChild(a);
     a.click();
     
-    // Cleanup
+    // Cleanup with a slightly longer delay to ensure browser handles the request
     setTimeout(() => {
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
-    }, 100);
+    }, 500);
     
-    console.log("8D Report exported successfully:", fileName);
+    console.log("8D Report download triggered successfully:", fileName);
   } catch (error) {
-    console.error("Export failed:", error);
+    console.error("Critical Export Error:", error);
   }
 }
