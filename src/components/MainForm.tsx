@@ -146,8 +146,13 @@ export default function MainForm({ onReportGenerated, selectedHistory }: MainFor
       }
       
       setAnalysisHistory([{ role: "assistant", content: firstQuestion }]);
-    } catch {
-      setErrorMsg(provider === "gemini" ? "Gemini 連線失敗，請檢查 API Key" : "Ollama 分析初始化失敗");
+    } catch (err: any) {
+      console.error("Analysis initialization error:", err);
+      let msg = provider === "gemini" ? "Gemini 連線失敗" : "Ollama 分析初始化失敗";
+      if (err?.message?.includes("API_KEY_INVALID")) msg = "Gemini API Key 無效";
+      else if (err?.message?.includes("quota")) msg = "Gemini API 配額已達上限 (429)";
+      else if (err?.message?.includes("safety")) msg = "內容因安全過濾被阻斷 (Safety Filter)";
+      setErrorMsg(`${msg}: ${err?.message || "未知錯誤"}`);
     } finally {
       setIsGenerating(false);
     }
@@ -185,8 +190,11 @@ export default function MainForm({ onReportGenerated, selectedHistory }: MainFor
       } else {
         setAnalysisHistory(prev => [...prev, { role: "assistant", content: nextQuestion }]);
       }
-    } catch {
-      setErrorMsg("分析過程中斷");
+    } catch (err: any) {
+      console.error("Analysis reply error:", err);
+      let msg = "分析過程中斷";
+      if (err?.message?.includes("quota")) msg = "API 配額已達上限";
+      setErrorMsg(`${msg}: ${err?.message || "未知錯誤"}`);
     } finally {
       setIsGenerating(false);
     }
@@ -256,9 +264,12 @@ export default function MainForm({ onReportGenerated, selectedHistory }: MainFor
       });
       
       onReportGenerated(newHistory);
-    } catch (err: unknown) {
-      console.error("Generate error:", err);
-      setErrorMsg("最終生成失敗");
+    } catch (err: any) {
+      console.error("Final generation error:", err);
+      let msg = "最終生成失敗";
+      if (err?.message?.includes("quota")) msg = "API 配額已達上限";
+      else if (err?.message?.includes("safety")) msg = "內容因安全過濾被阻斷";
+      setErrorMsg(`${msg}: ${err?.message || "未知錯誤"}`);
     } finally {
       setIsGenerating(false);
     }
