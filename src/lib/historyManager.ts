@@ -11,6 +11,7 @@ export interface ReportHistoryItem {
 }
 
 const STORAGE_KEY = "8d_reporter_history";
+const DRAFT_KEY = "8d_reporter_draft";
 
 export function saveHistory(item: Omit<ReportHistoryItem, "id" | "timestamp">): ReportHistoryItem {
   if (typeof window === "undefined") return item as ReportHistoryItem;
@@ -41,7 +42,6 @@ export function deleteHistory(id: string): void {
   const history = getHistory();
   localStorage.setItem(STORAGE_KEY, JSON.stringify(history.filter(i => i.id !== id)));
 }
-const DRAFT_KEY = "8d_reporter_draft";
 
 export function saveDraft(data: Partial<ReportHistoryItem>): void {
   if (typeof window === "undefined") return;
@@ -61,4 +61,19 @@ export function getDraft(): Partial<ReportHistoryItem> | null {
 export function clearDraft(): void {
   if (typeof window === "undefined") return;
   localStorage.removeItem(DRAFT_KEY);
+}
+
+export function clearAllData(): void {
+  if (typeof window === "undefined") return;
+  const projectKeys = [
+    STORAGE_KEY,
+    DRAFT_KEY,
+    "ai-provider",
+    "gemini-api-key",
+    "ollama-model",
+    "8d-template-mode",
+    "custom-8d-template",
+    "uploaded-8d-template"
+  ];
+  projectKeys.forEach(key => localStorage.removeItem(key));
 }

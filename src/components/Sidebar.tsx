@@ -4,7 +4,7 @@ import {
   BoxSelect, Globe, Sun, Moon,
   Info, ArrowRight, Cpu
 } from "lucide-react";
-import { ReportHistoryItem } from "@/lib/historyManager";
+import { ReportHistoryItem, clearAllData } from "@/lib/historyManager";
 import { useEffect, useState } from "react";
 import { getOllamaModels } from "@/lib/ollamaClient";
 
@@ -324,6 +324,22 @@ export default function Sidebar({
                 </div>
               ))
             )}
+          </div>
+          
+          {/* System Reset Section */}
+          <div className="pt-6 border-t border-(--border-color)/50">
+            <button 
+              onClick={() => {
+                if (window.confirm("⚠️ 確定要清空所有資料嗎？\n這將刪除所有報告紀錄、草稿、API Key 與模型設定，且無法復原。")) {
+                  clearAllData();
+                  window.location.reload();
+                }
+              }}
+              className="w-full flex items-center justify-center gap-2 py-3 rounded-xl border border-red-500/20 text-red-500 hover:bg-red-500 hover:text-white transition-all text-xs font-bold group"
+            >
+              <Trash2 className="w-3.5 h-3.5 group-hover:animate-bounce" />
+              清空所有資料與重置系統
+            </button>
           </div>
         </div>
       </div>
