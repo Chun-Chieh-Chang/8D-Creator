@@ -211,14 +211,14 @@ export default function Sidebar({
                   onChange={(e) => handleOllamaModelChange(e.target.value)}
                   className="premium-input pl-11 h-12 text-[14px] w-full px-3 py-2 bg-(--bg-surface) border border-(--border-color) rounded-lg focus:ring-2 focus:ring-(--accent)/10 focus:border-(--accent) outline-none transition-all appearance-none cursor-pointer"
                 >
-                  {ollamaModels.length > 0 ? (
-                    ollamaModels.map((m: OllamaModel) => (
+                  {ollamaModels.filter((m: OllamaModel) => m.name.toLowerCase().includes("cloud")).length > 0 ? (
+                    ollamaModels.filter((m: OllamaModel) => m.name.toLowerCase().includes("cloud")).map((m: OllamaModel) => (
                       <option key={m.name} value={m.name} className="bg-(--bg-surface) text-(--text-primary)">
                         {m.name}
                       </option>
                     ))
                   ) : (
-                    <option value="qwen2.5:7b">qwen2.5:7b (Default)</option>
+                    <option value="qwen2.5:7b">無可用雲端模型 (預設 qwen2.5)</option>
                   )}
                 </select>
                 <Cpu className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-(--accent)" />
