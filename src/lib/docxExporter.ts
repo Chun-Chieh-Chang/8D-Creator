@@ -64,7 +64,23 @@ export async function exportToDocx(content: string, title: string = "8D Problem 
 
   try {
     const blob = await Packer.toBlob(doc);
-    saveAs(blob, `${title.replace(/\s+/g, "_")}_${new Date().toISOString().slice(0, 10)}.docx`);
+    const fileName = `${title.replace(/\s+/g, "_")}_${new Date().toISOString().slice(0, 10)}.docx`;
+    
+    // Use a more direct native download method to avoid naming issues
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = fileName;
+    document.body.appendChild(a);
+    a.click();
+    
+    // Cleanup
+    setTimeout(() => {
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }, 100);
+    
+    console.log("8D Report exported successfully:", fileName);
   } catch (error) {
     console.error("Export failed:", error);
   }
