@@ -677,7 +677,7 @@ ${generatedContent}`;
                     </button>
                   </div>
                 </div>
-                <div className="p-10 bg-(--bg-surface)">
+                <div className="p-10 bg-(--bg-surface)" id="print-area">
                   <pre className="font-sans whitespace-pre-wrap text-[15px] text-(--text-primary) leading-[1.8] tracking-tight">
                     {generatedContent}
                   </pre>
