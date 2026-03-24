@@ -74,7 +74,8 @@ export default function MainForm({ onReportGenerated, selectedHistory }: MainFor
   const getAISettings = () => {
     const provider = localStorage.getItem("ai-provider") || "gemini";
     const apiKey = localStorage.getItem("gemini-api-key") || "";
-    return { provider, apiKey };
+    const ollamaModel = localStorage.getItem("ollama-model") || "qwen2.5:7b";
+    return { provider, apiKey, ollamaModel };
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -128,7 +129,7 @@ export default function MainForm({ onReportGenerated, selectedHistory }: MainFor
     setIsGenerating(true);
     setCurrentAnalystQuestion("");
 
-    const { provider, apiKey } = getAISettings();
+    const { provider, apiKey, ollamaModel } = getAISettings();
     const fileContext = uploadedFiles.map(f => `檔案 [${f.name}]:\n${f.content}`).join("\n\n");
     const fullContext = `問題描述：${formData.problemDescription}\n\n[附件資料背景]\n${fileContext}`;
 
@@ -142,7 +143,7 @@ export default function MainForm({ onReportGenerated, selectedHistory }: MainFor
       if (provider === "gemini" && apiKey) {
         await generateGemini5Why(apiKey, fullContext, [], callback);
       } else {
-        await generate5WhyQuestion(fullContext, [], callback);
+        await generate5WhyQuestion(fullContext, [], callback, ollamaModel);
       }
       
       setAnalysisHistory([{ role: "assistant", content: firstQuestion }]);
@@ -168,7 +169,7 @@ export default function MainForm({ onReportGenerated, selectedHistory }: MainFor
     setIsGenerating(true);
     setCurrentAnalystQuestion("");
 
-    const { provider, apiKey } = getAISettings();
+    const { provider, apiKey, ollamaModel } = getAISettings();
     const fileContext = uploadedFiles.map(f => `檔案 [${f.name}]:\n${f.content}`).join("\n\n");
     const fullContext = `問題描述：${formData.problemDescription}\n\n[附件資料背景]\n${fileContext}`;
 
@@ -182,7 +183,7 @@ export default function MainForm({ onReportGenerated, selectedHistory }: MainFor
       if (provider === "gemini" && apiKey) {
         await generateGemini5Why(apiKey, fullContext, newHistory, callback);
       } else {
-        await generate5WhyQuestion(fullContext, newHistory, callback);
+        await generate5WhyQuestion(fullContext, newHistory, callback, ollamaModel);
       }
 
       if (nextQuestion.includes("[FINISH_ANALYSIS]")) {
@@ -207,7 +208,7 @@ export default function MainForm({ onReportGenerated, selectedHistory }: MainFor
     setGeneratedContent("");
     setIsGenerating(true);
     
-    const { provider, apiKey } = getAISettings();
+    const { provider, apiKey, ollamaModel } = getAISettings();
     const fileContext = uploadedFiles.map(f => `檔案 [${f.name}]:\n${f.content}`).join("\n\n");
 
     const analysisSummary = finalHistory
@@ -253,7 +254,7 @@ export default function MainForm({ onReportGenerated, selectedHistory }: MainFor
       if (provider === "gemini" && apiKey) {
         await generateGeminiReport(apiKey, prompt, callback);
       } else {
-        await generate8DReport(prompt, callback);
+        await generate8DReport(prompt, callback, ollamaModel);
       }
       
       const newHistory = saveHistory({

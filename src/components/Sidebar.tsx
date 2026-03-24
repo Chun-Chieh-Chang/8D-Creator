@@ -2,16 +2,21 @@ import {
   FileText, Trash2, Clock, History,
   ShieldCheck, Key, LayoutTemplate,
   BoxSelect, Globe, Sun, Moon,
-  Info, ArrowRight
+  Info, ArrowRight, Cpu
 } from "lucide-react";
 import { ReportHistoryItem } from "@/lib/historyManager";
 import { useEffect, useState } from "react";
+import { getOllamaModels } from "@/lib/ollamaClient";
 
 interface SidebarProps {
   onSelectHistory: (report: ReportHistoryItem) => void;
   history: ReportHistoryItem[];
   onDeleteHistory: (id: string) => void;
   onNewReport?: () => void;
+}
+
+interface OllamaModel {
+  name: string;
 }
 
 export default function Sidebar({ 
@@ -22,47 +27,66 @@ export default function Sidebar({
 }: SidebarProps) {
   const [provider, setProvider] = useState<"ollama" | "gemini">("gemini");
   const [apiKey, setApiKey] = useState("");
+  const [ollamaModels, setOllamaModels] = useState<OllamaModel[]>([]);
+  const [selectedOllamaModel, setSelectedOllamaModel] = useState("qwen2.5:7b");
   const [templateMode, setTemplateModeState] = useState<"standard" | "custom" | "uploaded">("standard");
   const [theme, setThemeState] = useState<"light" | "dark">("dark");
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
     const saved = localStorage.getItem("theme") as "light" | "dark";
-    let activeTheme = theme;
     if (saved) {
-      activeTheme = saved;
       setThemeState(saved);
     } else if (window.matchMedia("(prefers-color-scheme: dark)").matches) {
-      activeTheme = "dark";
       setThemeState("dark");
     }
-    document.documentElement.classList.toggle("dark", activeTheme === "dark");
-    document.documentElement.classList.toggle("light", activeTheme === "light");
     setMounted(true);
   }, []);
 
   useEffect(() => {
+    if (mounted) {
+      document.documentElement.classList.toggle("dark", theme === "dark");
+      document.documentElement.classList.toggle("light", theme === "light");
+    }
+  }, [theme, mounted]);
+
+  useEffect(() => {
     const loadConfig = async () => {
-      // 1. Load from localStorage first
       const savedProvider = localStorage.getItem("ai-provider") as "ollama" | "gemini";
       const savedKey = localStorage.getItem("gemini-api-key") || "";
       const savedTemplateMode = (localStorage.getItem("8d-template-mode") as "standard" | "custom" | "uploaded") || "standard";
+      const savedOllamaModel = localStorage.getItem("ollama-model") || "qwen2.5:7b";
       
-      if (savedProvider) {
-        setProvider(savedProvider);
-      }
+      if (savedProvider) setProvider(savedProvider);
       setApiKey(savedKey);
       setTemplateModeState(savedTemplateMode);
+      setSelectedOllamaModel(savedOllamaModel);
 
-      // Note: Config fetch removed to prevent 404 records in production console.
+      if (savedProvider === "ollama") {
+        const models = await getOllamaModels();
+        setOllamaModels(models);
+      }
     };
 
     loadConfig();
   }, [theme]);
 
-  const handleProviderChange = (p: "ollama" | "gemini") => {
+  const handleProviderChange = async (p: "ollama" | "gemini") => {
     setProvider(p);
     localStorage.setItem("ai-provider", p);
+    if (p === "ollama" && ollamaModels.length === 0) {
+      const models = await getOllamaModels();
+      setOllamaModels(models);
+      if (models.length > 0 && !localStorage.getItem("ollama-model")) {
+        setSelectedOllamaModel(models[0].name);
+        localStorage.setItem("ollama-model", models[0].name);
+      }
+    }
+  };
+
+  const handleOllamaModelChange = (m: string) => {
+    setSelectedOllamaModel(m);
+    localStorage.setItem("ollama-model", m);
   };
 
   const handleKeyChange = (k: string) => {
@@ -178,6 +202,32 @@ export default function Sidebar({
               <Globe className="w-3.5 h-3.5" /> Gemini
             </button>
           </div>
+
+          {provider === "ollama" && (
+            <div className="space-y-3 animate-in slide-in-from-top-2 duration-300">
+              <div className="relative group/input">
+                <select
+                  value={selectedOllamaModel}
+                  onChange={(e) => handleOllamaModelChange(e.target.value)}
+                  className="premium-input pl-11 h-12 text-[14px] w-full px-3 py-2 bg-(--bg-surface) border border-(--border-color) rounded-lg focus:ring-2 focus:ring-(--accent)/10 focus:border-(--accent) outline-none transition-all appearance-none cursor-pointer"
+                >
+                  {ollamaModels.length > 0 ? (
+                    ollamaModels.map((m: OllamaModel) => (
+                      <option key={m.name} value={m.name} className="bg-(--bg-surface) text-(--text-primary)">
+                        {m.name}
+                      </option>
+                    ))
+                  ) : (
+                    <option value="qwen2.5:7b">qwen2.5:7b (Default)</option>
+                  )}
+                </select>
+                <Cpu className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-(--accent)" />
+              </div>
+              <p className="text-[10px] text-(--text-secondary) font-bold uppercase tracking-wider px-1">
+                已偵測到 {ollamaModels.length} 個本地模型
+              </p>
+            </div>
+          )}
 
           {provider === "gemini" && (
             <div className="space-y-4 animate-in slide-in-from-top-2 duration-300">

@@ -1,12 +1,24 @@
 import { ChatMessage, StreamCallback } from "./types";
 
-export async function generate8DReport(prompt: string, onChunk: StreamCallback) {
+export async function getOllamaModels() {
+  try {
+    const response = await fetch("http://127.0.0.1:11434/api/tags");
+    if (!response.ok) return [];
+    const data = await response.json();
+    return data.models || [];
+  } catch (error) {
+    console.error("Failed to fetch Ollama models:", error);
+    return [];
+  }
+}
+
+export async function generate8DReport(prompt: string, onChunk: StreamCallback, model: string = "qwen2.5:7b") {
   try {
     const response = await fetch("http://127.0.0.1:11434/api/generate", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        model: "qwen2.5:7b",
+        model: model,
         prompt: prompt,
         stream: true,
       }),
@@ -40,7 +52,8 @@ export async function generate8DReport(prompt: string, onChunk: StreamCallback) 
 export async function generate5WhyQuestion(
   context: string,
   history: ChatMessage[],
-  onChunk: StreamCallback
+  onChunk: StreamCallback,
+  model: string = "qwen2.5:7b"
 ) {
   const conversation = history.map(h => `${h.role === "user" ? "User" : "Assistant"}: ${h.content}`).join("\n");
   
@@ -59,5 +72,5 @@ export async function generate5WhyQuestion(
   3. 如果你認為已經找到根本原因（Systemic Root Cause），請輸出的結尾加上 [FINISH_ANALYSIS]。
   4. 輸出必須包含中英文對照。`;
 
-  return generate8DReport(prompt, onChunk);
+  return generate8DReport(prompt, onChunk, model);
 }
