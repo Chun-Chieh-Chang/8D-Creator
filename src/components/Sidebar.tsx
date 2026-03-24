@@ -34,13 +34,15 @@ export default function Sidebar({
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    const saved = localStorage.getItem("theme") as "light" | "dark";
-    if (saved) {
-      setThemeState(saved);
-    } else if (window.matchMedia("(prefers-color-scheme: dark)").matches) {
-      setThemeState("dark");
-    }
-    setMounted(true);
+    requestAnimationFrame(() => {
+      const saved = localStorage.getItem("theme") as "light" | "dark";
+      if (saved) {
+        setThemeState(saved);
+      } else if (window.matchMedia("(prefers-color-scheme: dark)").matches) {
+        setThemeState("dark");
+      }
+      setMounted(true);
+    });
   }, []);
 
   useEffect(() => {
