@@ -680,6 +680,11 @@ ${generatedContent}`;
           </div>
         )}
       </main>
+      <footer className="py-4 border-t border-(--border-color)/20 bg-(--bg-surface)/30 backdrop-blur-sm z-10">
+        <p className="text-[10px] text-(--text-secondary) font-bold uppercase tracking-widest text-center opacity-60">
+          Developed by Wesley Chang @ Mouldex, 2026.
+        </p>
+      </footer>
     </div>
   </div>
 );
