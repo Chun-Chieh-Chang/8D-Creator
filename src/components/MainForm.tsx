@@ -88,6 +88,16 @@ export default function MainForm({ onReportGenerated, selectedHistory }: MainFor
     return () => window.removeEventListener("template-settings-changed", handleUpdate);
   }, []);
 
+  // Save Draft as user types
+  useEffect(() => {
+    if (!selectedHistory && isMounted) {
+      saveDraft({
+        ...formData,
+        generatedContent
+      });
+    }
+  }, [formData, generatedContent, selectedHistory, isMounted]);
+
   if (!isMounted) return <div className="flex-1 bg-(--bg-surface) animate-pulse" />;
 
   const getAISettings = () => {
@@ -286,6 +296,7 @@ export default function MainForm({ onReportGenerated, selectedHistory }: MainFor
       });
       
       onReportGenerated(newHistory);
+      clearDraft(); // Clear draft once saved to history
     } catch (err: unknown) {
       const error = err as Error;
       console.error("Final generation error:", error);
@@ -673,7 +684,11 @@ ${generatedContent}`;
                   </div>
                   <div className="flex gap-3">
                     <button 
-                      onClick={() => setStep("input")} 
+                      onClick={() => {
+                        setStep("input");
+                        clearDraft();
+                        window.location.reload(); // Hard reset to clear all states
+                      }} 
                       className="px-4 py-2 text-xs font-bold text-(--text-secondary) hover:text-(--text-primary) transition-colors"
                     >
                       重新開始
