@@ -14,6 +14,25 @@ interface ChatResponse {
   choices: ChatChoice[];
 }
 
+// Exponential backoff retry helper
+async function withRetry<T>(
+  fn: () => Promise<T>,
+  maxRetries: number = 3,
+  delayMs: number = 1000
+): Promise<T> {
+  for (let i = 0; i < maxRetries; i++) {
+    try {
+      return await fn();
+    } catch (error) {
+      if (i === maxRetries - 1) throw error;
+      const waitTime = delayMs * Math.pow(2, i);
+      console.warn(`Retry ${i + 1}/${maxRetries} after ${waitTime}ms...`);
+      await new Promise(resolve => setTimeout(resolve, waitTime));
+    }
+  }
+  throw new Error("Retry failed");
+}
+
 async function streamChatCompletions(
   apiKey: string,
   messages: { role: string; content: string }[],
@@ -74,7 +93,7 @@ export async function generateAgnesReport(
     
     messages.push({ role: "user", content: prompt });
     
-    await streamChatCompletions(apiKey, messages, onChunk);
+    await withRetry(() => streamChatCompletions(apiKey, messages, onChunk));
   } catch (error) {
     console.error("Agnes Report Error:", error);
     throw error;

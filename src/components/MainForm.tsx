@@ -79,6 +79,7 @@ export default function MainForm({ onReportGenerated, selectedHistory }: MainFor
   const [analysisStep, setAnalysisStep] = useState(0);
   const [analysisMessage, setAnalysisMessage] = useState("");
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [lastError, setLastError] = useState<string | null>(null);
 
   useEffect(() => {
     if (step === "analysis") {
@@ -382,10 +383,25 @@ ${generatedContent}`;
         {errorMsg && (
           <div className="premium-card bg-(--error)/5 border-(--error)/20 p-4 flex items-start gap-4">
             <Info className="w-5 h-5 text-(--error) shrink-0" />
-            <div>
+            <div className="flex-1">
               <h3 className="text-[14px] font-bold text-(--error)">系統異常</h3>
               <p className="text-[13px] text-(--error)/80 mt-1">{errorMsg}</p>
+              {lastError && (
+                <p className="text-[11px] text-(--error)/60 mt-1">{lastError}</p>
+              )}
             </div>
+            <button
+              onClick={() => {
+                setErrorMsg("");
+                setLastError(null);
+                if (step === "analysis") {
+                  startAnalysis();
+                }
+              }}
+              className="px-3 py-1.5 bg-(--error)/10 hover:bg-(--error)/20 text-(--error) text-xs font-bold rounded-lg transition-all"
+            >
+              重試
+            </button>
           </div>
         )}
 

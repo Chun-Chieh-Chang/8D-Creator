@@ -2,7 +2,7 @@ import {
   FileText, Trash2, Clock, History,
   ShieldCheck, Key,
   Sun, Moon, Globe,
-  Info, ArrowRight, Sparkles
+  Info, ArrowRight, Sparkles, Search, Filter
 } from "lucide-react";
 import { ReportHistoryItem } from "@/lib/historyManager";
 import { useEffect, useState } from "react";
@@ -24,6 +24,8 @@ export default function Sidebar({
   const [apiKey, setApiKey] = useState("");
   const [theme, setThemeState] = useState<"light" | "dark">("dark");
   const [mounted, setMounted] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [filterCustomer, setFilterCustomer] = useState("");
 
   useEffect(() => {
     const saved = localStorage.getItem("theme") as "light" | "dark";
@@ -229,6 +231,31 @@ export default function Sidebar({
             </span>
           </div>
 
+          {/* Search Bar */}
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-(--text-secondary)" />
+            <input
+              type="text"
+              placeholder="搜尋報告..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full pl-9 pr-3 py-2 bg-(--bg-base) border border-(--border-color) rounded-lg text-[12px] focus:ring-2 focus:ring-(--accent)/10 focus:border-(--accent) outline-none transition-all"
+            />
+          </div>
+
+          {/* Filter by Customer */}
+          <select
+            value={filterCustomer}
+            onChange={(e) => setFilterCustomer(e.target.value)}
+            className="w-full px-3 py-2 bg-(--bg-base) border border-(--border-color) rounded-lg text-[12px] focus:ring-2 focus:ring-(--accent)/10 focus:border-(--accent) outline-none transition-all appearance-none"
+          >
+            <option value="">所有客戶</option>
+            {Array.from(new Set(history.map(h => h.customerName).filter(Boolean)))
+              .map((customer: string) => (
+                <option key={customer} value={customer}>{customer}</option>
+              ))}
+          </select>
+
           <div className="space-y-2">
             {(!history || history.length === 0) ? (
               <div className="px-4 py-8 bg-(--bg-base)/30 rounded-2xl border border-dashed border-(--border-color) flex flex-col items-center justify-center text-center gap-3">
@@ -236,31 +263,39 @@ export default function Sidebar({
                 <p className="text-[12px] text-(--text-secondary) px-4">尚無報告紀錄，快來生成您的第一份 8D 報告吧！</p>
               </div>
             ) : (
-              history.map((report) => (
-                <div 
-                  key={report.id}
-                  onClick={() => onSelectHistory(report)}
-                  className="group p-3 hover:bg-(--bg-surface) rounded-xl border border-transparent hover:border-(--border-color) hover:shadow-sm transition-all cursor-pointer flex justify-between items-center"
-                >
-                  <div className="min-w-0 pr-4">
-                    <div className="text-[13px] font-bold text-(--text-primary) truncate mb-0.5">
-                      {report?.productInfo || "未命名報告"}
-                    </div>
-                    <div className="text-[10px] text-(--text-secondary) font-bold uppercase truncate">
-                      {report.date}
-                    </div>
-                  </div>
-                  <button 
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onDeleteHistory(report.id);
-                    }}
-                    className="p-2 opacity-0 group-hover:opacity-100 hover:bg-red-50 hover:text-red-500 rounded-lg transition-all"
+              history
+                .filter((report) => {
+                  const matchesSearch = !searchQuery || 
+                    report.productInfo?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                    report.problemDescription?.toLowerCase().includes(searchQuery.toLowerCase());
+                  const matchesCustomer = !filterCustomer || report.customerName === filterCustomer;
+                  return matchesSearch && matchesCustomer;
+                })
+                .map((report) => (
+                  <div 
+                    key={report.id}
+                    onClick={() => onSelectHistory(report)}
+                    className="group p-3 hover:bg-(--bg-surface) rounded-xl border border-transparent hover:border-(--border-color) hover:shadow-sm transition-all cursor-pointer flex justify-between items-center"
                   >
-                    <Trash2 className="w-3.5 h-3.5" />
-                  </button>
-                </div>
-              ))
+                    <div className="min-w-0 pr-4">
+                      <div className="text-[13px] font-bold text-(--text-primary) truncate mb-0.5">
+                        {report?.productInfo || "未命名報告"}
+                      </div>
+                      <div className="text-[10px] text-(--text-secondary) font-bold uppercase truncate">
+                        {report.date}
+                      </div>
+                    </div>
+                    <button 
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onDeleteHistory(report.id);
+                      }}
+                      className="p-2 opacity-0 group-hover:opacity-100 hover:bg-red-50 hover:text-red-500 rounded-lg transition-all"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                ))
             )}
           </div>
         </div>

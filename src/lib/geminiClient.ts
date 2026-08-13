@@ -3,6 +3,25 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 import { ChatMessage, StreamCallback } from "./types";
 import { buildEnhanced5WhyPrompt } from './tools/promptBuilder';
 
+// Exponential backoff retry helper
+async function withRetry<T>(
+  fn: () => Promise<T>,
+  maxRetries: number = 3,
+  delayMs: number = 1000
+): Promise<T> {
+  for (let i = 0; i < maxRetries; i++) {
+    try {
+      return await fn();
+    } catch (error) {
+      if (i === maxRetries - 1) throw error;
+      const waitTime = delayMs * Math.pow(2, i);
+      console.warn(`Retry ${i + 1}/${maxRetries} after ${waitTime}ms...`);
+      await new Promise(resolve => setTimeout(resolve, waitTime));
+    }
+  }
+  throw new Error("Retry failed");
+}
+
 export async function generateGeminiReport(
   apiKey: string,
   prompt: string,
@@ -12,12 +31,14 @@ export async function generateGeminiReport(
     const genAI = new GoogleGenerativeAI(apiKey);
     const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
 
-    const result = await model.generateContentStream(prompt);
+    await withRetry(async () => {
+      const result = await model.generateContentStream(prompt);
 
-    for await (const chunk of result.stream) {
-      const chunkText = chunk.text();
-      onChunk(chunkText);
-    }
+      for await (const chunk of result.stream) {
+        const chunkText = chunk.text();
+        onChunk(chunkText);
+      }
+    });
   } catch (error) {
     console.error("Gemini Error:", error);
     throw error;
