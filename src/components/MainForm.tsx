@@ -1,18 +1,17 @@
 import { useEffect, useState, useRef } from "react";
 import { 
-  FileEdit, Sparkles, CheckCircle2, FileDown, 
-  Loader2, Info, BrainCircuit, ArrowRight, 
-  Upload, X, Paperclip, FileText,
-  Settings as SettingsIcon, LayoutTemplate
+  FileText, CheckCircle, FileDown,
+  Loader2, AlertCircle, ArrowRight, 
+  Upload, X
 } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import { generateAgnesReport, generateAgnes5Why } from "@/lib/agnesClient";
 import { generateGeminiReport, generateGemini5Why } from "@/lib/geminiClient";
 import { exportToDocx } from "@/lib/docxExporter";
 import { exportToHtml } from "@/lib/htmlExporter";
+import { exportToPdf } from "@/lib/pdfExporter";
 import { ReportHistoryItem, saveHistory } from "@/lib/historyManager";
 import { parseFile } from "@/lib/fileParser";
-import { getTemplateContent } from "@/lib/templateStore";
 import { buildEnhancedReportPrompt } from "@/lib/tools/promptBuilder";
 import { calculateRPN, findSimilarCases } from "@/lib/tools/analysisTools";
 import { getHistory } from "@/lib/historyManager";
@@ -22,78 +21,52 @@ interface MainFormProps {
   selectedHistory: ReportHistoryItem | null;
 }
 
-type AppStep = "input" | "analysis" | "final";
+type Step = "input" | "analysis" | "final";
 
 export default function MainForm({ onReportGenerated, selectedHistory }: MainFormProps) {
-  const [step, setStep] = useState<AppStep>(selectedHistory ? "final" : "input");
+  const [step, setStep] = useState<Step>(selectedHistory ? "final" : "input");
   const [formData, setFormData] = useState({
-    // 問題描述結構化欄位
-    problemTitle: selectedHistory?.problemDescription || "", // 問題標題
-    occurrenceTime: selectedHistory?.date || new Date().toISOString().split("T")[0], // 發生時間
-    location: "", // 發生地點/線別
-    defectDescription: "", // 缺陷現象詳細描述
-    detectionMethod: "", // 發現方式
-    impactScope: "", // 影響範圍
-    preliminaryCause: "", // 初步原因猜測
-    // 基礎資料
+    problemTitle: selectedHistory?.problemDescription || "",
+    occurrenceTime: selectedHistory?.date || new Date().toISOString().split("T")[0],
+    location: "",
+    defectDescription: "",
+    detectionMethod: "",
+    impactScope: "",
+    preliminaryCause: "",
     date: selectedHistory?.date || new Date().toISOString().split("T")[0],
     defectQuantity: selectedHistory?.defectQuantity || 1,
     productInfo: selectedHistory?.productInfo || "",
     customerName: selectedHistory?.customerName || "",
   });
 
-  const [isGenerating, setIsGenerating] = useState(false);
-  const [generatedContent, setGeneratedContent] = useState<string>(selectedHistory?.generatedContent || "");
+  const [isLoading, setIsLoading] = useState(false);
+  const [reportContent, setReportContent] = useState<string>(selectedHistory?.generatedContent || "");
   const [errorMsg, setErrorMsg] = useState("");
-  
-  // UI State
-  const [showEditor, setShowEditor] = useState(false);
 
-  // 5-Why Analysis State
-  const [analysisHistory, setAnalysisHistory] = useState<{ role: "user" | "assistant"; content: string }[]>([]);
-  const [currentAnalystQuestion, setCurrentAnalystQuestion] = useState("");
+  // Analysis state
+  const [chatHistory, setChatHistory] = useState<{ role: "user" | "assistant"; content: string }[]>([]);
+  const [currentMessage, setCurrentMessage] = useState("");
   const [userInput, setUserInput] = useState("");
-
-  // File Upload State
-  const [uploadedFiles, setUploadedFiles] = useState<{ name: string; content: string }[]>([]);
-  const [isParsingFiles, setIsParsingFiles] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
-
   const chatEndRef = useRef<HTMLDivElement>(null);
 
-  const [isMounted, setIsMounted] = useState(false);
-  
-  // 風險評估狀態
-  const [riskAssessment, setRiskAssessment] = useState<{
-    severity: number;
-    occurrence: number;
-    detection: number;
-    rpn: number;
-    priority: 'high' | 'medium' | 'low';
-  } | null>(null);
-  
-  // 相似案例狀態
-  const [similarCases, setSimilarCases] = useState<any[]>([]);
-  
-  // 分析進度狀態
-  const [analysisStep, setAnalysisStep] = useState(0);
-  const [analysisMessage, setAnalysisMessage] = useState("");
+  // File upload state
+  const [uploadedFiles, setUploadedFiles] = useState<{ name: string; content: string }[]>([]);
+  const [isReadingFile, setIsReadingFile] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Assessment state
+  const [riskResult, setRiskResult] = useState<{ rpn: number; priority: string } | null>(null);
+  const [similarItems, setSimilarItems] = useState<any[]>([]);
+  const [analysisProgress, setAnalysisProgress] = useState(0);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
-  const [lastError, setLastError] = useState<string | null>(null);
 
   useEffect(() => {
     if (step === "analysis") {
       chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
     }
-  }, [analysisHistory, currentAnalystQuestion, step]);
+  }, [chatHistory, currentMessage, step]);
 
-  useEffect(() => {
-    setIsMounted(true);
-  }, []);
-
-  if (!isMounted) return <div className="flex-1 bg-(--bg-surface) animate-pulse" />;
-
-  const getAISettings = () => {
+  const getSettings = () => {
     const provider = localStorage.getItem("ai-provider") || "agnes";
     const apiKey = localStorage.getItem("agnes-api-key") || localStorage.getItem("gemini-api-key") || "";
     return { provider, apiKey };
@@ -105,7 +78,7 @@ export default function MainForm({ onReportGenerated, selectedHistory }: MainFor
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files) return;
-    setIsParsingFiles(true);
+    setIsReadingFile(true);
     const files = Array.from(e.target.files);
     
     for (const file of files) {
@@ -113,32 +86,24 @@ export default function MainForm({ onReportGenerated, selectedHistory }: MainFor
         const content = await parseFile(file);
         setUploadedFiles(prev => [...prev, { name: file.name, content }]);
       } catch {
-        console.error("File parse error");
+        console.error("Parse error:", file.name);
       }
     }
-    setIsParsingFiles(false);
+    setIsReadingFile(false);
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
-
-
 
   const removeFile = (index: number) => {
     setUploadedFiles(prev => prev.filter((_, i) => i !== index));
   };
 
-  // 計算風險評估與相似案例
-  const analyzeRiskAndSimilarity = () => {
-    // 計算 RPN
-    const rpnResult = calculateRPN(
-      formData.defectDescription,
-      formData.impactScope,
-      formData.detectionMethod
-    );
-    setRiskAssessment(rpnResult);
+  // Run risk assessment
+  const runAssessment = () => {
+    const rpn = calculateRPN(formData.defectDescription, formData.impactScope, formData.detectionMethod);
+    setRiskResult({ rpn: rpn.rpn, priority: rpn.priority });
     
-    // 尋找相似案例
     const history = getHistory();
-    const caseMatches = findSimilarCases(
+    const matches = findSimilarCases(
       {
         defectType: formData.defectDescription.substring(0, 20),
         product: formData.productInfo,
@@ -146,7 +111,7 @@ export default function MainForm({ onReportGenerated, selectedHistory }: MainFor
       },
       history
     );
-    setSimilarCases(caseMatches);
+    setSimilarItems(matches);
   };
 
   const startAnalysis = async () => {
@@ -156,13 +121,13 @@ export default function MainForm({ onReportGenerated, selectedHistory }: MainFor
     }
     setErrorMsg("");
     setStep("analysis");
-    setIsGenerating(true);
-    setCurrentAnalystQuestion("");
+    setIsLoading(true);
+    setCurrentMessage("");
 
-    const { provider, apiKey } = getAISettings();
+    const { provider, apiKey } = getSettings();
     const fileContext = uploadedFiles.map(f => `檔案 [${f.name}]:\n${f.content}`).join("\n\n");
     
-    const problemContext = [
+    const context = [
       formData.problemTitle && `【問題標題】${formData.problemTitle}`,
       formData.location && `【發生地點/線別】${formData.location}`,
       formData.detectionMethod && `【發現方式】${formData.detectionMethod}`,
@@ -171,21 +136,19 @@ export default function MainForm({ onReportGenerated, selectedHistory }: MainFor
       formData.defectDescription && `【缺陷現象詳細描述】\n${formData.defectDescription}`
     ].filter(Boolean).join("\n\n");
     
-    const fullContext = `${problemContext}\n\n[附件資料背景]\n${fileContext}`;
+    const fullContext = `${context}\n\n[附件資料背景]\n${fileContext}`;
     
-    // 執行風險評估與相似案例搜尋
     setIsAnalyzing(true);
-    setAnalysisStep(20);
-    setAnalysisMessage("正在進行風險評估與歷史案例比對...");
-    
+    setAnalysisProgress(20);
+
     try {
-      analyzeRiskAndSimilarity();
-      setAnalysisStep(40);
+      runAssessment();
+      setAnalysisProgress(40);
       
-      let firstQuestion = "";
+      let question = "";
       const callback = (chunk: string) => {
-        firstQuestion += chunk;
-        setCurrentAnalystQuestion(prev => prev + chunk);
+        question += chunk;
+        setCurrentMessage(prev => prev + chunk);
       };
 
       if (provider === "gemini" && apiKey) {
@@ -195,37 +158,35 @@ export default function MainForm({ onReportGenerated, selectedHistory }: MainFor
       } else {
         setErrorMsg("請設定 API Key");
         setIsAnalyzing(false);
-        setIsGenerating(false);
+        setIsLoading(false);
         return;
       }
       
-      setAnalysisHistory([{ role: "assistant", content: firstQuestion }]);
-      setAnalysisStep(100);
-      setAnalysisMessage("分析完成，請回答下一個問題");
+      setChatHistory([{ role: "assistant", content: question }]);
+      setAnalysisProgress(100);
     } catch {
-      setErrorMsg(provider === "gemini" ? "Gemini 連線失敗，請檢查 API Key" : "Agnes AI 連線失敗，請檢查 API Key");
+      setErrorMsg(provider === "gemini" ? "Gemini 連線失敗" : "Agnes AI 連線失敗");
     } finally {
       setIsAnalyzing(false);
-      setIsGenerating(false);
+      setIsLoading(false);
     }
   };
 
-  const handleAnalysisReply = async () => {
-    if (!userInput.trim() || isGenerating) return;
+  const sendReply = async () => {
+    if (!userInput.trim() || isLoading) return;
 
-    const newHistory = [...analysisHistory, { role: "user" as const, content: userInput }];
-    setAnalysisHistory(newHistory);
+    const newHistory = [...chatHistory, { role: "user" as const, content: userInput }];
+    setChatHistory(newHistory);
     setUserInput("");
-    setIsGenerating(true);
+    setIsLoading(true);
     setIsAnalyzing(true);
-    setAnalysisStep(60);
-    setAnalysisMessage("正在分析您的回答...");
-    setCurrentAnalystQuestion("");
+    setAnalysisProgress(60);
+    setCurrentMessage("");
 
-    const { provider, apiKey } = getAISettings();
+    const { provider, apiKey } = getSettings();
     const fileContext = uploadedFiles.map(f => `檔案 [${f.name}]:\n${f.content}`).join("\n\n");
     
-    const problemContext = [
+    const context = [
       formData.problemTitle && `【問題標題】${formData.problemTitle}`,
       formData.location && `【發生地點/線別】${formData.location}`,
       formData.detectionMethod && `【發現方式】${formData.detectionMethod}`,
@@ -234,13 +195,13 @@ export default function MainForm({ onReportGenerated, selectedHistory }: MainFor
       formData.defectDescription && `【缺陷現象詳細描述】\n${formData.defectDescription}`
     ].filter(Boolean).join("\n\n");
     
-    const fullContext = `${problemContext}\n\n[附件資料背景]\n${fileContext}`;
+    const fullContext = `${context}\n\n[附件資料背景]\n${fileContext}`;
 
     try {
-      let nextQuestion = "";
+      let answer = "";
       const callback = (chunk: string) => {
-        nextQuestion += chunk;
-        setCurrentAnalystQuestion(prev => prev + chunk);
+        answer += chunk;
+        setCurrentMessage(prev => prev + chunk);
       };
 
       if (provider === "gemini" && apiKey) {
@@ -248,41 +209,40 @@ export default function MainForm({ onReportGenerated, selectedHistory }: MainFor
       } else if (provider === "agnes" && apiKey) {
         await generateAgnes5Why(apiKey, fullContext, newHistory, callback);
       } else {
-        setErrorMsg("分析過程中斷 - 請檢查 API Key");
+        setErrorMsg("請檢查 API Key");
       }
 
-      if (nextQuestion.includes("[FINISH_ANALYSIS]")) {
+      if (answer.includes("[FINISH_ANALYSIS]")) {
         setStep("final");
-        handleFinalGenerate(newHistory);
+        generateReport([...newHistory, { role: "assistant", content: answer }]);
       } else {
-        setAnalysisHistory(prev => [...prev, { role: "assistant", content: nextQuestion }]);
+        setChatHistory(prev => [...prev, { role: "assistant", content: answer }]);
       }
     } catch {
       setErrorMsg("分析過程中斷");
     } finally {
-      setIsGenerating(false);
+      setIsLoading(false);
+      setIsAnalyzing(false);
     }
   };
 
-  const handleFinalGenerate = async (finalHistory = analysisHistory) => {
+  const generateReport = async (history = chatHistory) => {
     setErrorMsg("");
-    setGeneratedContent("");
-    setIsGenerating(true);
+    setReportContent("");
+    setIsLoading(true);
     
-    const { provider, apiKey } = getAISettings();
-    const fileContext = uploadedFiles.map(f => `檔案 [${f.name}]:\n${f.content}`).join("\n\n");
-
-    const analysisSummary = finalHistory
-      .map(h => `${h.role === "user" ? "用戶回答" : "專家追問"}: ${h.content}`)
+    const { provider, apiKey } = getSettings();
+    
+    const analysisSummary = history
+      .map(h => `${h.role === "user" ? "用戶回答" : "專家"}: ${h.content}`)
       .join("\n");
 
-    // 使用增強型報告生成提示
     const reportPrompt = buildEnhancedReportPrompt(analysisSummary, formData);
 
-    let fullResult = "";
+    let result = "";
     const callback = (chunk: string) => {
-      fullResult += chunk;
-      setGeneratedContent(prev => prev + chunk);
+      result += chunk;
+      setReportContent(prev => prev + chunk);
     };
 
     try {
@@ -291,272 +251,226 @@ export default function MainForm({ onReportGenerated, selectedHistory }: MainFor
       } else if (provider === "agnes" && apiKey) {
         await generateAgnesReport(apiKey, reportPrompt, callback);
       } else {
-        setErrorMsg("最終生成失敗 - 請檢查 API Key");
+        setErrorMsg("生成失敗 - 請檢查 API Key");
       }
       
-      const newHistory = saveHistory({
+      const newItem = saveHistory({
         date: formData.date,
         productInfo: formData.productInfo,
         customerName: formData.customerName,
         defectQuantity: formData.defectQuantity,
-        problemDescription: [
-          formData.problemTitle,
-          formData.defectDescription
-        ].filter(Boolean).join('\n'),
-        generatedContent: fullResult,
+        problemDescription: [formData.problemTitle, formData.defectDescription].filter(Boolean).join('\n'),
+        generatedContent: result,
       });
       
-      onReportGenerated(newHistory);
+      onReportGenerated(newItem);
     } catch (err: unknown) {
       console.error("Generate error:", err);
-      setErrorMsg("最終生成失敗");
+      setErrorMsg("報告生成失敗");
     } finally {
-      setIsGenerating(false);
+      setIsLoading(false);
     }
   };
 
-  const copyForAI = () => {
-    const metadata = `---
-title: 8D Report - ${formData.productInfo}
-date: ${formData.date}
-customer: ${formData.customerName}
-quantity: ${formData.defectQuantity}
-type: Quality_Assurance_Report
-source: 8D_Reporter_AI
----
-
-# 8D Report Background
-**問題標題**: ${formData.problemTitle}
-**發生時間**: ${formData.occurrenceTime}
-**發生地點/線別**: ${formData.location}
-**缺陷現象詳細描述**: ${formData.defectDescription}
-${formData.detectionMethod ? `**發現方式**: ${formData.detectionMethod}\n` : ''}
-${formData.impactScope ? `**影響範圍**: ${formData.impactScope}\n` : ''}
-${formData.preliminaryCause ? `**初步原因猜測**: ${formData.preliminaryCause}\n` : ''}
-
-# 5-Why Analysis Summary
-${analysisHistory.map(h => `${h.role}: ${h.content}`).join("\n")}
-
-# Final Report Content
-${generatedContent}`;
-
-    navigator.clipboard.writeText(metadata);
-    setErrorMsg("已複製優化後的 Markdown (含元數據)，可直接匯入 NotebookLM 或 Gemini Pro！");
-    setTimeout(() => setErrorMsg(""), 3000);
+  const copyToClipboard = () => {
+    const text = `---\ntitle: 8D Report - ${formData.productInfo}\ndate: ${formData.date}\ncustomer: ${formData.customerName}\nquantity: ${formData.defectQuantity}\n---\n\n# 8D Report\n${reportContent}`;
+    navigator.clipboard.writeText(text);
+    setErrorMsg("已複製到剪貼簿");
+    setTimeout(() => setErrorMsg(""), 2000);
   };
 
-  const handleDownload = () => {
-    if (!generatedContent) return;
-    exportToDocx(generatedContent, "8D_Report_" + (formData.productInfo || "Draft"));
+  const downloadWord = () => {
+    if (!reportContent) return;
+    exportToDocx(reportContent, formData.productInfo || "8D_Report");
   };
 
-  const handleExportHtml = () => {
-    if (!generatedContent) return;
-    exportToHtml(generatedContent, {
-      title: "8D_Report_" + (formData.productInfo || "Draft"),
+  const downloadHtml = () => {
+    if (!reportContent) return;
+    exportToHtml(reportContent, {
+      title: formData.productInfo || "8D_Report",
       metadata: {
         date: formData.date,
         customer: formData.customerName,
         product: formData.productInfo,
         defectQuantity: formData.defectQuantity,
-        location: formData.location,
-        problemDescription: formData.problemTitle + '\n\n' + formData.defectDescription
-      },
-      bumpVersion: 'patch',
-      changelog: ['初始生成'],
-      brandSettings: {
-        companyName: formData.customerName || 'AI 8D Generator'
+        location: formData.location
       }
     });
   };
 
+  const downloadPdf = () => {
+    if (!reportContent) return;
+    exportToPdf({
+      title: formData.productInfo || "8D_Report",
+      content: reportContent,
+      metadata: { date: formData.date, customer: formData.customerName, product: formData.productInfo },
+      brandSettings: { companyName: formData.customerName }
+    });
+  };
+
   return (
-    <div className="flex-1 h-screen overflow-y-auto bg-(--bg-base) scrollbar-premium">
-      <div className="max-w-[1800px] mx-auto p-4 lg:p-6 pb-32 space-y-6 flex flex-col items-center w-full">
+    <div className="flex-1 overflow-y-auto bg-[var(--bg-base)]">
+      <div className="max-w-7xl mx-auto p-6 space-y-6">
         
-        {/* Current Stage Indicator (Elevated to top) */}
-        <div className="flex items-center justify-center gap-4 py-2 mb-2">
-          <div className={`flex items-center gap-2 px-4 py-2 rounded-full transition-all border ${step === "input" ? "bg-(--accent) text-white border-transparent shadow-lg shadow-(--accent)/20" : "bg-(--bg-surface)/50 text-(--text-secondary) border-(--border-color)"}`}>
-            <FileEdit className="w-4 h-4" />
-            <span className="text-xs font-bold">資訊填入</span>
-          </div>
-          <ArrowRight className="w-4 h-4 text-(--text-secondary) opacity-30" />
-          <div className={`flex items-center gap-2 px-4 py-2 rounded-full transition-all border ${step === "analysis" ? "bg-(--accent) text-white border-transparent shadow-lg shadow-(--accent)/20" : "bg-(--bg-surface)/50 text-(--text-secondary) border-(--border-color)"}`}>
-            <BrainCircuit className="w-4 h-4" />
-            <span className="text-xs font-bold">根因分析</span>
-          </div>
-          <ArrowRight className="w-4 h-4 text-(--text-secondary) opacity-30" />
-          <div className={`flex items-center gap-2 px-4 py-2 rounded-full transition-all border ${step === "final" ? "bg-(--accent) text-white border-transparent shadow-lg shadow-(--accent)/20" : "bg-(--bg-surface)/50 text-(--text-secondary) border-(--border-color)"}`}>
-            <CheckCircle2 className="w-4 h-4" />
-            <span className="text-xs font-bold">報告完成</span>
-          </div>
+        {/* Step Indicator */}
+        <div className="flex items-center gap-2 text-sm">
+          {[
+            { key: "input", label: "填寫資訊" },
+            { key: "analysis", label: "原因分析" },
+            { key: "final", label: "輸出報告" }
+          ].map((s, i, arr) => (
+            <div key={s.key} className="flex items-center gap-2">
+              <div className={`px-3 py-1.5 rounded ${
+                step === s.key 
+                  ? "bg-[var(--accent)] text-white" 
+                  : step !== s.key && ["input","analysis","final"].indexOf(step) > i
+                  ? "bg-green-600 text-white" 
+                  : "bg-white border border-gray-200 text-[var(--text-secondary)]"
+              }`}>
+                {s.label}
+              </div>
+              {i < arr.length - 1 && <ArrowRight className="w-4 h-4 text-gray-400 opacity-40" />}
+            </div>
+          ))}
         </div>
 
-        {/* Main Content Area */}
-        <main className="w-full flex-1 flex flex-col min-h-0">
-
+        {/* Error Message */}
         {errorMsg && (
-          <div className="premium-card bg-(--error)/5 border-(--error)/20 p-4 flex items-start gap-4">
-            <Info className="w-5 h-5 text-(--error) shrink-0" />
-            <div className="flex-1">
-              <h3 className="text-[14px] font-bold text-(--error)">系統異常</h3>
-              <p className="text-[13px] text-(--error)/80 mt-1">{errorMsg}</p>
-              {lastError && (
-                <p className="text-[11px] text-(--error)/60 mt-1">{lastError}</p>
-              )}
-            </div>
-            <button
-              onClick={() => {
-                setErrorMsg("");
-                setLastError(null);
-                if (step === "analysis") {
-                  startAnalysis();
-                }
-              }}
-              className="px-3 py-1.5 bg-(--error)/10 hover:bg-(--error)/20 text-(--error) text-xs font-bold rounded-lg transition-all"
-            >
-              重試
+          <div className="flex items-start gap-3 p-3 bg-red-50 border border-red-200 rounded text-sm text-red-700">
+            <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+            <div className="flex-1">{errorMsg}</div>
+            <button onClick={() => setErrorMsg("")} className="text-red-400 hover:text-red-600">
+              <X className="w-4 h-4" />
             </button>
           </div>
         )}
 
-        {/* STEP 1: INPUT */}
+        {/* STEP 1: INPUT FORM */}
         {step === "input" && (
-          <div className="premium-card p-6 lg:p-10 space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500 w-full max-w-full mx-auto shadow-2xl border-t-4 border-t-(--accent)">
+          <div className="card p-6">
+            <h1 className="text-lg font-semibold mb-1">8D 報告參數設定</h1>
+            <p className="text-sm text-[var(--text-secondary)] mb-6">請填寫以下基礎資訊，以便進行後續分析</p>
             
-            <div className="space-y-2">
-              <h1 className="text-3xl font-extrabold text-(--text-primary)">8D 報告參數設定</h1>
-              <p className="text-sm text-(--text-secondary)">請填寫基礎缺陷資訊，AI 將引導您進行後續的 5-Why 推導。</p>
-            </div>
-            
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
-              {/* Left Column: Problem Description & Files */}
-              <div className="space-y-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+              {/* Left: Problem Details */}
+              <div className="space-y-5">
+                <h2 className="text-sm font-medium text-[var(--text-secondary)] uppercase tracking-wide">問題描述</h2>
+                
                 <div>
-                  <h3 className="text-lg font-bold text-(--text-primary) mb-4 flex items-center gap-2">
-                    <FileEdit className="w-5 h-5 text-(--accent)" /> 問題現象描述
-                  </h3>
-                  
-                  {/* Structured Problem Description Fields */}
-                  <div className="space-y-4">
-                    <div>
-                      <label className="input-label">
-                        <span className="font-semibold">問題標題 *</span>
-                        <span className="text-(--text-secondary) font-normal ml-1">簡潔描述問題核心</span>
-                      </label>
-                      <input 
-                        type="text" 
-                        name="problemTitle" 
-                        value={formData.problemTitle} 
-                        onChange={handleChange} 
-                        placeholder="例: XX產品表面刮傷不良率異常升高"
-                        className="fluent-input w-full"
-                      />
-                    </div>
-                    
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <label className="input-label">發生日期 *</label>
-                        <input type="date" name="occurrenceTime" value={formData.occurrenceTime} onChange={handleChange} className="fluent-input w-full" />
-                      </div>
-                      <div>
-                        <label className="input-label">發生地點/線別</label>
-                        <input 
-                          type="text" 
-                          name="location" 
-                          value={formData.location} 
-                          onChange={handleChange} 
-                          placeholder="例: SMT線別A / 成品倉庫"
-                          className="fluent-input w-full"
-                        />
-                      </div>
-                    </div>
-                    
-                    <div>
-                      <label className="input-label">
-                        <span className="font-semibold">缺陷現象詳細描述 *</span>
-                        <span className="text-(--text-secondary) font-normal ml-1">包含觀察到的具體不良現象、缺陷特徵、數量比例等</span>
-                      </label>
-                      <textarea 
-                        name="defectDescription" 
-                        value={formData.defectDescription} 
-                        onChange={handleChange} 
-                        className="fluent-textarea min-h-[150px] text-base" 
-                        placeholder="請詳細描述：&#10;• 缺陷的具體表現（如：刮傷、鏽蝕、尺寸超差...）&#10;• 缺陷的嚴重程度或比例&#10;• 缺陷發生的頻率&#10;• 與其他正常產品的差異點"
-                      />
-                    </div>
-                    
-                    <div>
-                      <label className="input-label">發現方式</label>
-                      <input 
-                        type="text" 
-                        name="detectionMethod" 
-                        value={formData.detectionMethod} 
-                        onChange={handleChange} 
-                        placeholder="例: IQC進料檢驗 / 生產線自檢 / 客戶驗貨"
-                        className="fluent-input w-full"
-                      />
-                    </div>
-                    
-                    <div>
-                      <label className="input-label">影響範圍</label>
-                      <input 
-                        type="text" 
-                        name="impactScope" 
-                        value={formData.impactScope} 
-                        onChange={handleChange} 
-                        placeholder="例: 批次 B2024001-B2024005 / 約2000 pcs / 涉及客戶ABC"
-                        className="fluent-input w-full"
-                      />
-                    </div>
-                    
-                    <div>
-                      <label className="input-label">初步原因猜測</label>
-                      <input 
-                        type="text" 
-                        name="preliminaryCause" 
-                        value={formData.preliminaryCause} 
-                        onChange={handleChange} 
-                        placeholder="例: 刀具磨損 / 溫度設定不當 / 作業員疏失"
-                        className="fluent-input w-full"
-                      />
-                    </div>
+                  <label className="label">問題標題 <span className="text-red-500">*</span></label>
+                  <input
+                    type="text"
+                    name="problemTitle"
+                    value={formData.problemTitle}
+                    onChange={handleChange}
+                    placeholder="例：XX產品表面刮傷不良率異常升高"
+                    className="input"
+                  />
+                </div>
+                
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="label">發生日期 <span className="text-red-500">*</span></label>
+                    <input
+                      type="date"
+                      name="occurrenceTime"
+                      value={formData.occurrenceTime}
+                      onChange={handleChange}
+                      className="input"
+                    />
+                  </div>
+                  <div>
+                    <label className="label">發生地點/線別</label>
+                    <input
+                      type="text"
+                      name="location"
+                      value={formData.location}
+                      onChange={handleChange}
+                      placeholder="例：SMT線別A"
+                      className="input"
+                    />
                   </div>
                 </div>
+                
+                <div>
+                  <label className="label">缺陷現象詳細描述 <span className="text-red-500">*</span></label>
+                  <textarea
+                    name="defectDescription"
+                    value={formData.defectDescription}
+                    onChange={handleChange}
+                    placeholder="請詳細描述缺陷表現、嚴重程度、頻率等..."
+                    className="textarea"
+                    rows={5}
+                  />
+                </div>
+                
+                <div>
+                  <label className="label">發現方式</label>
+                  <input
+                    type="text"
+                    name="detectionMethod"
+                    value={formData.detectionMethod}
+                    onChange={handleChange}
+                    placeholder="例：IQC進料檢驗 / 客戶驗貨"
+                    className="input"
+                  />
+                </div>
+                
+                <div>
+                  <label className="label">影響範圍</label>
+                  <input
+                    type="text"
+                    name="impactScope"
+                    value={formData.impactScope}
+                    onChange={handleChange}
+                    placeholder="例：批次 B2024001-B2024005 / 約2000 pcs"
+                    className="input"
+                  />
+                </div>
+                
+                <div>
+                  <label className="label">初步原因猜測</label>
+                  <input
+                    type="text"
+                    name="preliminaryCause"
+                    value={formData.preliminaryCause}
+                    onChange={handleChange}
+                    placeholder="例：刀具磨損 / 溫度設定不當"
+                    className="input"
+                  />
+                </div>
 
-                <div className="space-y-4">
-                  <label className="input-label flex items-center gap-2">
-                    <Paperclip className="w-4 h-4 text-(--accent)" />
-                    上傳參考資料 (Excel/PDF/Word/TXT)
-                  </label>
-                  
-                  <div 
+                {/* File Upload */}
+                <div>
+                  <label className="label">上傳參考資料</label>
+                  <div
                     onClick={() => fileInputRef.current?.click()}
-                    className="border-2 border-dashed border-(--border-color) hover:border-(--accent) bg-(--bg-base)/30 rounded-2xl p-6 transition-all cursor-pointer group flex flex-col items-center justify-center gap-2"
+                    className="border-2 border-dashed border-gray-300 hover:border-[var(--accent)] rounded p-4 cursor-pointer text-center transition-colors"
                   >
-                    <input 
-                      type="file" 
-                      ref={fileInputRef} 
-                      onChange={handleFileChange} 
-                      multiple 
-                      className="hidden" 
+                    <input
+                      type="file"
+                      ref={fileInputRef}
+                      onChange={handleFileChange}
+                      multiple
+                      className="hidden"
                       accept=".xlsx,.xls,.docx,.pdf,.txt"
                     />
-                    <Upload className="w-6 h-6 text-(--accent) group-hover:scale-110 transition-transform" />
-                    <p className="text-[13px] font-bold text-(--text-primary)">
-                      {isParsingFiles ? "解析中..." : "點擊或拖拽上傳文件"}
+                    <Upload className="w-5 h-5 mx-auto mb-2 text-gray-400" />
+                    <p className="text-sm text-[var(--text-secondary)]">
+                      {isReadingFile ? "讀取中..." : "點擊或拖拽上傳文件"}
                     </p>
+                    <p className="text-xs text-gray-400 mt-1">支援 Excel / Word / PDF / TXT</p>
                   </div>
-
+                  
                   {uploadedFiles.length > 0 && (
-                    <div className="grid grid-cols-1 gap-2 mt-2">
+                    <div className="mt-2 space-y-1">
                       {uploadedFiles.map((file, idx) => (
-                        <div key={idx} className="flex items-center justify-between p-2.5 bg-white border border-(--border-color) rounded-xl shadow-sm group">
+                        <div key={idx} className="flex items-center justify-between p-2 bg-gray-50 rounded text-xs">
                           <div className="flex items-center gap-2 overflow-hidden">
-                            <FileText className="w-3.5 h-3.5 text-(--accent)" />
-                            <p className="text-[11px] font-bold text-(--text-primary) truncate">{file.name}</p>
+                            <FileText className="w-3.5 h-3.5 text-[var(--accent)] shrink-0" />
+                            <span className="truncate">{file.name}</span>
                           </div>
-                          <button onClick={() => removeFile(idx)} className="p-1 hover:text-red-500 transition-colors">
+                          <button onClick={() => removeFile(idx)} className="text-gray-400 hover:text-red-500">
                             <X className="w-3.5 h-3.5" />
                           </button>
                         </div>
@@ -566,43 +480,42 @@ ${generatedContent}`;
                 </div>
               </div>
 
-              {/* Right Column: Metadata & Submit */}
-              <div className="flex flex-col space-y-6">
-                <div>
-                  <h3 className="text-lg font-bold text-(--text-primary) mb-4">基礎資料紀錄</h3>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                      <label className="input-label">發生日期</label>
-                      <input type="date" name="date" value={formData.date} onChange={handleChange} className="fluent-input" />
-                    </div>
-                    <div>
-                      <label className="input-label">不良數量</label>
-                      <input type="number" name="defectQuantity" value={formData.defectQuantity} onChange={handleChange} className="fluent-input" />
-                    </div>
-                    <div className="sm:col-span-2">
-                      <label className="input-label">產品/型號</label>
-                      <input type="text" name="productInfo" value={formData.productInfo} onChange={handleChange} placeholder="輸入型號..." className="fluent-input" />
-                    </div>
-                    <div className="sm:col-span-2">
-                      <label className="input-label">客戶名稱</label>
-                      <input type="text" name="customerName" value={formData.customerName} onChange={handleChange} placeholder="輸入客戶..." className="fluent-input" />
-                    </div>
+              {/* Right: Basic Info */}
+              <div className="space-y-5">
+                <h2 className="text-sm font-medium text-[var(--text-secondary)] uppercase tracking-wide">基本資料</h2>
+                
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="label">發生日期</label>
+                    <input type="date" name="date" value={formData.date} onChange={handleChange} className="input" />
+                  </div>
+                  <div>
+                    <label className="label">不良數量 (pcs)</label>
+                    <input type="number" name="defectQuantity" value={formData.defectQuantity} onChange={handleChange} className="input" />
                   </div>
                 </div>
+                
+                <div>
+                  <label className="label">產品/型號</label>
+                  <input type="text" name="productInfo" value={formData.productInfo} onChange={handleChange} placeholder="輸入型號" className="input" />
+                </div>
+                
+                <div>
+                  <label className="label">客戶名稱</label>
+                  <input type="text" name="customerName" value={formData.customerName} onChange={handleChange} placeholder="輸入客戶" className="input" />
+                </div>
 
-                <div className="flex-1" />
-
-                <div className="pt-6 border-t border-(--border-color)">
-                  <button 
-                    onClick={startAnalysis} 
-                    disabled={isGenerating || isParsingFiles}
-                    className="btn-primary w-full h-14 shadow-xl shadow-(--accent)/20 text-lg"
+                <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
+                  <button
+                    onClick={startAnalysis}
+                    disabled={isLoading || isReadingFile}
+                    className="btn btn-primary w-full h-[42px] text-base"
                   >
-                    {isGenerating ? <Loader2 className="w-5 h-5 animate-spin" /> : <BrainCircuit className="w-6 h-6" />}
-                    <span>開始引導式分析</span>
+                    {isLoading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
+                    開始分析
                   </button>
-                  <p className="text-[11px] text-(--text-secondary) text-center mt-3">
-                    AI 將根據您提供的資訊，協助推導 5-Why 根因與矯正措施。
+                  <p className="text-xs text-[var(--text-secondary)] text-center mt-2">
+                    系統將引導您進行 5-Why 根本原因分析
                   </p>
                 </div>
               </div>
@@ -610,165 +523,145 @@ ${generatedContent}`;
           </div>
         )}
 
-        {/* STEP 2: 5-WHY ANALYSIS */}
+        {/* STEP 2: ANALYSIS */}
         {step === "analysis" && (
-          <div className="premium-card p-6 lg:p-8 space-y-6 animate-in fade-in slide-in-from-right-4 duration-500 w-full">
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 h-full min-h-[600px]">
-              {/* Interaction Panel (Middle Column) */}
-              <div className="lg:col-span-12 xl:col-span-5 flex flex-col space-y-6">
-                <div className="premium-card p-6 flex-1 flex flex-col shadow-xl">
-                  <div className="flex items-center justify-between border-b border-(--border-color) pb-4 mb-4">
-                    <div className="flex items-center gap-3">
-                      <div className="bg-(--accent)/10 p-2 rounded-lg">
-                        <BrainCircuit className="w-5 h-5 text-(--accent)" />
-                      </div>
-                      <div>
-                        <h2 className="text-lg font-bold text-(--text-primary)">5-Why 診斷中</h2>
-                        <p className="text-[10px] text-(--text-secondary) font-bold uppercase tracking-wider">Interactive Assistant</p>
-                      </div>
-                    </div>
-                    {isAnalyzing && (
-                      <div className="flex items-center gap-2">
-                        <Loader2 className="w-4 h-4 animate-spin text-(--accent)" />
-                        <span className="text-[11px] text-(--accent) font-medium">{analysisMessage}</span>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Progress Bar */}
-                  {isAnalyzing && (
-                    <div className="mb-4 space-y-1">
-                      <div className="flex justify-between text-[10px] text-(--text-secondary)">
-                        <span>分析進度</span>
-                        <span className="font-bold">{analysisStep}%</span>
-                      </div>
-                      <div className="h-1.5 bg-(--bg-base) rounded-full overflow-hidden">
-                        <div 
-                          className="h-full bg-(--accent) transition-all duration-500 ease-out rounded-full"
-                          style={{ width: `${analysisStep}%` }}
-                        />
-                      </div>
-                    </div>
-                  )}
-
-                  <div className="flex-1 space-y-4 overflow-y-auto pr-2 custom-scrollbar min-h-[400px]">
-                    {analysisHistory.map((chat, idx) => (
-                      <div key={idx} className={`flex ${chat.role === "user" ? "justify-end" : "justify-start"}`}>
-                        <div className={`max-w-[90%] p-3 rounded-2xl ${
-                          chat.role === "user" ? 
-                          "bg-(--accent) text-white shadow-md shadow-(--accent)/20" : 
-                          "bg-(--bg-surface) border border-(--border-color) text-(--text-primary)"
-                        }`}>
-                          <p className="text-[13px] leading-relaxed whitespace-pre-wrap">{chat.content}</p>
-                        </div>
-                      </div>
-                    ))}
-                    
-                    {isGenerating && currentAnalystQuestion && (
-                      <div className="flex justify-start">
-                        <div className="max-w-[90%] p-3 rounded-2xl bg-(--bg-surface) border border-(--border-color) text-(--text-primary)">
-                          <p className="text-[13px] leading-relaxed whitespace-pre-wrap">{currentAnalystQuestion}</p>
-                          <Loader2 className="w-3 h-3 animate-spin mt-2 opacity-30" />
-                        </div>
-                      </div>
-                    )}
-                    <div ref={chatEndRef} />
-                  </div>
-
-                  <div className="mt-4 pt-4 border-t border-(--border-color)">
-                    <div className="relative group">
-                      <textarea
-                        value={userInput}
-                        onChange={(e) => setUserInput(e.target.value)}
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter" && !e.shiftKey) {
-                            e.preventDefault();
-                            handleAnalysisReply();
-                          }
-                        }}
-                        placeholder="輸入您的觀察或回答..."
-                        className="w-full bg-(--bg-base) border border-(--border-color) rounded-xl p-4 pr-12 text-[13px] focus:ring-2 focus:ring-(--accent)/20 focus:border-(--accent) transition-all resize-none min-h-[100px]"
-                        disabled={isGenerating}
-                      />
-                      <button
-                        onClick={handleAnalysisReply}
-                        disabled={!userInput.trim() || isGenerating}
-                        className="absolute right-3 bottom-3 p-2 bg-(--accent) text-white rounded-lg hover:bg-(--accent-hover) disabled:opacity-30 transition-all shadow-md shadow-(--accent)/20"
-                      >
-                        <ArrowRight className="w-4 h-4" />
-                      </button>
-                    </div>
-                    <div className="flex justify-between items-center mt-3">
-                      <p className="text-[10px] text-(--text-secondary)">按 Enter 發送，Shift + Enter 換行</p>
-                      <button 
-                        onClick={() => handleFinalGenerate()}
-                        className="text-[11px] font-bold text-(--accent) hover:underline"
-                      >
-                        直接生成 8D 報告 (跳過分析) →
-                      </button>
-                    </div>
-                  </div>
+          <div className="grid grid-cols-1 xl:grid-cols-12 gap-6">
+            {/* Chat Panel */}
+            <div className="xl:col-span-5 card flex flex-col" style={{ height: "calc(100vh - 180px)" }}>
+              <div className="p-4 border-b border-[var(--border-color)] flex items-center justify-between">
+                <div>
+                  <h2 className="text-sm font-semibold">原因分析對話</h2>
+                  <p className="text-xs text-[var(--text-secondary)]">與專家系統互動</p>
                 </div>
+                {isAnalyzing && (
+                  <div className="flex items-center gap-2 text-xs text-[var(--accent)]">
+                    <Loader2 className="w-3 h-3 animate-spin" />
+                    {analysisProgress}%
+                  </div>
+                )}
               </div>
 
-              {/* Preview Panel (Right Column) */}
-              <div className="lg:col-span-12 xl:col-span-7 flex flex-col space-y-4">
-                {/* Risk Assessment Badge */}
-                {riskAssessment && (
-                  <div className="premium-card p-4 flex items-center gap-4">
-                    <div className="flex items-center gap-3 flex-1">
-                      <span className="text-xs font-bold text-(--text-secondary) uppercase tracking-wider">風險評估</span>
-                      <div className={`px-3 py-1 rounded-full text-xs font-bold ${
-                        riskAssessment.priority === 'high' 
-                          ? 'bg-red-500/10 text-red-600 dark:text-red-400' 
-                          : riskAssessment.priority === 'medium'
-                          ? 'bg-amber-500/10 text-amber-600 dark:text-amber-400'
-                          : 'bg-green-500/10 text-green-600 dark:text-green-400'
-                      }`}>
-                        {riskAssessment.priority === 'high' ? '高優先級' : riskAssessment.priority === 'medium' ? '中優先級' : '低優先級'}
-                      </div>
-                      <div className="flex items-center gap-4 text-xs text-(--text-secondary)">
-                        <span>S: {riskAssessment.severity}</span>
-                        <span>O: {riskAssessment.occurrence}</span>
-                        <span>D: {riskAssessment.detection}</span>
-                        <span className="font-bold text-(--text-primary)">RPN: {riskAssessment.rpn}</span>
-                      </div>
-                    </div>
-                  </div>
-                )}
-                
-                {/* Similar Cases Alert */}
-                {similarCases.length > 0 && (
-                  <div className="premium-card p-4 bg-(--accent)/5 border-(--accent)/20">
-                    <div className="flex items-start gap-3">
-                      <Sparkles className="w-5 h-5 text-(--accent) shrink-0 mt-0.5" />
-                      <div className="flex-1">
-                        <p className="text-[12px] font-bold text-(--accent) mb-1">發現 {similarCases.length} 個相似歷史案例</p>
-                        <p className="text-[11px] text-(--text-secondary)">
-                          {similarCases.map((c, i) => `案例 #${c.caseId}(相似度${c.similarity}%)`).join('、')}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                )}
+              {/* Progress Bar */}
+              {isAnalyzing && (
+                <div className="h-0.5 bg-gray-100 dark:bg-gray-800">
+                  <div
+                    className="h-full bg-[var(--accent)] transition-all duration-300"
+                    style={{ width: `${analysisProgress}%` }}
+                  />
+                </div>
+              )}
 
-                <div className="premium-card flex-1 flex flex-col shadow-xl overflow-hidden border-t-4 border-t-(--accent)">
-                  <div className="bg-(--bg-surface) p-4 border-b border-(--border-color) flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                       <div className="p-1.5 rounded-md bg-(--accent)/10">
-                         <FileText className="w-4 h-4 text-(--accent)" />
-                       </div>
-                       <span className="text-[13px] font-bold text-(--text-primary)">即時報告預覽 (Live Preview)</span>
-                    </div>
-                    <div className="flex gap-2">
-                      <div className="w-2 h-2 rounded-full bg-red-400/20" />
-                      <div className="w-2 h-2 rounded-full bg-amber-400/20" />
-                      <div className="w-2 h-2 rounded-full bg-emerald-400/20" />
+              {/* Chat Messages */}
+              <div className="flex-1 overflow-y-auto p-4 space-y-4">
+                {chatHistory.map((msg, idx) => (
+                  <div key={idx} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
+                    <div className={`max-w-[85%] p-3 rounded text-sm whitespace-pre-wrap ${
+                      msg.role === "user"
+                        ? "bg-[var(--accent)] text-white"
+                        : "bg-gray-100 dark:bg-gray-800 text-[var(--text-primary)]"
+                    }`}>
+                      {msg.content}
                     </div>
                   </div>
-                  <div className="flex-1 p-6 lg:p-10 bg-white dark:bg-(--bg-base)/50 overflow-y-auto custom-scrollbar prose dark:prose-invert max-w-none">
-                    <ReactMarkdown>{generatedContent || "# 報告生成中...\n完成 5-Why 對話或點擊跳過即可生成完整 8D 報告。"}</ReactMarkdown>
+                ))}
+                
+                {currentMessage && (
+                  <div className="flex justify-start">
+                    <div className="max-w-[85%] p-3 rounded bg-gray-100 dark:bg-gray-800 text-sm whitespace-pre-wrap">
+                      {currentMessage}
+                      <Loader2 className="w-3 h-3 animate-spin mt-2 inline opacity-40 ml-1" />
+                    </div>
                   </div>
+                )}
+                <div ref={chatEndRef} />
+              </div>
+
+              {/* Input Area */}
+              <div className="p-4 border-t border-[var(--border-color)]">
+                <div className="relative">
+                  <textarea
+                    value={userInput}
+                    onChange={(e) => setUserInput(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" && !e.shiftKey) {
+                        e.preventDefault();
+                        sendReply();
+                      }
+                    }}
+                    placeholder="輸入您的回答..."
+                    className="w-full bg-white dark:bg-[var(--bg-surface)] border border-gray-300 dark:border-gray-600 rounded p-3 pr-12 text-sm resize-none focus:outline-none focus:border-[var(--accent)]"
+                    rows={3}
+                    disabled={isLoading}
+                  />
+                  <button
+                    onClick={sendReply}
+                    disabled={!userInput.trim() || isLoading}
+                    className="absolute right-2 bottom-2 p-2 bg-[var(--accent)] text-white rounded hover:bg-[var(--accent-hover)] disabled:opacity-40 transition-colors"
+                  >
+                    <ArrowRight className="w-4 h-4" />
+                  </button>
+                </div>
+                <div className="flex justify-between items-center mt-2">
+                  <p className="text-xs text-[var(--text-secondary)]">Enter 發送，Shift+Enter 換行</p>
+                  <button
+                    onClick={() => { setStep("final"); generateReport(); }}
+                    className="text-xs text-[var(--accent)] hover:underline"
+                  >
+                    跳過分析，直接生成報告 →
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* Preview Panel */}
+            <div className="xl:col-span-7 space-y-4">
+              {/* Risk Assessment */}
+              {riskResult && (
+                <div className="card p-4 flex items-center gap-4">
+                  <span className="text-xs font-medium text-[var(--text-secondary)]">風險評估</span>
+                  <span className={`px-2 py-0.5 rounded text-xs font-medium ${
+                    riskResult.priority === 'high' ? 'bg-red-100 text-red-700' :
+                    riskResult.priority === 'medium' ? 'bg-yellow-100 text-yellow-700' :
+                    'bg-green-100 text-green-700'
+                  }`}>
+                    {riskResult.priority === 'high' ? '高優先級' : riskResult.priority === 'medium' ? '中優先級' : '低優先級'}
+                  </span>
+                  <span className="text-xs text-[var(--text-secondary)] ml-auto">
+                    RPN: <span className="font-mono font-semibold">{riskResult.rpn}</span>
+                  </span>
+                </div>
+              )}
+
+              {/* Similar Cases */}
+              {similarItems.length > 0 && (
+                <div className="card p-4 bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800">
+                  <p className="text-sm font-medium text-blue-800 dark:text-blue-300 mb-1">
+                    相關歷史案例 ({similarItems.length})
+                  </p>
+                  <p className="text-xs text-blue-600 dark:text-blue-400">
+                    {similarItems.slice(0, 3).map((c: any, i: number) => `#${c.caseId} (${c.similarity}%)`).join('、')}
+                  </p>
+                </div>
+              )}
+
+              {/* Report Preview */}
+              <div className="card" style={{ height: "calc(100vh - 280px)", display: "flex", flexDirection: "column" }}>
+                <div className="p-3 border-b border-[var(--border-color)] flex items-center justify-between">
+                  <span className="text-sm font-medium">即時預覽</span>
+                  <div className="flex gap-1.5">
+                    <div className="w-2.5 h-2.5 rounded-full bg-red-400" />
+                    <div className="w-2.5 h-2.5 rounded-full bg-yellow-400" />
+                    <div className="w-2.5 h-2.5 rounded-full bg-green-400" />
+                  </div>
+                </div>
+                <div className="flex-1 p-5 overflow-y-auto prose prose-sm max-w-none dark:prose-invert">
+                  {reportContent ? (
+                    <ReactMarkdown>{reportContent}</ReactMarkdown>
+                  ) : (
+                    <div className="text-center py-20 text-[var(--text-secondary)]">
+                      <p className="text-sm">完成分析或點擊「直接生成」查看報告預覽</p>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
@@ -777,62 +670,53 @@ ${generatedContent}`;
 
         {/* STEP 3: FINAL REPORT */}
         {step === "final" && (
-          <div className="animate-in fade-in slide-in-from-bottom-4 duration-700">
-            {isGenerating ? (
-              <div className="premium-card p-20 flex flex-col items-center justify-center space-y-6">
-                <div className="relative">
-                  <div className="w-16 h-16 rounded-full border-4 border-(--accent)/20 border-t-(--accent) animate-spin"></div>
-                  <Sparkles className="absolute inset-0 m-auto w-6 h-6 text-(--accent) animate-pulse" />
-                </div>
-                <div className="text-center">
-                  <h3 className="text-xl font-bold text-(--text-primary)">報告生成中</h3>
-                  <p className="text-sm text-(--text-secondary) mt-1">正在整合分析結果並優化語言風格...</p>
+          <div className="card overflow-hidden">
+            {/* Header */}
+            <div className="p-4 border-b border-[var(--border-color)] flex items-center justify-between bg-gray-50 dark:bg-[var(--bg-surface)]">
+              <div className="flex items-center gap-3">
+                <CheckCircle className="w-5 h-5 text-green-600" />
+                <div>
+                  <h2 className="text-sm font-semibold">報告已完成</h2>
+                  <p className="text-xs text-[var(--text-secondary)]">可匯出為不同格式</p>
                 </div>
               </div>
+              <div className="flex gap-2">
+                <button onClick={() => setStep("input")} className="btn btn-ghost text-xs">
+                  重新開始
+                </button>
+                <button onClick={copyToClipboard} className="btn btn-secondary text-xs">
+                  複製內容
+                </button>
+                <button onClick={downloadWord} className="btn btn-secondary text-xs">
+                  <FileDown className="w-3.5 h-3.5 mr-1.5" />Word
+                </button>
+                <button onClick={downloadHtml} className="btn btn-secondary text-xs">
+                  <FileText className="w-3.5 h-3.5 mr-1.5" />HTML
+                </button>
+                <button onClick={downloadPdf} className="btn btn-primary text-xs">
+                  <FileDown className="w-3.5 h-3.5 mr-1.5" />PDF
+                </button>
+              </div>
+            </div>
+
+            {/* Loading State */}
+            {isLoading ? (
+              <div className="p-20 flex flex-col items-center gap-4">
+                <Loader2 className="w-8 h-8 animate-spin text-[var(--accent)]" />
+                <p className="text-sm text-[var(--text-secondary)]">正在生成報告...</p>
+              </div>
+            ) : reportContent ? (
+              <div className="p-8 prose prose-sm max-w-none">
+                <ReactMarkdown>{reportContent}</ReactMarkdown>
+              </div>
             ) : (
-              <div className="premium-card overflow-hidden">
-                <div className="bg-(--bg-base) border-b border-(--border-color) px-8 py-7 flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="bg-(--success)/10 p-2 rounded-lg">
-                      <CheckCircle2 className="w-6 h-6 text-(--success)" />
-                    </div>
-                    <div>
-                      <h2 className="text-xl font-bold text-(--text-primary)">8D 報告已完成</h2>
-                      <p className="text-xs text-(--text-secondary)">內容已根據 5-Why 分析進行深度優化</p>
-                    </div>
-                  </div>
-                  <div className="flex gap-3">
-                    <button 
-                      onClick={() => setStep("input")} 
-                      className="px-4 py-2 text-xs font-bold text-(--text-secondary) hover:text-(--text-primary) transition-colors"
-                    >
-                      重新開始
-                    </button>
-                    <button 
-                      onClick={copyForAI} 
-                      className="btn-primary h-10 px-6 bg-(--accent) text-white"
-                    >
-                      <Sparkles className="w-4 h-4 mr-2" /> 複製給 AI (優化版)
-                    </button>
-                    <button onClick={handleDownload} className="btn-secondary h-10 px-6">
-                      <FileDown className="w-4 h-4 mr-2" /> 匯出 Word
-                    </button>
-                    <button onClick={handleExportHtml} className="btn-secondary h-10 px-6">
-                      <FileText className="w-4 h-4 mr-2" /> 匯出 HTML
-                    </button>
-                  </div>
-                </div>
-                <div className="p-10 bg-(--bg-surface)">
-                  <pre className="font-sans whitespace-pre-wrap text-[15px] text-(--text-primary) leading-[1.8] tracking-tight">
-                    {generatedContent}
-                  </pre>
-                </div>
+              <div className="p-20 text-center text-[var(--text-secondary)]">
+                <p className="text-sm">尚未生成報告，請先完成分析步驟</p>
               </div>
             )}
           </div>
         )}
-      </main>
+      </div>
     </div>
-  </div>
-);
+  );
 }
