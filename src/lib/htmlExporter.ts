@@ -112,6 +112,7 @@ function parseMetadata(markdown: string, fallback: Partial<ReportMetadata>): Rep
 function processMarkdown(markdown: string): string {
   let processed = markdown;
   
+  // Auto-number 8D sections
   processed = processed.replace(/^## (問題描述)/gm, '## D1 問題描述');
   processed = processed.replace(/^## (使用工具描繪問題)/gm, '## D2 使用工具描繪問題');
   processed = processed.replace(/^## (團隊建立)/gm, '## D3 團隊建立');
@@ -153,6 +154,7 @@ function convertMarkdownToHtml(markdown: string): string {
     const line = lines[i];
     const trimmed = line.trim();
 
+    // Code blocks
     if (trimmed.startsWith('```')) {
       if (!inCodeBlock) {
         inCodeBlock = true;
@@ -172,12 +174,14 @@ function convertMarkdownToHtml(markdown: string): string {
       continue;
     }
 
+    // Empty lines
     if (!trimmed) {
       closeCurrentTable();
       closeCurrentList();
       continue;
     }
 
+    // Tables
     if (trimmed.startsWith('|')) {
       closeCurrentList();
       currentTableRows.push(trimmed);
@@ -188,6 +192,7 @@ function convertMarkdownToHtml(markdown: string): string {
       currentTableRows = [];
     }
 
+    // Headings
     if (trimmed.startsWith('# ')) {
       result.push(`<h1>${processInline(trimmed.slice(2))}</h1>`);
       continue;
@@ -205,16 +210,19 @@ function convertMarkdownToHtml(markdown: string): string {
       continue;
     }
 
+    // Horizontal rule
     if (/^(-{3,}|_{3,}|\*{3,})$/.test(trimmed)) {
       result.push('<hr class="divider">');
       continue;
     }
 
+    // Blockquote
     if (trimmed.startsWith('>')) {
       result.push(`<blockquote>${processInline(trimmed.slice(1).trim())}</blockquote>`);
       continue;
     }
 
+    // Unordered lists
     if (/^[-*+]\s/.test(trimmed)) {
       if (currentListType !== 'ul') {
         closeCurrentList();
@@ -225,6 +233,7 @@ function convertMarkdownToHtml(markdown: string): string {
       continue;
     }
 
+    // Ordered lists
     if (/^\d+\.\s/.test(trimmed)) {
       if (currentListType !== 'ol') {
         closeCurrentList();
@@ -235,10 +244,12 @@ function convertMarkdownToHtml(markdown: string): string {
       continue;
     }
 
+    // Paragraph
     closeCurrentList();
     result.push(`<p>${processInline(trimmed)}</p>`);
   }
 
+  // Close any remaining structures
   closeCurrentTable();
   closeCurrentList();
 
@@ -366,8 +377,6 @@ interface DocOptions {
 function generateHtmlDocument(options: DocOptions): string {
   const { title, metadata, content, toc, generatedDate } = options;
   
-  const tocHtml = renderTableOfContents(toc);
-  
   return `<!DOCTYPE html>
 <html lang="zh-TW">
 <head>
@@ -377,6 +386,7 @@ function generateHtmlDocument(options: DocOptions): string {
   <meta name="generator" content="AI 8D Generator">
   <title>${escapeHtml(title)} | 8D 報告</title>
   
+  <!-- Premium Typography -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;600;700;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -384,9 +394,11 @@ function generateHtmlDocument(options: DocOptions): string {
   <style>
     /* ============================================
        8D REPORT PREMIUM STYLESHEET
+       Color System: Indigo Professional Theme
     ============================================ */
     
     :root {
+      /* Primary Palette */
       --color-primary-50: #EEF2FF;
       --color-primary-100: #E0E7FF;
       --color-primary-200: #C7D2FE;
@@ -398,15 +410,17 @@ function generateHtmlDocument(options: DocOptions): string {
       --color-primary-800: #3730A3;
       --color-primary-900: #312E81;
       
+      /* Semantic Colors */
       --color-success: #059669;
       --color-success-light: #ECFDF5;
       --color-warning: #D97706;
       --color-warning-light: #FFFBEB;
       --color-danger: #DC2626;
       --color-danger-light: #FEF2F2;
-      --color-info: #0891C2;
+      --color-info: #0891B2;
       --color-info-light: #ECFEFF;
       
+      /* Neutrals */
       --color-neutral-50: #FAFAF9;
       --color-neutral-100: #F5F5F4;
       --color-neutral-200: #E7E5E4;
@@ -418,29 +432,35 @@ function generateHtmlDocument(options: DocOptions): string {
       --color-neutral-800: #292524;
       --color-neutral-900: #1C1917;
       
+      /* Background System */
       --bg-page: var(--color-neutral-50);
       --bg-card: #FFFFFF;
       --bg-subtle: var(--color-primary-50);
       --bg-elevated: var(--color-neutral-100);
       
+      /* Text System */
       --text-primary: var(--color-neutral-900);
       --text-secondary: var(--color-neutral-600);
       --text-muted: var(--color-neutral-500);
       --text-inverse: #FFFFFF;
       
+      /* Border System */
       --border-subtle: var(--color-neutral-200);
       --border-default: var(--color-neutral-300);
       --border-strong: var(--color-neutral-400);
       
+      /* Shadow System */
       --shadow-xs: 0 1px 2px rgba(0,0,0,0.05);
       --shadow-sm: 0 1px 3px rgba(0,0,0,0.1), 0 1px 2px rgba(0,0,0,0.06);
       --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06);
       --shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05);
       --shadow-xl: 0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04);
       
+      /* Typography */
       --font-sans: 'Noto Sans TC', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
       --font-mono: 'JetBrains Mono', 'SF Mono', Consolas, monospace;
       
+      /* Spacing */
       --space-1: 0.25rem;
       --space-2: 0.5rem;
       --space-3: 0.75rem;
@@ -452,14 +472,17 @@ function generateHtmlDocument(options: DocOptions): string {
       --space-12: 3rem;
       --space-16: 4rem;
       
+      /* Layout */
       --max-width: 900px;
       --sidebar-width: 260px;
       
+      /* Transitions */
       --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
       --transition-base: 200ms cubic-bezier(0.4, 0, 0.2, 1);
       --transition-slow: 300ms cubic-bezier(0.4, 0, 0.2, 1);
     }
     
+    /* Dark Mode */
     @media (prefers-color-scheme: dark) {
       :root {
         --color-primary-50: #1E1B4B;
@@ -528,16 +551,9 @@ function generateHtmlDocument(options: DocOptions): string {
       --shadow-lg: 0 10px 15px rgba(0,0,0,0.5);
     }
     
-    *, *::before, *::after {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
-    
-    html {
-      scroll-behavior: smooth;
-      -webkit-text-size-adjust: 100%;
-    }
+    /* Reset & Base */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; -webkit-text-size-adjust: 100%; }
     
     body {
       font-family: var(--font-sans);
@@ -558,7 +574,7 @@ function generateHtmlDocument(options: DocOptions): string {
       box-shadow: var(--shadow-lg);
     }
     
-    /* HEADER */
+    /* Header */
     .report-header {
       position: relative;
       background: linear-gradient(135deg, 
@@ -571,34 +587,28 @@ function generateHtmlDocument(options: DocOptions): string {
       overflow: hidden;
     }
     
-    .report-header::before {
+    .report-header::before,
+    .report-header::after {
       content: '';
       position: absolute;
-      top: -50%;
-      right: -20%;
-      width: 600px;
-      height: 600px;
-      background: radial-gradient(circle, 
-        rgba(255,255,255,0.08) 0%, 
-        transparent 60%
-      );
       border-radius: 50%;
       pointer-events: none;
     }
     
+    .report-header::before {
+      top: -50%;
+      right: -20%;
+      width: 600px;
+      height: 600px;
+      background: radial-gradient(circle, rgba(255,255,255,0.08) 0%, transparent 60%);
+    }
+    
     .report-header::after {
-      content: '';
-      position: absolute;
       bottom: -30%;
       left: -10%;
       width: 400px;
       height: 400px;
-      background: radial-gradient(circle, 
-        rgba(255,255,255,0.05) 0%, 
-        transparent 60%
-      );
-      border-radius: 50%;
-      pointer-events: none;
+      background: radial-gradient(circle, rgba(255,255,255,0.05) 0%, transparent 60%);
     }
     
     .header-content {
@@ -625,11 +635,7 @@ function generateHtmlDocument(options: DocOptions): string {
       margin-bottom: var(--space-6);
     }
     
-    .report-badge svg {
-      width: 14px;
-      height: 14px;
-      opacity: 0.9;
-    }
+    .report-badge svg { width: 14px; height: 14px; opacity: 0.9; }
     
     .report-title {
       font-size: clamp(2rem, 5vw, 3rem);
@@ -644,10 +650,9 @@ function generateHtmlDocument(options: DocOptions): string {
       font-size: 1.05rem;
       font-weight: 400;
       opacity: 0.85;
-      letter-spacing: 0.01em;
     }
     
-    /* META SECTION */
+    /* Meta Section */
     .report-meta {
       padding: var(--space-8) var(--space-12);
       background: var(--bg-subtle);
@@ -662,12 +667,7 @@ function generateHtmlDocument(options: DocOptions): string {
       margin: 0 auto;
     }
     
-    .meta-item {
-      display: flex;
-      flex-direction: column;
-      gap: var(--space-1);
-    }
-    
+    .meta-item { display: flex; flex-direction: column; gap: var(--space-1); }
     .meta-label {
       font-size: 10px;
       font-weight: 700;
@@ -675,7 +675,6 @@ function generateHtmlDocument(options: DocOptions): string {
       letter-spacing: 0.1em;
       color: var(--text-muted);
     }
-    
     .meta-value {
       font-size: 13px;
       font-weight: 500;
@@ -683,7 +682,7 @@ function generateHtmlDocument(options: DocOptions): string {
       line-height: 1.4;
     }
     
-    /* BODY LAYOUT */
+    /* Body Layout */
     .report-body {
       display: grid;
       grid-template-columns: 1fr;
@@ -692,12 +691,10 @@ function generateHtmlDocument(options: DocOptions): string {
     }
     
     @media (min-width: 1024px) {
-      .report-body {
-        grid-template-columns: var(--sidebar-width) 1fr;
-      }
+      .report-body { grid-template-columns: var(--sidebar-width) 1fr; }
     }
     
-    /* TOC SIDEBAR */
+    /* TOC Sidebar */
     .toc-sidebar {
       padding: var(--space-8) var(--space-6);
       border-right: 1px solid var(--border-subtle);
@@ -729,16 +726,7 @@ function generateHtmlDocument(options: DocOptions): string {
       border-bottom: 2px solid var(--border-subtle);
     }
     
-    .toc-list {
-      list-style: none;
-      display: flex;
-      flex-direction: column;
-      gap: var(--space-1);
-    }
-    
-    .toc-item {
-      display: block;
-    }
+    .toc-list { list-style: none; display: flex; flex-direction: column; gap: var(--space-1); }
     
     .toc-link {
       display: flex;
@@ -753,10 +741,7 @@ function generateHtmlDocument(options: DocOptions): string {
       transition: all var(--transition-fast);
     }
     
-    .toc-link:hover {
-      background: var(--bg-subtle);
-      color: var(--color-primary-600);
-    }
+    .toc-link:hover { background: var(--bg-subtle); color: var(--color-primary-600); }
     
     .toc-number {
       display: inline-flex;
@@ -772,18 +757,11 @@ function generateHtmlDocument(options: DocOptions): string {
       flex-shrink: 0;
     }
     
-    /* MAIN CONTENT */
-    .report-content {
-      padding: var(--space-12);
-    }
+    /* Content */
+    .report-content { padding: var(--space-12); }
+    @media (max-width: 1023px) { .report-content { padding: var(--space-8); } }
     
-    @media (max-width: 1023px) {
-      .report-content {
-        padding: var(--space-8);
-      }
-    }
-    
-    /* TYPOGRAPHY */
+    /* Typography */
     h1, h2, h3, h4 {
       font-family: var(--font-sans);
       font-weight: 700;
@@ -825,13 +803,9 @@ function generateHtmlDocument(options: DocOptions): string {
       scroll-margin-top: 1rem;
     }
     
-    p {
-      margin-bottom: var(--space-4);
-      text-align: justify;
-      hyphens: auto;
-    }
+    p { margin-bottom: var(--space-4); text-align: justify; hyphens: auto; }
     
-    /* LISTS */
+    /* Lists */
     ul.bullet-list, ol.numbered-list {
       margin-bottom: var(--space-4);
       padding-left: var(--space-6);
@@ -842,17 +816,10 @@ function generateHtmlDocument(options: DocOptions): string {
       position: relative;
     }
     
-    ul.bullet-list li::marker {
-      color: var(--color-primary-600);
-      font-size: 1.2em;
-    }
+    ul.bullet-list li::marker { color: var(--color-primary-600); font-size: 1.2em; }
+    ol.numbered-list li::marker { color: var(--color-primary-600); font-weight: 700; }
     
-    ol.numbered-list li::marker {
-      color: var(--color-primary-600);
-      font-weight: 700;
-    }
-    
-    /* TABLES */
+    /* Tables */
     table.professional-table {
       width: 100%;
       border-collapse: separate;
@@ -882,15 +849,10 @@ function generateHtmlDocument(options: DocOptions): string {
       vertical-align: top;
     }
     
-    table.professional-table tbody tr:hover td {
-      background: var(--bg-subtle);
-    }
+    table.professional-table tbody tr:hover td { background: var(--bg-subtle); }
+    table.professional-table tbody tr:last-child td { border-bottom: none; }
     
-    table.professional-table tbody tr:last-child td {
-      border-bottom: none;
-    }
-    
-    /* CODE */
+    /* Code Blocks */
     pre {
       background: var(--color-neutral-900);
       color: #E2E8F0;
@@ -903,19 +865,9 @@ function generateHtmlDocument(options: DocOptions): string {
       line-height: 1.6;
     }
     
-    pre code {
-      font-family: inherit;
-      background: none;
-      padding: 0;
-      border-radius: 0;
-      color: inherit;
-      font-size: inherit;
-    }
+    pre code { font-family: inherit; background: none; padding: 0; color: inherit; font-size: inherit; }
     
-    .code-block {
-      position: relative;
-      margin: var(--space-5) 0;
-    }
+    .code-block { position: relative; margin: var(--space-5) 0; }
     
     .code-lang {
       position: absolute;
@@ -941,7 +893,7 @@ function generateHtmlDocument(options: DocOptions): string {
       font-weight: 500;
     }
     
-    /* BLOCKQUOTE */
+    /* Blockquote */
     blockquote {
       border-left: 4px solid var(--color-primary-600);
       background: var(--bg-subtle);
@@ -951,13 +903,9 @@ function generateHtmlDocument(options: DocOptions): string {
       font-style: italic;
     }
     
-    blockquote p {
-      margin: 0;
-      color: var(--text-secondary);
-      font-style: normal;
-    }
+    blockquote p { margin: 0; color: var(--text-secondary); font-style: normal; }
     
-    /* DIVIDERS */
+    /* Divider */
     hr.divider {
       border: none;
       height: 2px;
@@ -965,7 +913,7 @@ function generateHtmlDocument(options: DocOptions): string {
       margin: var(--space-10) 0;
     }
     
-    /* BADGES */
+    /* Badge */
     .badge {
       display: inline-flex;
       align-items: center;
@@ -981,7 +929,7 @@ function generateHtmlDocument(options: DocOptions): string {
     .badge-low { background: var(--color-success-light); color: var(--color-success); }
     .badge-info { background: var(--color-info-light); color: var(--color-info); }
     
-    /* FOOTER */
+    /* Footer */
     .report-footer {
       padding: var(--space-8) var(--space-12);
       background: var(--bg-subtle);
@@ -989,54 +937,27 @@ function generateHtmlDocument(options: DocOptions): string {
       text-align: center;
     }
     
-    .footer-brand {
-      font-weight: 700;
-      color: var(--color-primary-600);
-      font-size: 14px;
-    }
+    .footer-brand { font-weight: 700; color: var(--color-primary-600); font-size: 14px; }
+    .footer-text { font-size: 12px; color: var(--text-muted); margin-top: var(--space-2); }
     
-    .footer-text {
-      font-size: 12px;
-      color: var(--text-muted);
-      margin-top: var(--space-2);
-    }
-    
-    /* PRINT */
+    /* Print Styles */
     @media print {
       @page { size: A4; margin: 15mm 10mm; }
-      
-      html, body {
-        background: white !important;
-        color: #1a1a1a !important;
-        font-size: 11pt;
-      }
-      
-      .report-container {
-        max-width: 100%;
-        box-shadow: none;
-      }
-      
-      .report-header {
-        padding: 20mm 15mm;
-        background: var(--color-primary-700) !important;
-        -webkit-print-color-adjust: exact;
-        print-color-adjust: exact;
-      }
-      
+      html, body { background: white !important; color: #1a1a1a !important; font-size: 11pt; }
+      .report-container { max-width: 100%; box-shadow: none; }
+      .report-header { padding: 20mm 15mm; background: var(--color-primary-700) !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
       .report-meta { padding: 8mm 15mm; }
       .report-content { padding: 10mm 15mm; }
       .toc-sidebar { display: none; }
       .report-body { grid-template-columns: 1fr !important; }
-      
       h1, h2, h3, h4 { page-break-after: avoid; }
       p, li, td { page-break-inside: avoid; }
       pre, table { page-break-inside: avoid; }
-      
       a { color: var(--color-primary-700); text-decoration: none; }
       a[href]::after { content: none; }
     }
     
-    /* ANIMATIONS */
+    /* Animations */
     @keyframes fadeIn {
       from { opacity: 0; transform: translateY(10px); }
       to { opacity: 1; transform: translateY(0); }
@@ -1048,13 +969,13 @@ function generateHtmlDocument(options: DocOptions): string {
     .report-content > *:nth-child(3) { animation-delay: 0.15s; }
     .report-content > *:nth-child(4) { animation-delay: 0.2s; }
     
-    /* SCROLLBAR */
+    /* Scrollbar */
     ::-webkit-scrollbar { width: 6px; height: 6px; }
     ::-webkit-scrollbar-track { background: transparent; }
     ::-webkit-scrollbar-thumb { background: var(--border-default); border-radius: 3px; }
     ::-webkit-scrollbar-thumb:hover { background: var(--border-strong); }
     
-    /* RESPONSIVE */
+    /* Responsive */
     @media (max-width: 640px) {
       :root { --space-12: 1.5rem; --space-8: 1rem; }
       .report-header { padding: var(--space-8) var(--space-6); }
@@ -1158,19 +1079,4 @@ function generateHtmlDocument(options: DocOptions): string {
   </script>
 </body>
 </html>`;
-}
-
-/**
- * Render table of contents HTML
- */
-function renderTableOfContents(toc: TocItem[]): string {
-  if (toc.length === 0) return '';
-  
-  return toc.map((item: TocItem, index: number) => `
-    <li class="toc-item">
-      <a href="#${item.id}" class="toc-link" style="padding-left: ${item.level === 3 ? '1.25rem' : '0.75rem'}">
-        <span class="toc-number">${index + 1}</span>
-        <span>${escapeHtml(item.text)}</span>
-      </a>
-    </li>`).join('\n');
 }
