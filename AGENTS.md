@@ -37,4 +37,22 @@ npx tsc --noEmit 2>&1 | Select-Object -First 30
 - 修改 prop 介面
 - 刪除函數/方法
 - 重構元件
+
+## TypeScript 嚴格模式預防規則
+
+### 陣列方法參數類型聲明
+使用 `filter()`, `map()`, `reduce()` 等陣列方法時，**必須**為回調參數添加顯式類型：
+
+```typescript
+// ❌ 錯誤 - 隱含 any 類型
+const result = array.filter(item => item.condition);
+
+// ✅ 正確 - 顯式類型聲明
+const result = array.filter((item: Type) => item.condition);
+```
+
+### 其他常見規則
+- **禁止** 使用 `any` 類型（除非必要）
+- **要求** 所有函數參數都有明確的類型簽名
+- **要求** 所有 return 值都有明確的回傳類型
 <!-- END:typescript-typecheck-rule -->
