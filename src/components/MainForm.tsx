@@ -78,6 +78,7 @@ export default function MainForm({ onReportGenerated, selectedHistory }: MainFor
   // 分析進度狀態
   const [analysisStep, setAnalysisStep] = useState(0);
   const [analysisMessage, setAnalysisMessage] = useState("");
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
 
   useEffect(() => {
     if (step === "analysis") {
@@ -172,11 +173,14 @@ export default function MainForm({ onReportGenerated, selectedHistory }: MainFor
     const fullContext = `${problemContext}\n\n[附件資料背景]\n${fileContext}`;
     
     // 執行風險評估與相似案例搜尋
-    analyzeRiskAndSimilarity();
+    setIsAnalyzing(true);
+    setAnalysisStep(20);
     setAnalysisMessage("正在進行風險評估與歷史案例比對...");
-    setAnalysisStep(1);
-
+    
     try {
+      analyzeRiskAndSimilarity();
+      setAnalysisStep(40);
+      
       let firstQuestion = "";
       const callback = (chunk: string) => {
         firstQuestion += chunk;
@@ -189,14 +193,18 @@ export default function MainForm({ onReportGenerated, selectedHistory }: MainFor
         await generateAgnes5Why(apiKey, fullContext, [], callback);
       } else {
         setErrorMsg("請設定 API Key");
+        setIsAnalyzing(false);
         setIsGenerating(false);
         return;
       }
       
       setAnalysisHistory([{ role: "assistant", content: firstQuestion }]);
+      setAnalysisStep(100);
+      setAnalysisMessage("分析完成，請回答下一個問題");
     } catch {
       setErrorMsg(provider === "gemini" ? "Gemini 連線失敗，請檢查 API Key" : "Agnes AI 連線失敗，請檢查 API Key");
     } finally {
+      setIsAnalyzing(false);
       setIsGenerating(false);
     }
   };
@@ -208,6 +216,9 @@ export default function MainForm({ onReportGenerated, selectedHistory }: MainFor
     setAnalysisHistory(newHistory);
     setUserInput("");
     setIsGenerating(true);
+    setIsAnalyzing(true);
+    setAnalysisStep(60);
+    setAnalysisMessage("正在分析您的回答...");
     setCurrentAnalystQuestion("");
 
     const { provider, apiKey } = getAISettings();
@@ -585,7 +596,29 @@ ${generatedContent}`;
                         <p className="text-[10px] text-(--text-secondary) font-bold uppercase tracking-wider">Interactive Assistant</p>
                       </div>
                     </div>
+                    {isAnalyzing && (
+                      <div className="flex items-center gap-2">
+                        <Loader2 className="w-4 h-4 animate-spin text-(--accent)" />
+                        <span className="text-[11px] text-(--accent) font-medium">{analysisMessage}</span>
+                      </div>
+                    )}
                   </div>
+
+                  {/* Progress Bar */}
+                  {isAnalyzing && (
+                    <div className="mb-4 space-y-1">
+                      <div className="flex justify-between text-[10px] text-(--text-secondary)">
+                        <span>分析進度</span>
+                        <span className="font-bold">{analysisStep}%</span>
+                      </div>
+                      <div className="h-1.5 bg-(--bg-base) rounded-full overflow-hidden">
+                        <div 
+                          className="h-full bg-(--accent) transition-all duration-500 ease-out rounded-full"
+                          style={{ width: `${analysisStep}%` }}
+                        />
+                      </div>
+                    </div>
+                  )}
 
                   <div className="flex-1 space-y-4 overflow-y-auto pr-2 custom-scrollbar min-h-[400px]">
                     {analysisHistory.map((chat, idx) => (
