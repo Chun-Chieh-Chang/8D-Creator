@@ -120,7 +120,7 @@ export default function BrandSettingsPanel({ onClose }: { onClose: () => void })
               value={settings.companyName}
               onChange={(e) => setSettings(prev => ({ ...prev, companyName: e.target.value }))}
               placeholder="例: 臺灣半導體股份有限公司"
-              className="w-full h-10 px-3 bg-neutral-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all"
+              className="w-full h-10 px-3 bg-neutral-50 dark:bg-neutral-800 text-neutral-900 dark:text-white border border-neutral-200 dark:border-neutral-700 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all"
             />
           </div>
 
@@ -148,7 +148,7 @@ export default function BrandSettingsPanel({ onClose }: { onClose: () => void })
                       style={{ backgroundColor: preset.accent }}
                     />
                   </div>
-                  <span className="text-[13px] font-medium text-neutral-600 dark:text-neutral-400">{preset.name}</span>
+                  <span className="text-[13px] font-medium text-neutral-700 dark:text-neutral-300">{preset.name}</span>
                 </button>
               ))}
             </div>
@@ -169,7 +169,7 @@ export default function BrandSettingsPanel({ onClose }: { onClose: () => void })
                   type="text"
                   value={settings.primaryColor}
                   onChange={(e) => setSettings(prev => ({ ...prev, primaryColor: e.target.value }))}
-                  className="flex-1 h-10 px-3 bg-neutral-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 rounded-lg text-sm font-mono"
+                  className="flex-1 h-10 px-3 bg-neutral-50 dark:bg-neutral-800 text-neutral-900 dark:text-white border border-neutral-200 dark:border-neutral-700 rounded-lg text-sm font-mono"
                 />
               </div>
             </div>
@@ -186,7 +186,7 @@ export default function BrandSettingsPanel({ onClose }: { onClose: () => void })
                   type="text"
                   value={settings.accentColor}
                   onChange={(e) => setSettings(prev => ({ ...prev, accentColor: e.target.value }))}
-                  className="flex-1 h-10 px-3 bg-neutral-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 rounded-lg text-sm font-mono"
+                  className="flex-1 h-10 px-3 bg-neutral-50 dark:bg-neutral-800 text-neutral-900 dark:text-white border border-neutral-200 dark:border-neutral-700 rounded-lg text-sm font-mono"
                 />
               </div>
             </div>
@@ -201,7 +201,7 @@ export default function BrandSettingsPanel({ onClose }: { onClose: () => void })
             <select
               value={settings.customFont}
               onChange={(e) => setSettings(prev => ({ ...prev, customFont: e.target.value }))}
-              className="w-full h-10 px-3 bg-neutral-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none"
+              className="w-full h-10 px-3 bg-neutral-50 dark:bg-neutral-800 text-neutral-900 dark:text-white border border-neutral-200 dark:border-neutral-700 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none"
             >
               {FONT_OPTIONS.map((font) => (
                 <option key={font.value} value={font.value}>{font.label}</option>
@@ -220,7 +220,7 @@ export default function BrandSettingsPanel({ onClose }: { onClose: () => void })
               value={settings.watermarkText}
               onChange={(e) => setSettings(prev => ({ ...prev, watermarkText: e.target.value }))}
               placeholder="例: CONFIDENTIAL / 內部資料"
-              className="w-full h-10 px-3 bg-neutral-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none"
+              className="w-full h-10 px-3 bg-neutral-50 dark:bg-neutral-800 text-neutral-900 dark:text-white border border-neutral-200 dark:border-neutral-700 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none"
             />
           </div>
         </div>
