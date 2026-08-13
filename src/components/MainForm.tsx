@@ -14,6 +14,8 @@ import { ReportHistoryItem, saveHistory } from "@/lib/historyManager";
 import { parseFile } from "@/lib/fileParser";
 import { getTemplateContent } from "@/lib/templateStore";
 import { buildEnhancedReportPrompt } from "@/lib/tools/promptBuilder";
+import { calculateRPN, findSimilarCases } from "@/lib/tools/analysisTools";
+import { getHistory } from "@/lib/historyManager";
 
 interface MainFormProps {
   onReportGenerated: (item: ReportHistoryItem) => void;
@@ -60,6 +62,22 @@ export default function MainForm({ onReportGenerated, selectedHistory }: MainFor
   const chatEndRef = useRef<HTMLDivElement>(null);
 
   const [isMounted, setIsMounted] = useState(false);
+  
+  // 風險評估狀態
+  const [riskAssessment, setRiskAssessment] = useState<{
+    severity: number;
+    occurrence: number;
+    detection: number;
+    rpn: number;
+    priority: 'high' | 'medium' | 'low';
+  } | null>(null);
+  
+  // 相似案例狀態
+  const [similarCases, setSimilarCases] = useState<any[]>([]);
+  
+  // 分析進度狀態
+  const [analysisStep, setAnalysisStep] = useState(0);
+  const [analysisMessage, setAnalysisMessage] = useState("");
 
   useEffect(() => {
     if (step === "analysis") {
@@ -106,6 +124,29 @@ export default function MainForm({ onReportGenerated, selectedHistory }: MainFor
     setUploadedFiles(prev => prev.filter((_, i) => i !== index));
   };
 
+  // 計算風險評估與相似案例
+  const analyzeRiskAndSimilarity = () => {
+    // 計算 RPN
+    const rpnResult = calculateRPN(
+      formData.defectDescription,
+      formData.impactScope,
+      formData.detectionMethod
+    );
+    setRiskAssessment(rpnResult);
+    
+    // 尋找相似案例
+    const history = getHistory();
+    const caseMatches = findSimilarCases(
+      {
+        defectType: formData.defectDescription.substring(0, 20),
+        product: formData.productInfo,
+        location: formData.location
+      },
+      history
+    );
+    setSimilarCases(caseMatches);
+  };
+
   const startAnalysis = async () => {
     if (!formData.problemTitle || !formData.defectDescription) {
       setErrorMsg("請填寫問題標題與缺陷現象描述");
@@ -129,6 +170,11 @@ export default function MainForm({ onReportGenerated, selectedHistory }: MainFor
     ].filter(Boolean).join("\n\n");
     
     const fullContext = `${problemContext}\n\n[附件資料背景]\n${fileContext}`;
+    
+    // 執行風險評估與相似案例搜尋
+    analyzeRiskAndSimilarity();
+    setAnalysisMessage("正在進行風險評估與歷史案例比對...");
+    setAnalysisStep(1);
 
     try {
       let firstQuestion = "";
@@ -602,7 +648,46 @@ ${generatedContent}`;
               </div>
 
               {/* Preview Panel (Right Column) */}
-              <div className="lg:col-span-12 xl:col-span-7 flex flex-col">
+              <div className="lg:col-span-12 xl:col-span-7 flex flex-col space-y-4">
+                {/* Risk Assessment Badge */}
+                {riskAssessment && (
+                  <div className="premium-card p-4 flex items-center gap-4">
+                    <div className="flex items-center gap-3 flex-1">
+                      <span className="text-xs font-bold text-(--text-secondary) uppercase tracking-wider">風險評估</span>
+                      <div className={`px-3 py-1 rounded-full text-xs font-bold ${
+                        riskAssessment.priority === 'high' 
+                          ? 'bg-red-500/10 text-red-600 dark:text-red-400' 
+                          : riskAssessment.priority === 'medium'
+                          ? 'bg-amber-500/10 text-amber-600 dark:text-amber-400'
+                          : 'bg-green-500/10 text-green-600 dark:text-green-400'
+                      }`}>
+                        {riskAssessment.priority === 'high' ? '高優先級' : riskAssessment.priority === 'medium' ? '中優先級' : '低優先級'}
+                      </div>
+                      <div className="flex items-center gap-4 text-xs text-(--text-secondary)">
+                        <span>S: {riskAssessment.severity}</span>
+                        <span>O: {riskAssessment.occurrence}</span>
+                        <span>D: {riskAssessment.detection}</span>
+                        <span className="font-bold text-(--text-primary)">RPN: {riskAssessment.rpn}</span>
+                      </div>
+                    </div>
+                  </div>
+                )}
+                
+                {/* Similar Cases Alert */}
+                {similarCases.length > 0 && (
+                  <div className="premium-card p-4 bg-(--accent)/5 border-(--accent)/20">
+                    <div className="flex items-start gap-3">
+                      <Sparkles className="w-5 h-5 text-(--accent) shrink-0 mt-0.5" />
+                      <div className="flex-1">
+                        <p className="text-[12px] font-bold text-(--accent) mb-1">發現 {similarCases.length} 個相似歷史案例</p>
+                        <p className="text-[11px] text-(--text-secondary)">
+                          {similarCases.map((c, i) => `案例 #${c.caseId}(相似度${c.similarity}%)`).join('、')}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
                 <div className="premium-card flex-1 flex flex-col shadow-xl overflow-hidden border-t-4 border-t-(--accent)">
                   <div className="bg-(--bg-surface) p-4 border-b border-(--border-color) flex items-center justify-between">
                     <div className="flex items-center gap-2">
