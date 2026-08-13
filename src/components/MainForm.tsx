@@ -23,7 +23,15 @@ type AppStep = "input" | "analysis" | "final";
 export default function MainForm({ onReportGenerated, selectedHistory }: MainFormProps) {
   const [step, setStep] = useState<AppStep>(selectedHistory ? "final" : "input");
   const [formData, setFormData] = useState({
-    problemDescription: selectedHistory?.problemDescription || "",
+    // 問題描述結構化欄位
+    problemTitle: selectedHistory?.problemDescription || "", // 問題標題
+    occurrenceTime: selectedHistory?.date || new Date().toISOString().split("T")[0], // 發生時間
+    location: "", // 發生地點/線別
+    defectDescription: "", // 缺陷現象詳細描述
+    detectionMethod: "", // 發現方式
+    impactScope: "", // 影響範圍
+    preliminaryCause: "", // 初步原因猜測
+    // 基礎資料
     date: selectedHistory?.date || new Date().toISOString().split("T")[0],
     defectQuantity: selectedHistory?.defectQuantity || 1,
     productInfo: selectedHistory?.productInfo || "",
@@ -97,8 +105,8 @@ export default function MainForm({ onReportGenerated, selectedHistory }: MainFor
   };
 
   const startAnalysis = async () => {
-    if (!formData.problemDescription) {
-      setErrorMsg("請輸入問題描述 (Problem Description is required)");
+    if (!formData.problemTitle || !formData.defectDescription) {
+      setErrorMsg("請填寫問題標題與缺陷現象描述");
       return;
     }
     setErrorMsg("");
@@ -194,7 +202,13 @@ export default function MainForm({ onReportGenerated, selectedHistory }: MainFor
       .replace(/{{PRODUCT}}/g, formData.productInfo)
       .replace(/{{CUSTOMER}}/g, formData.customerName)
       .replace(/{{QUANTITY}}/g, String(formData.defectQuantity))
-      .replace(/{{DESCRIPTION}}/g, formData.problemDescription)
+      .replace(/{{DESCRIPTION}}/g, 
+        [
+          formData.problemTitle,
+          formData.location && `發生地點: ${formData.location}`,
+          formData.defectDescription
+        ].filter(Boolean).join('\n')
+      )
       .replace(/{{5WHY_SUMMARY}}/g, analysisSummary);
 
     const prompt = `你是一名資深質量工程師。請根據以下背景資料與 5-Why 分析結果，生成一份專業、具備深度「說服力」且「表述生動」的 8D 報告。
@@ -237,7 +251,10 @@ export default function MainForm({ onReportGenerated, selectedHistory }: MainFor
         productInfo: formData.productInfo,
         customerName: formData.customerName,
         defectQuantity: formData.defectQuantity,
-        problemDescription: formData.problemDescription,
+        problemDescription: [
+          formData.problemTitle,
+          formData.defectDescription
+        ].filter(Boolean).join('\n'),
         generatedContent: fullResult,
       });
       
@@ -330,13 +347,92 @@ ${generatedContent}`;
                   <h3 className="text-lg font-bold text-(--text-primary) mb-4 flex items-center gap-2">
                     <FileEdit className="w-5 h-5 text-(--accent)" /> 問題現象描述
                   </h3>
-                  <textarea 
-                    name="problemDescription" 
-                    value={formData.problemDescription} 
-                    onChange={handleChange} 
-                    className="fluent-textarea min-h-[300px] text-base" 
-                    placeholder="請詳細描述缺陷具體現象、發生背景、受影響範圍等..." 
-                  />
+                  
+                  {/* Structured Problem Description Fields */}
+                  <div className="space-y-4">
+                    <div>
+                      <label className="input-label">
+                        <span className="font-semibold">問題標題 *</span>
+                        <span className="text-(--text-secondary) font-normal ml-1">簡潔描述問題核心</span>
+                      </label>
+                      <input 
+                        type="text" 
+                        name="problemTitle" 
+                        value={formData.problemTitle} 
+                        onChange={handleChange} 
+                        placeholder="例: XX產品表面刮傷不良率異常升高"
+                        className="fluent-input w-full"
+                      />
+                    </div>
+                    
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="input-label">發生日期 *</label>
+                        <input type="date" name="occurrenceTime" value={formData.occurrenceTime} onChange={handleChange} className="fluent-input w-full" />
+                      </div>
+                      <div>
+                        <label className="input-label">發生地點/線別</label>
+                        <input 
+                          type="text" 
+                          name="location" 
+                          value={formData.location} 
+                          onChange={handleChange} 
+                          placeholder="例: SMT線別A / 成品倉庫"
+                          className="fluent-input w-full"
+                        />
+                      </div>
+                    </div>
+                    
+                    <div>
+                      <label className="input-label">
+                        <span className="font-semibold">缺陷現象詳細描述 *</span>
+                        <span className="text-(--text-secondary) font-normal ml-1">包含觀察到的具體不良現象、缺陷特徵、數量比例等</span>
+                      </label>
+                      <textarea 
+                        name="defectDescription" 
+                        value={formData.defectDescription} 
+                        onChange={handleChange} 
+                        className="fluent-textarea min-h-[150px] text-base" 
+                        placeholder="請詳細描述：&#10;• 缺陷的具體表現（如：刮傷、鏽蝕、尺寸超差...）&#10;• 缺陷的嚴重程度或比例&#10;• 缺陷發生的頻率&#10;• 與其他正常產品的差異點"
+                      />
+                    </div>
+                    
+                    <div>
+                      <label className="input-label">發現方式</label>
+                      <input 
+                        type="text" 
+                        name="detectionMethod" 
+                        value={formData.detectionMethod} 
+                        onChange={handleChange} 
+                        placeholder="例: IQC進料檢驗 / 生產線自檢 / 客戶驗貨"
+                        className="fluent-input w-full"
+                      />
+                    </div>
+                    
+                    <div>
+                      <label className="input-label">影響範圍</label>
+                      <input 
+                        type="text" 
+                        name="impactScope" 
+                        value={formData.impactScope} 
+                        onChange={handleChange} 
+                        placeholder="例: 批次 B2024001-B2024005 / 約2000 pcs / 涉及客戶ABC"
+                        className="fluent-input w-full"
+                      />
+                    </div>
+                    
+                    <div>
+                      <label className="input-label">初步原因猜測</label>
+                      <input 
+                        type="text" 
+                        name="preliminaryCause" 
+                        value={formData.preliminaryCause} 
+                        onChange={handleChange} 
+                        placeholder="例: 刀具磨損 / 溫度設定不當 / 作業員疏失"
+                        className="fluent-input w-full"
+                      />
+                    </div>
+                  </div>
                 </div>
 
                 <div className="space-y-4">
