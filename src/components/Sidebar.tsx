@@ -98,14 +98,14 @@ export default function Sidebar({
           <div className="flex items-center gap-1">
             <button
               onClick={() => setShowBrandSettings(true)}
-              className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded text-[var(--text-secondary)] hover:text-[var(--accent)] transition-colors"
+              className="p-2 hover:bg-[var(--bg-base)] rounded text-[var(--text-secondary)] hover:text-[var(--accent)] transition-colors"
               title="品牌設定"
             >
               <Palette className="w-4 h-4" />
             </button>
             <button
               onClick={toggleTheme}
-              className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded text-[var(--text-secondary)] hover:text-[var(--accent)] transition-colors"
+              className="p-2 hover:bg-[var(--bg-base)] rounded text-[var(--text-secondary)] hover:text-[var(--accent)] transition-colors"
             >
               {mounted ? (
                 theme === "light" ? <Moon className="w-4 h-4" /> : <Sun className="w-4 h-4" />
@@ -126,15 +126,15 @@ export default function Sidebar({
           </button>
 
           {/* Help */}
-          <details className="bg-gray-50 dark:bg-gray-900/50 rounded border border-[var(--border-color)]">
-            <summary className="flex items-center justify-between cursor-pointer p-3 text-sm font-medium text-[var(--text-secondary)]">
+          <details className="bg-[var(--bg-base)] rounded border border-[var(--border-color)]">
+            <summary className="flex items-center justify-between cursor-pointer p-3 text-sm font-medium text-[var(--text-primary)]">
               <div className="flex items-center gap-2">
-                <Info className="w-4 h-4" />
+                <Info className="w-4 h-4 text-[var(--accent)]" />
                 使用說明
               </div>
-              <ArrowRight className="w-3 h-3 transition-transform group-open:rotate-90" />
+              <ArrowRight className="w-3.5 h-3.5 text-[var(--text-secondary)] transition-transform group-open:rotate-90" />
             </summary>
-            <div className="px-3 pb-3 space-y-2 text-[13px] text-[var(--text-secondary)]">
+            <div className="px-3 pb-3 space-y-2 text-[13px] text-[var(--text-secondary)] border-t border-[var(--border-color)] pt-2 mt-1">
               <ul className="space-y-1 list-disc list-inside">
                 <li>填寫問題描述後開始分析</li>
                 <li>與專家對話進行 5-Why 推導</li>
@@ -148,11 +148,11 @@ export default function Sidebar({
           <div className="space-y-3">
             <h2 className="text-[13px] font-medium text-[var(--text-secondary)] uppercase tracking-wide">AI 引擎設定</h2>
             
-            <div className="flex p-1 bg-gray-100 dark:bg-gray-800 rounded-lg">
+            <div className="flex p-1 bg-[var(--bg-base)] border border-[var(--border-color)] rounded-lg">
               <button
                 onClick={() => handleProviderChange("agnes")}
                 className={`flex-1 py-1.5 rounded text-[13px] font-medium transition-all ${
-                  provider === "agnes" ? "bg-white dark:bg-gray-700 shadow text-[var(--accent)]" : "text-[var(--text-secondary)]"
+                  provider === "agnes" ? "bg-[var(--accent)] text-white shadow-sm font-semibold" : "text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
                 }`}
               >
                 Agnes AI
@@ -160,7 +160,7 @@ export default function Sidebar({
               <button
                 onClick={() => handleProviderChange("gemini")}
                 className={`flex-1 py-1.5 rounded text-[13px] font-medium transition-all ${
-                  provider === "gemini" ? "bg-white dark:bg-gray-700 shadow text-[var(--accent)]" : "text-[var(--text-secondary)]"
+                  provider === "gemini" ? "bg-[var(--accent)] text-white shadow-sm font-semibold" : "text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
                 }`}
               >
                 Gemini
@@ -177,9 +177,9 @@ export default function Sidebar({
               />
               <p className="text-[13px] text-[var(--text-secondary)]">
                 {provider === "agnes" ? (
-                  <span>前往 <a href="https://apihub.agnes-ai.com" target="_blank" rel="noreferrer" className="text-[var(--accent)] underline">Agnes AI Hub</a> 取得金鑰</span>
+                  <span>前往 <a href="https://apihub.agnes-ai.com" target="_blank" rel="noreferrer" className="text-[var(--accent)] font-medium underline">Agnes AI Hub</a> 取得金鑰</span>
                 ) : (
-                  <span>前往 <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noreferrer" className="text-[var(--accent)] underline">Google AI Studio</a> 免費申請</span>
+                  <span>前往 <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noreferrer" className="text-[var(--accent)] font-medium underline">Google AI Studio</a> 免費申請</span>
                 )}
               </p>
             </div>
@@ -192,7 +192,7 @@ export default function Sidebar({
                 <History className="w-4 h-4 text-[var(--text-secondary)]" />
                 <h2 className="text-[13px] font-medium text-[var(--text-secondary)] uppercase tracking-wide">報告紀錄</h2>
               </div>
-              <span className="text-[13px] text-[var(--text-secondary)] bg-gray-100 dark:bg-gray-800 px-2 py-0.5 rounded-full">
+              <span className="text-[13px] text-[var(--text-primary)] bg-[var(--bg-base)] border border-[var(--border-color)] px-2.5 py-0.5 rounded-full font-medium">
                 {history.length}
               </span>
             </div>
@@ -234,7 +234,7 @@ export default function Sidebar({
                   <div
                     key={report.id}
                     onClick={() => onSelectHistory(report)}
-                    className="group p-3 hover:bg-gray-100 dark:hover:bg-gray-800/50 rounded border border-transparent hover:border-[var(--border-color)] cursor-pointer transition-all"
+                    className="group p-3 hover:bg-[var(--bg-base)] rounded border border-transparent hover:border-[var(--border-color)] cursor-pointer transition-all"
                   >
                     <div className="flex items-start justify-between gap-2">
                       <div className="min-w-0">
