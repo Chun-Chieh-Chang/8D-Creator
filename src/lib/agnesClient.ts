@@ -62,17 +62,26 @@ async function streamChatCompletions(
 export async function generateAgnesReport(
   apiKey: string,
   prompt: string,
-  onChunk: StreamCallback
+  onChunk: StreamCallback,
+  systemMessage?: string
 ) {
   try {
-    await streamChatCompletions(apiKey, [
-      { role: "user", content: prompt },
-    ], onChunk);
+    const messages: { role: string; content: string }[] = [];
+    
+    if (systemMessage) {
+      messages.push({ role: "system", content: systemMessage });
+    }
+    
+    messages.push({ role: "user", content: prompt });
+    
+    await streamChatCompletions(apiKey, messages, onChunk);
   } catch (error) {
     console.error("Agnes Report Error:", error);
     throw error;
   }
 }
+
+import { buildEnhanced5WhyPrompt } from './tools/promptBuilder';
 
 export async function generateAgnes5Why(
   apiKey: string,
@@ -80,22 +89,6 @@ export async function generateAgnes5Why(
   history: ChatMessage[],
   onChunk: StreamCallback
 ) {
-  const conversation = history.map(h => `${h.role === "user" ? "User" : "Assistant"}: ${h.content}`).join("\n");
-
-  const prompt = `你是一名的資深質量管理專家與 8D 顧問。你的目標是引導用戶進行「5-Why」根本原因分析。
-  所有對話與輸出請使用「中英文對照」格式，且中文部分「嚴禁使用簡體字」，必須使用「繁體中文」。
-  
-  [背景資訊]
-  ${context}
-  
-  [對話歷史]
-  ${conversation}
-  
-  [專家指令]
-  1. 請根據背景與歷史，提出下一個「為什麼」。
-  2. 語氣要專業、嚴謹。
-  3. 如果你認為已經找到根本原因（Systemic Root Cause），請輸出的結尾加上 [FINISH_ANALYSIS]。
-  4. 輸出必須包含中英文對照。`;
-
-  return generateAgnesReport(apiKey, prompt, onChunk);
+  const enhancedPrompt = buildEnhanced5WhyPrompt(context, history);
+  return generateAgnesReport(apiKey, enhancedPrompt, onChunk);
 }

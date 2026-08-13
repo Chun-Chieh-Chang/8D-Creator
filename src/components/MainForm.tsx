@@ -13,6 +13,7 @@ import { exportToHtml } from "@/lib/htmlExporter";
 import { ReportHistoryItem, saveHistory } from "@/lib/historyManager";
 import { parseFile } from "@/lib/fileParser";
 import { getActivePromptTemplate } from "@/lib/templateStore";
+import { buildEnhancedReportPrompt } from "@/lib/tools/promptBuilder";
 
 interface MainFormProps {
   onReportGenerated: (item: ReportHistoryItem) => void;
@@ -217,40 +218,8 @@ export default function MainForm({ onReportGenerated, selectedHistory }: MainFor
       .map(h => `${h.role === "user" ? "用戶回答" : "專家追問"}: ${h.content}`)
       .join("\n");
 
-    const templateRaw = getActivePromptTemplate();
-    const finalizedTemplate = templateRaw
-      .replace(/{{DATE}}/g, formData.date)
-      .replace(/{{PRODUCT}}/g, formData.productInfo)
-      .replace(/{{CUSTOMER}}/g, formData.customerName)
-      .replace(/{{QUANTITY}}/g, String(formData.defectQuantity))
-      .replace(/{{DESCRIPTION}}/g, 
-        [
-          formData.problemTitle,
-          formData.location && `發生地點: ${formData.location}`,
-          formData.defectDescription
-        ].filter(Boolean).join('\n')
-      )
-      .replace(/{{5WHY_SUMMARY}}/g, analysisSummary);
-
-    const prompt = `你是一名資深質量工程師。請根據以下背景資料與 5-Why 分析結果，生成一份專業、具備深度「說服力」且「表述生動」的 8D 報告。
-    
-    [核心目標]
-    這份報告將作為 NotebookLM 的知識來源 (Source) 以及後續 Gemini Pro 進一步分析的基礎。請確保邏輯嚴密、措辭強而有力，能讓閱讀者一眼看出改善的決心與成效。
-
-    [語言與格式要求]
-    1. 報告內容必須全程使用「中英文對照」呈現 (Bilingual Output)。
-    2. 中文部分「嚴禁使用簡體字」，必須全數使用「繁體中文」。
-    3. 直接輸出報告內容，不要包含多餘的寒暄語。
-    4. 必須嚴格遵循下方提供的「模板格式」進行輸出。
-
-    [附件參考資料]
-    ${fileContext}
-
-    [5-Why 交互分析結果]
-    ${analysisSummary}
-    
-    [模板格式要求]
-    ${finalizedTemplate}`;
+    // 使用增強型報告生成提示
+    const reportPrompt = buildEnhancedReportPrompt(analysisSummary, formData);
 
     let fullResult = "";
     const callback = (chunk: string) => {
@@ -260,9 +229,9 @@ export default function MainForm({ onReportGenerated, selectedHistory }: MainFor
 
     try {
       if (provider === "gemini" && apiKey) {
-        await generateGeminiReport(apiKey, prompt, callback);
+        await generateGeminiReport(apiKey, reportPrompt, callback);
       } else if (provider === "agnes" && apiKey) {
-        await generateAgnesReport(apiKey, prompt, callback);
+        await generateAgnesReport(apiKey, reportPrompt, callback);
       } else {
         setErrorMsg("最終生成失敗 - 請檢查 API Key");
       }
