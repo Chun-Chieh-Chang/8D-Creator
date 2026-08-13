@@ -1,7 +1,7 @@
 import { 
   FileText, Trash2, Clock, History,
   ShieldCheck, Key, LayoutTemplate,
-  Sun, Moon,
+  Sun, Moon, Globe,
   Info, ArrowRight, Sparkles
 } from "lucide-react";
 import { ReportHistoryItem } from "@/lib/historyManager";
