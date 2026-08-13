@@ -1,28 +1,33 @@
 @import "tailwindcss";
 
 @theme {
-  --color-brand-day-bg: #F8FAFC;         /* Light slate bg for depth */
-  --color-brand-day-surface: #FFFFFF;    /* Pure white surfaces */
-  --color-brand-day-text-primary: #0F172A;
-  --color-brand-day-text-secondary: #64748B;
+  /* 淺色主題 - 溫暖優雅系 */
+  --color-brand-day-bg: #FAFAF9;              /* 溫暖米白背景 */
+  --color-brand-day-surface: #FFFFFF;         /* 純白卡片 */
+  --color-brand-day-text-primary: #1C1917;   /* 暖黑色文字 */
+  --color-brand-day-text-secondary: #57534E; /* 中灰色次要文字 */
   
-  --color-brand-night-bg: #0B0F19;       /* Deep rich dark */
-  --color-brand-night-surface: #1E293B;  /* Slate card */
-  --color-brand-night-text-primary: #F8FAFC;
-  --color-brand-night-text-secondary: #94A3B8;
+  /* 深色主題 - 深邃奢華系 */
+  --color-brand-night-bg: #09090B;           /* 近乎純黑的溫暖黑 */
+  --color-brand-night-surface: #18181B;      /* 深邃卡片背景 */
+  --color-brand-night-text-primary: #FAFAF9; /* 溫暖白色文字 */
+  --color-brand-night-text-secondary: #A1A1AA; /* 柔和次要文字 */
 
-  --color-brand-accent: #2563EB;         /* Deep royal blue */
-  --color-brand-accent-hover: #1D4ED8;
-  --color-brand-accent-night: #3B82F6;
+  /* 強調色 - 高雅靛藍系 */
+  --color-brand-accent: #4F46E5;             /* 高貴靛藍 */
+  --color-brand-accent-hover: #4338CA;       /* 懸停深靛藍 */
+  --color-brand-accent-night: #6366F1;       /* 深色模式亮靛藍 */
   
-  --color-brand-success: #10B981;
+  /* 狀態色 - 溫和飽和 */
+  --color-brand-success: #059669;            /* 深邃翡翠綠 */
   --color-brand-success-night: #10B981;
   
-  --color-brand-error: #EF4444;
-  --color-brand-error-night: #F87171;
+  --color-brand-error: #DC2626;              /* 經典鮮紅 */
+  --color-brand-error-night: #EF4444;
 
-  --color-brand-border: #E2E8F0;
-  --color-brand-border-night: #334155;
+  /* 邊框色 - 精緻層次 */
+  --color-brand-border: #E7E5E4;            /* 暖灰邊框 */
+  --color-brand-border-night: #27272A;      /* 深色細膩邊框 */
 
   --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
 }
@@ -38,8 +43,9 @@
     --success: var(--color-brand-success);
     --error: var(--color-brand-error);
     --border-color: var(--color-brand-border);
-    --shadow-soft: 0 4px 20px -2px rgba(0, 0, 0, 0.05);
-    --shadow-float: 0 10px 40px -10px rgba(0, 0, 0, 0.08);
+    --shadow-soft: 0 2px 8px rgba(0, 0, 0, 0.04);
+    --shadow-float: 0 8px 32px rgba(0, 0, 0, 0.08);
+    --shadow-elevated: 0 16px 48px rgba(0, 0, 0, 0.12);
   }
 
   @media (prefers-color-scheme: dark) {
@@ -49,12 +55,13 @@
       --text-primary: var(--color-brand-night-text-primary);
       --text-secondary: var(--color-brand-night-text-secondary);
       --accent: var(--color-brand-accent-night);
-      --accent-hover: #60A5FA;
+      --accent-hover: #818CF8;
       --success: var(--color-brand-success-night);
       --error: var(--color-brand-error-night);
       --border-color: var(--color-brand-border-night);
-      --shadow-soft: 0 4px 20px -2px rgba(0, 0, 0, 0.4);
-      --shadow-float: 0 20px 40px -10px rgba(0, 0, 0, 0.6);
+      --shadow-soft: 0 2px 8px rgba(0, 0, 0, 0.3);
+      --shadow-float: 0 8px 32px rgba(0, 0, 0, 0.4);
+      --shadow-elevated: 0 16px 48px rgba(0, 0, 0, 0.5);
     }
   }
 
@@ -64,12 +71,13 @@
     --text-primary: var(--color-brand-night-text-primary);
     --text-secondary: var(--color-brand-night-text-secondary);
     --accent: var(--color-brand-accent-night);
-    --accent-hover: #60A5FA;
+    --accent-hover: #818CF8;
     --success: var(--color-brand-success-night);
     --error: var(--color-brand-error-night);
     --border-color: var(--color-brand-border-night);
-    --shadow-soft: 0 4px 20px -2px rgba(0, 0, 0, 0.4);
-    --shadow-float: 0 20px 40px -10px rgba(0, 0, 0, 0.6);
+    --shadow-soft: 0 2px 8px rgba(0, 0, 0, 0.3);
+    --shadow-float: 0 8px 32px rgba(0, 0, 0, 0.4);
+    --shadow-elevated: 0 16px 48px rgba(0, 0, 0, 0.5);
   }
 
   body {
@@ -80,6 +88,7 @@
     -moz-osx-font-smoothing: grayscale;
     font-size: 14px;
     letter-spacing: -0.01em;
+    line-height: 1.6;
   }
 }
 
