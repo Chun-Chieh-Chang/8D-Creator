@@ -103,7 +103,7 @@ export function findSimilarCases(
     if (item.problemDescription && currentProblem.defectType) {
       const words1 = item.problemDescription.split(/\s+/);
       const words2 = currentProblem.defectType.split(/\s+/);
-      const commonWords = words1.filter(w => words2.includes(w));
+      const commonWords = words1.filter((w: string) => words2.includes(w));
       if (commonWords.length > 0) {
         score += commonWords.length * 10;
       }
