@@ -1,6 +1,6 @@
 import { 
   FileText, Trash2, Clock, History,
-  ShieldCheck, Key, LayoutTemplate,
+  ShieldCheck, Key,
   Sun, Moon, Globe,
   Info, ArrowRight, Sparkles
 } from "lucide-react";
@@ -22,7 +22,6 @@ export default function Sidebar({
 }: SidebarProps) {
   const [provider, setProvider] = useState<"agnes" | "gemini">("agnes");
   const [apiKey, setApiKey] = useState("");
-  const [templateMode, setTemplateModeState] = useState<"standard" | "custom" | "uploaded">("standard");
   const [theme, setThemeState] = useState<"light" | "dark">("dark");
   const [mounted, setMounted] = useState(false);
 
@@ -46,13 +45,11 @@ export default function Sidebar({
       // 1. Load from localStorage first
       const savedProvider = localStorage.getItem("ai-provider") as "agnes" | "gemini";
       const savedKey = localStorage.getItem("agnes-api-key") || localStorage.getItem("gemini-api-key") || "";
-      const savedTemplateMode = (localStorage.getItem("8d-template-mode") as "standard" | "custom" | "uploaded") || "standard";
       
       if (savedProvider) {
         setProvider(savedProvider);
       }
       setApiKey(savedKey);
-      setTemplateModeState(savedTemplateMode);
     };
 
     loadConfig();
@@ -224,35 +221,6 @@ export default function Sidebar({
               </div>
             </div>
           )}
-        </div>
-
-        {/* Template Mode Section */}
-        <div className="px-3 py-4 bg-(--bg-base)/50 rounded-2xl border border-(--border-color)/50 space-y-4">
-          <div className="flex items-center gap-2 mb-1">
-            <LayoutTemplate className="w-4 h-4 text-(--accent)" />
-            <h2 className="text-[11px] font-bold text-(--text-secondary) tracking-widest uppercase">Template Mode</h2>
-          </div>
-          
-          <div className="grid grid-cols-1 gap-2">
-            {[
-              { id: "standard", label: "AI 標準模板", desc: "標準 8D 報告格式" },
-              { id: "custom", label: "AI 自定義模板", desc: "根據您的要求生成" },
-              { id: "uploaded", label: "上傳我的模板", desc: "使用現有檔案結構" }
-            ].map((mode) => (
-              <button
-                key={mode.id}
-                onClick={() => handleTemplateModeChange(mode.id as "standard" | "custom" | "uploaded")}
-                className={`p-3 rounded-xl border text-left transition-all ${
-                  templateMode === mode.id 
-                    ? "bg-(--bg-surface) border-(--accent) shadow-sm ring-2 ring-(--accent)/5" 
-                    : "bg-(--bg-base)/30 border-transparent hover:border-(--border-color)"
-                }`}
-              >
-                <div className="text-[13px] font-bold text-(--text-primary)">{mode.label}</div>
-                <div className="text-[11px] text-(--text-secondary)">{mode.desc}</div>
-              </button>
-            ))}
-          </div>
         </div>
 
         {/* History Section */}

@@ -11,7 +11,7 @@ import { generateGeminiReport, generateGemini5Why } from "@/lib/geminiClient";
 import { exportToDocx } from "@/lib/docxExporter";
 import { ReportHistoryItem, saveHistory } from "@/lib/historyManager";
 import { parseFile } from "@/lib/fileParser";
-import { getActivePromptTemplate, getTemplateMode, getCustomTemplate, setCustomTemplate, setUploadedTemplate } from "@/lib/templateStore";
+import { getActivePromptTemplate } from "@/lib/templateStore";
 
 interface MainFormProps {
   onReportGenerated: (item: ReportHistoryItem) => void;
@@ -34,10 +34,8 @@ export default function MainForm({ onReportGenerated, selectedHistory }: MainFor
   const [generatedContent, setGeneratedContent] = useState<string>(selectedHistory?.generatedContent || "");
   const [errorMsg, setErrorMsg] = useState("");
   
-  // Template & UI State
-  const [templateMode, setTemplateMode] = useState(getTemplateMode());
+  // UI State
   const [showEditor, setShowEditor] = useState(false);
-  const [customDraft, setCustomDraft] = useState(getCustomTemplate());
 
   // 5-Why Analysis State
   const [analysisHistory, setAnalysisHistory] = useState<{ role: "user" | "assistant"; content: string }[]>([]);
@@ -48,7 +46,7 @@ export default function MainForm({ onReportGenerated, selectedHistory }: MainFor
   const [uploadedFiles, setUploadedFiles] = useState<{ name: string; content: string }[]>([]);
   const [isParsingFiles, setIsParsingFiles] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const templateUploadRef = useRef<HTMLInputElement>(null);
+
   const chatEndRef = useRef<HTMLDivElement>(null);
 
   const [isMounted, setIsMounted] = useState(false);
@@ -61,12 +59,6 @@ export default function MainForm({ onReportGenerated, selectedHistory }: MainFor
 
   useEffect(() => {
     setIsMounted(true);
-    const handleUpdate = () => {
-      setTemplateMode(getTemplateMode());
-      setCustomDraft(getCustomTemplate());
-    };
-    window.addEventListener("template-settings-changed", handleUpdate);
-    return () => window.removeEventListener("template-settings-changed", handleUpdate);
   }, []);
 
   if (!isMounted) return <div className="flex-1 bg-(--bg-surface) animate-pulse" />;
@@ -98,21 +90,7 @@ export default function MainForm({ onReportGenerated, selectedHistory }: MainFor
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
-  const handleTemplateUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (!e.target.files?.[0]) return;
-    setIsParsingFiles(true);
-    try {
-      const content = await parseFile(e.target.files[0]);
-      setUploadedTemplate(content);
-      setErrorMsg("模板上傳成功！已切換至上傳模板模式。");
-      setTimeout(() => setErrorMsg(""), 3000);
-    } catch {
-      console.error("Template parse error");
-      setErrorMsg("模板讀取失敗");
-    } finally {
-      setIsParsingFiles(false);
-    }
-  };
+
 
   const removeFile = (index: number) => {
     setUploadedFiles(prev => prev.filter((_, i) => i !== index));
@@ -340,74 +318,6 @@ ${generatedContent}`;
         {step === "input" && (
           <div className="premium-card p-6 lg:p-10 space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500 w-full max-w-full mx-auto shadow-2xl border-t-4 border-t-(--accent)">
             
-            {/* Template Specific Action Bar */}
-            {(templateMode === "custom" || templateMode === "uploaded") && (
-              <div className="p-4 rounded-2xl bg-(--accent)/5 border border-(--accent)/10 flex items-center justify-between mb-2">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 rounded-lg bg-white shadow-sm">
-                    {templateMode === "custom" ? <SettingsIcon className="w-4 h-4 text-(--accent)" /> : <LayoutTemplate className="w-4 h-4 text-(--accent)" />}
-                  </div>
-                  <div>
-                    <p className="text-[13px] font-bold text-(--text-primary)">
-                      {templateMode === "custom" ? "自定義模板模式" : "已上傳模板模式"}
-                    </p>
-                    <p className="text-[11px] text-(--text-secondary)">AI 將依照指定結構生成報告</p>
-                  </div>
-                </div>
-                <div className="flex gap-2">
-                  {templateMode === "custom" ? (
-                    <button 
-                      onClick={() => setShowEditor(!showEditor)}
-                      className="px-4 py-1.5 rounded-lg bg-white border border-(--border-color) text-(--accent) text-xs font-bold hover:shadow-md transition-all"
-                    >
-                      {showEditor ? "關閉編輯器" : "修改自定義格式"}
-                    </button>
-                  ) : (
-                    <button 
-                      onClick={() => templateUploadRef.current?.click()}
-                      className="px-4 py-1.5 rounded-lg bg-white border border-(--border-color) text-(--accent) text-xs font-bold hover:shadow-md transition-all"
-                    >
-                      更換模板文件
-                    </button>
-                  )}
-                  <input type="file" ref={templateUploadRef} onChange={handleTemplateUpload} className="hidden" accept=".docx,.txt" />
-                </div>
-              </div>
-            )}
-
-            {/* Template Editor Drawer */}
-            {templateMode === "custom" && showEditor && (
-              <div className="space-y-4 animate-in slide-in-from-top-4 duration-500">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-[14px] font-bold text-(--text-primary) flex items-center gap-2">
-                    <FileText className="w-4 h-4" /> 編輯自定義模板結構
-                  </h3>
-                  <div className="flex gap-4 text-[10px] text-(--text-secondary) font-bold uppercase tracking-tighter">
-                    <span>可用變數:</span>
-                    <span>{"{{DATE}}"}</span>
-                    <span>{"{{PRODUCT}}"}</span>
-                    <span>{"{{CUSTOMER}}"}</span>
-                    <span>{"{{QUANTITY}}"}</span>
-                    <span>{"{{5WHY_SUMMARY}}"}</span>
-                  </div>
-                </div>
-                <textarea 
-                  value={customDraft} 
-                  onChange={(e) => setCustomDraft(e.target.value)}
-                  className="fluent-textarea min-h-[300px] font-mono text-[13px] bg-(--bg-base)"
-                  placeholder="輸入 8D 報告的自定義 Markdown 結構..."
-                />
-                <div className="flex justify-end gap-3">
-                  <button 
-                    onClick={() => setCustomTemplate(customDraft)}
-                    className="px-6 py-2 rounded-xl bg-(--accent) text-white text-xs font-bold hover:shadow-lg transition-all"
-                  >
-                    儲存模板設定
-                  </button>
-                </div>
-              </div>
-            )}
-
             <div className="space-y-2">
               <h1 className="text-3xl font-extrabold text-(--text-primary)">8D 報告參數設定</h1>
               <p className="text-sm text-(--text-secondary)">請填寫基礎缺陷資訊，AI 將引導您進行後續的 5-Why 推導。</p>
