@@ -81,28 +81,28 @@ export default function BrandSettingsPanel({ onClose }: { onClose: () => void })
     <div className={`fixed inset-0 z-50 flex items-center justify-center p-4 ${mounted ? 'animate-in fade-in duration-200' : 'opacity-0'}`}>
       {/* Backdrop */}
       <div 
-        className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+        className="absolute inset-0 bg-black/60 backdrop-blur-sm"
         onClick={onClose}
       />
       
       {/* Modal */}
-      <div className="relative w-full max-w-lg bg-white dark:bg-neutral-900 rounded-2xl shadow-2xl overflow-hidden">
+      <div className="relative w-full max-w-lg bg-[var(--bg-surface)] text-[var(--text-primary)] border border-[var(--border-color)] rounded-2xl shadow-2xl overflow-hidden">
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-neutral-200 dark:border-neutral-800">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-[var(--border-color)]">
           <div className="flex items-center gap-3">
-            <div className="p-2 bg-indigo-100 dark:bg-indigo-900/30 rounded-lg">
-              <Palette className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
+            <div className="p-2 bg-[var(--accent)]/15 rounded-lg">
+              <Palette className="w-5 h-5 text-[var(--accent)]" />
             </div>
             <div>
-              <h2 className="text-base font-bold text-neutral-900 dark:text-white">品牌設定</h2>
-              <p className="text-[13px] text-neutral-500 dark:text-neutral-400">自訂報告外觀與識別</p>
+              <h2 className="text-base font-bold text-[var(--text-primary)]">品牌設定</h2>
+              <p className="text-[13px] text-[var(--text-secondary)]">自訂報告外觀與識別</p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="p-2 hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-lg transition-colors"
+            className="p-2 hover:bg-[var(--bg-base)] rounded-lg transition-colors text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
           >
-            <X className="w-5 h-5 text-neutral-500" />
+            <X className="w-5 h-5" />
           </button>
         </div>
 
@@ -111,8 +111,8 @@ export default function BrandSettingsPanel({ onClose }: { onClose: () => void })
           
           {/* Company Name */}
           <div className="space-y-2">
-            <label className="flex items-center gap-2 text-sm font-semibold text-neutral-700 dark:text-neutral-300">
-              <Building2 className="w-4 h-4" />
+            <label className="flex items-center gap-2 text-sm font-semibold text-[var(--text-primary)]">
+              <Building2 className="w-4 h-4 text-[var(--accent)]" />
               公司名稱
             </label>
             <input
@@ -120,13 +120,13 @@ export default function BrandSettingsPanel({ onClose }: { onClose: () => void })
               value={settings.companyName}
               onChange={(e) => setSettings(prev => ({ ...prev, companyName: e.target.value }))}
               placeholder="例: 臺灣半導體股份有限公司"
-              className="w-full h-10 px-3 bg-neutral-50 dark:bg-neutral-800 text-neutral-900 dark:text-white border border-neutral-200 dark:border-neutral-700 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all"
+              className="w-full h-10 px-3 bg-[var(--bg-base)] text-[var(--text-primary)] placeholder:text-[var(--text-secondary)] placeholder:opacity-80 border border-[var(--border-color)] rounded-lg text-sm focus:ring-2 focus:ring-[var(--accent)]/20 focus:border-[var(--accent)] outline-none transition-all"
             />
           </div>
 
           {/* Color Presets */}
           <div className="space-y-2">
-            <label className="text-sm font-semibold text-neutral-700 dark:text-neutral-300">配色方案</label>
+            <label className="text-sm font-semibold text-[var(--text-primary)]">配色方案</label>
             <div className="grid grid-cols-3 gap-2">
               {COLOR_PRESETS.map((preset) => (
                 <button
@@ -134,21 +134,21 @@ export default function BrandSettingsPanel({ onClose }: { onClose: () => void })
                   onClick={() => applyPreset(preset.primary, preset.accent)}
                   className={`p-3 rounded-lg border-2 transition-all ${
                     settings.primaryColor === preset.primary
-                      ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-900/20'
-                      : 'border-neutral-200 dark:border-neutral-700 hover:border-neutral-300'
+                      ? 'border-[var(--accent)] bg-[var(--accent)]/10 text-[var(--accent)] font-semibold'
+                      : 'border-[var(--border-color)] bg-[var(--bg-base)] text-[var(--text-primary)] hover:border-[var(--accent)]/50'
                   }`}
                 >
                   <div className="flex gap-1 mb-2">
                     <div 
-                      className="w-4 h-4 rounded-full" 
+                      className="w-4 h-4 rounded-full shadow-sm" 
                       style={{ backgroundColor: preset.primary }}
                     />
                     <div 
-                      className="w-4 h-4 rounded-full" 
+                      className="w-4 h-4 rounded-full shadow-sm" 
                       style={{ backgroundColor: preset.accent }}
                     />
                   </div>
-                  <span className="text-[13px] font-medium text-neutral-700 dark:text-neutral-300">{preset.name}</span>
+                  <span className="text-[13px] font-medium">{preset.name}</span>
                 </button>
               ))}
             </div>
@@ -157,7 +157,7 @@ export default function BrandSettingsPanel({ onClose }: { onClose: () => void })
           {/* Custom Colors */}
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <label className="text-sm font-semibold text-neutral-700 dark:text-neutral-300">主色</label>
+              <label className="text-sm font-semibold text-[var(--text-primary)]">主色</label>
               <div className="flex items-center gap-2">
                 <input
                   type="color"
@@ -169,12 +169,12 @@ export default function BrandSettingsPanel({ onClose }: { onClose: () => void })
                   type="text"
                   value={settings.primaryColor}
                   onChange={(e) => setSettings(prev => ({ ...prev, primaryColor: e.target.value }))}
-                  className="flex-1 h-10 px-3 bg-neutral-50 dark:bg-neutral-800 text-neutral-900 dark:text-white border border-neutral-200 dark:border-neutral-700 rounded-lg text-sm font-mono"
+                  className="flex-1 h-10 px-3 bg-[var(--bg-base)] text-[var(--text-primary)] border border-[var(--border-color)] rounded-lg text-sm font-mono"
                 />
               </div>
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-semibold text-neutral-700 dark:text-neutral-300">強調色</label>
+              <label className="text-sm font-semibold text-[var(--text-primary)]">強調色</label>
               <div className="flex items-center gap-2">
                 <input
                   type="color"
@@ -186,7 +186,7 @@ export default function BrandSettingsPanel({ onClose }: { onClose: () => void })
                   type="text"
                   value={settings.accentColor}
                   onChange={(e) => setSettings(prev => ({ ...prev, accentColor: e.target.value }))}
-                  className="flex-1 h-10 px-3 bg-neutral-50 dark:bg-neutral-800 text-neutral-900 dark:text-white border border-neutral-200 dark:border-neutral-700 rounded-lg text-sm font-mono"
+                  className="flex-1 h-10 px-3 bg-[var(--bg-base)] text-[var(--text-primary)] border border-[var(--border-color)] rounded-lg text-sm font-mono"
                 />
               </div>
             </div>
@@ -194,25 +194,27 @@ export default function BrandSettingsPanel({ onClose }: { onClose: () => void })
 
           {/* Font Selection */}
           <div className="space-y-2">
-            <label className="flex items-center gap-2 text-sm font-semibold text-neutral-700 dark:text-neutral-300">
-              <Type className="w-4 h-4" />
+            <label className="flex items-center gap-2 text-sm font-semibold text-[var(--text-primary)]">
+              <Type className="w-4 h-4 text-[var(--accent)]" />
               字體選擇
             </label>
             <select
               value={settings.customFont}
               onChange={(e) => setSettings(prev => ({ ...prev, customFont: e.target.value }))}
-              className="w-full h-10 px-3 bg-neutral-50 dark:bg-neutral-800 text-neutral-900 dark:text-white border border-neutral-200 dark:border-neutral-700 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none"
+              className="w-full h-10 px-3 bg-[var(--bg-base)] text-[var(--text-primary)] border border-[var(--border-color)] rounded-lg text-sm focus:ring-2 focus:ring-[var(--accent)]/20 focus:border-[var(--accent)] outline-none"
             >
               {FONT_OPTIONS.map((font) => (
-                <option key={font.value} value={font.value}>{font.label}</option>
+                <option key={font.value} value={font.value} className="bg-[var(--bg-surface)] text-[var(--text-primary)]">
+                  {font.label}
+                </option>
               ))}
             </select>
           </div>
 
           {/* Watermark Text */}
           <div className="space-y-2">
-            <label className="flex items-center gap-2 text-sm font-semibold text-neutral-700 dark:text-neutral-300">
-              <ImageIcon className="w-4 h-4" />
+            <label className="flex items-center gap-2 text-sm font-semibold text-[var(--text-primary)]">
+              <ImageIcon className="w-4 h-4 text-[var(--accent)]" />
               水印文字（可選）
             </label>
             <input
@@ -220,16 +222,16 @@ export default function BrandSettingsPanel({ onClose }: { onClose: () => void })
               value={settings.watermarkText}
               onChange={(e) => setSettings(prev => ({ ...prev, watermarkText: e.target.value }))}
               placeholder="例: CONFIDENTIAL / 內部資料"
-              className="w-full h-10 px-3 bg-neutral-50 dark:bg-neutral-800 text-neutral-900 dark:text-white border border-neutral-200 dark:border-neutral-700 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none"
+              className="w-full h-10 px-3 bg-[var(--bg-base)] text-[var(--text-primary)] placeholder:text-[var(--text-secondary)] placeholder:opacity-80 border border-[var(--border-color)] rounded-lg text-sm focus:ring-2 focus:ring-[var(--accent)]/20 focus:border-[var(--accent)] outline-none"
             />
           </div>
         </div>
 
         {/* Footer Actions */}
-        <div className="flex items-center justify-between px-6 py-4 border-t border-neutral-200 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-800/50">
+        <div className="flex items-center justify-between px-6 py-4 border-t border-[var(--border-color)] bg-[var(--bg-base)]">
           <button
             onClick={handleReset}
-            className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+            className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-500/10 rounded-lg transition-colors"
           >
             <Trash2 className="w-4 h-4" />
             重置預設
@@ -244,13 +246,13 @@ export default function BrandSettingsPanel({ onClose }: { onClose: () => void })
             )}
             <button
               onClick={onClose}
-              className="px-4 py-2 text-sm font-medium text-neutral-600 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-lg transition-colors"
+              className="px-4 py-2 text-sm font-medium text-[var(--text-secondary)] hover:bg-[var(--bg-surface)] hover:text-[var(--text-primary)] rounded-lg transition-colors"
             >
               取消
             </button>
             <button
               onClick={handleSave}
-              className="flex items-center gap-2 px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-lg transition-colors shadow-lg shadow-indigo-500/20"
+              className="flex items-center gap-2 px-5 py-2 bg-[var(--accent)] hover:bg-[var(--accent-hover)] text-white text-sm font-semibold rounded-lg transition-colors shadow-lg shadow-[var(--accent)]/20"
             >
               <CheckCircle2 className="w-4 h-4" />
               儲存設定
