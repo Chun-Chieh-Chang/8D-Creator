@@ -1,6 +1,5 @@
 // src/lib/fileParser.ts
-import * as XLSX from 'xlsx';
-import mammoth from 'mammoth';
+// Lazy-loaded heavy dependencies for bundle size optimization
 
 export async function parseFile(file: File): Promise<string> {
   const extension = file.name.split('.').pop()?.toLowerCase();
@@ -11,10 +10,12 @@ export async function parseFile(file: File): Promise<string> {
     
     case 'xlsx':
     case 'xls':
+      // Dynamic import for lazy loading
+      const XLSX = await import('xlsx');
       const data = await file.arrayBuffer();
       const workbook = XLSX.read(data);
       let excelText = "";
-      workbook.SheetNames.forEach(sheetName => {
+      workbook.SheetNames.forEach((sheetName: string) => {
         excelText += `Sheet: ${sheetName}\n`;
         const sheet = workbook.Sheets[sheetName];
         excelText += XLSX.utils.sheet_to_txt(sheet) + "\n";
@@ -22,14 +23,15 @@ export async function parseFile(file: File): Promise<string> {
       return excelText;
 
     case 'docx':
+      // Dynamic import for lazy loading
+      const mammoth = await import('mammoth');
       const arrayBuffer = await file.arrayBuffer();
       const result = await mammoth.extractRawText({ arrayBuffer });
       return result.value;
 
     case 'pdf':
-      // Simplified PDF text extraction (requires pdfjs-dist setup which can be tricky in some environments)
-      // For now, we'll suggest using a simpler approach or acknowledge the file.
-      return `[PDF File: ${file.name} - Text extraction pending full implementation]`;
+      // PDF parsing requires more setup, placeholder for now
+      return `[PDF File: ${file.name} - Text extraction pending implementation]`;
 
     default:
       return `[File: ${file.name} - Unsupported format for text extraction]`;
