@@ -74,12 +74,6 @@ export default function Sidebar({
     localStorage.setItem(keyStorage, k);
   };
 
-  const handleTemplateModeChange = (mode: "standard" | "custom" | "uploaded") => {
-    setTemplateModeState(mode);
-    localStorage.setItem("8d-template-mode", mode);
-    window.dispatchEvent(new Event("templateModeChanged"));
-  };
-
   const toggleTheme = () => {
     const newTheme = theme === "light" ? "dark" : "light";
     setThemeState(newTheme);
