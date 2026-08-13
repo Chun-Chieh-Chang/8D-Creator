@@ -116,7 +116,17 @@ export default function MainForm({ onReportGenerated, selectedHistory }: MainFor
 
     const { provider, apiKey } = getAISettings();
     const fileContext = uploadedFiles.map(f => `檔案 [${f.name}]:\n${f.content}`).join("\n\n");
-    const fullContext = `問題描述：${formData.problemDescription}\n\n[附件資料背景]\n${fileContext}`;
+    
+    const problemContext = [
+      formData.problemTitle && `【問題標題】${formData.problemTitle}`,
+      formData.location && `【發生地點/線別】${formData.location}`,
+      formData.detectionMethod && `【發現方式】${formData.detectionMethod}`,
+      formData.impactScope && `【影響範圍】${formData.impactScope}`,
+      formData.preliminaryCause && `【初步原因猜測】${formData.preliminaryCause}`,
+      formData.defectDescription && `【缺陷現象詳細描述】\n${formData.defectDescription}`
+    ].filter(Boolean).join("\n\n");
+    
+    const fullContext = `${problemContext}\n\n[附件資料背景]\n${fileContext}`;
 
     try {
       let firstQuestion = "";
@@ -154,7 +164,17 @@ export default function MainForm({ onReportGenerated, selectedHistory }: MainFor
 
     const { provider, apiKey } = getAISettings();
     const fileContext = uploadedFiles.map(f => `檔案 [${f.name}]:\n${f.content}`).join("\n\n");
-    const fullContext = `問題描述：${formData.problemDescription}\n\n[附件資料背景]\n${fileContext}`;
+    
+    const problemContext = [
+      formData.problemTitle && `【問題標題】${formData.problemTitle}`,
+      formData.location && `【發生地點/線別】${formData.location}`,
+      formData.detectionMethod && `【發現方式】${formData.detectionMethod}`,
+      formData.impactScope && `【影響範圍】${formData.impactScope}`,
+      formData.preliminaryCause && `【初步原因猜測】${formData.preliminaryCause}`,
+      formData.defectDescription && `【缺陷現象詳細描述】\n${formData.defectDescription}`
+    ].filter(Boolean).join("\n\n");
+    
+    const fullContext = `${problemContext}\n\n[附件資料背景]\n${fileContext}`;
 
     try {
       let nextQuestion = "";
@@ -278,7 +298,13 @@ source: 8D_Reporter_AI
 ---
 
 # 8D Report Background
-${formData.problemDescription}
+**問題標題**: ${formData.problemTitle}
+**發生時間**: ${formData.occurrenceTime}
+**發生地點/線別**: ${formData.location}
+**缺陷現象詳細描述**: ${formData.defectDescription}
+${formData.detectionMethod ? `**發現方式**: ${formData.detectionMethod}\n` : ''}
+${formData.impactScope ? `**影響範圍**: ${formData.impactScope}\n` : ''}
+${formData.preliminaryCause ? `**初步原因猜測**: ${formData.preliminaryCause}\n` : ''}
 
 # 5-Why Analysis Summary
 ${analysisHistory.map(h => `${h.role}: ${h.content}`).join("\n")}
