@@ -325,7 +325,7 @@ export default function MainForm({ onReportGenerated, selectedHistory }: MainFor
                   ? "bg-[var(--accent)] text-white" 
                   : step !== s.key && ["input","analysis","final"].indexOf(step) > i
                   ? "bg-green-600 text-white" 
-                  : "bg-white border border-gray-200 text-[var(--text-secondary)]"
+                  : "bg-[var(--bg-surface)] border border-[var(--border-color)] text-[var(--text-secondary)]"
               }`}>
                 {s.label}
               </div>
@@ -336,7 +336,7 @@ export default function MainForm({ onReportGenerated, selectedHistory }: MainFor
 
         {/* Error Message */}
         {errorMsg && (
-          <div className="flex items-start gap-3 p-3 bg-red-50 border border-red-200 rounded text-sm text-red-700">
+          <div className="flex items-start gap-3 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded text-sm text-red-700 dark:text-red-300">
             <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
             <div className="flex-1">{errorMsg}</div>
             <button onClick={() => setErrorMsg("")} className="text-red-400 hover:text-red-600">
@@ -445,7 +445,7 @@ export default function MainForm({ onReportGenerated, selectedHistory }: MainFor
                   <label className="label">上傳參考資料</label>
                   <div
                     onClick={() => fileInputRef.current?.click()}
-                    className="border-2 border-dashed border-gray-300 hover:border-[var(--accent)] rounded p-4 cursor-pointer text-center transition-colors"
+                    className="border-2 border-dashed border-[var(--border-color)] hover:border-[var(--accent)] rounded p-4 cursor-pointer text-center transition-colors"
                   >
                     <input
                       type="file"
@@ -455,22 +455,22 @@ export default function MainForm({ onReportGenerated, selectedHistory }: MainFor
                       className="hidden"
                       accept=".xlsx,.xls,.docx,.pdf,.txt"
                     />
-                    <Upload className="w-5 h-5 mx-auto mb-2 text-gray-400" />
-                    <p className="text-sm text-[var(--text-secondary)]">
+                    <Upload className="w-5 h-5 mx-auto mb-2 text-[var(--accent)] opacity-80" />
+                    <p className="text-sm font-medium text-[var(--text-primary)]">
                       {isReadingFile ? "讀取中..." : "點擊或拖拽上傳文件"}
                     </p>
-                    <p className="text-xs text-gray-400 mt-1">支援 Excel / Word / PDF / TXT</p>
+                    <p className="text-[13px] text-[var(--text-secondary)] mt-1">支援 Excel / Word / PDF / TXT</p>
                   </div>
                   
                   {uploadedFiles.length > 0 && (
                     <div className="mt-2 space-y-1">
                       {uploadedFiles.map((file, idx) => (
-                        <div key={idx} className="flex items-center justify-between p-2 bg-gray-50 rounded text-xs">
+                        <div key={idx} className="flex items-center justify-between p-2 bg-[var(--bg-base)] border border-[var(--border-color)] rounded text-[13px]">
                           <div className="flex items-center gap-2 overflow-hidden">
                             <FileText className="w-3.5 h-3.5 text-[var(--accent)] shrink-0" />
-                            <span className="truncate">{file.name}</span>
+                            <span className="truncate text-[var(--text-primary)] font-medium">{file.name}</span>
                           </div>
-                          <button onClick={() => removeFile(idx)} className="text-gray-400 hover:text-red-500">
+                          <button onClick={() => removeFile(idx)} className="text-[var(--text-secondary)] hover:text-red-500 transition-colors">
                             <X className="w-3.5 h-3.5" />
                           </button>
                         </div>
@@ -505,7 +505,7 @@ export default function MainForm({ onReportGenerated, selectedHistory }: MainFor
                   <input type="text" name="customerName" value={formData.customerName} onChange={handleChange} placeholder="輸入客戶" className="input" />
                 </div>
 
-                <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
+                <div className="pt-4 border-t border-[var(--border-color)]">
                   <button
                     onClick={startAnalysis}
                     disabled={isLoading || isReadingFile}
@@ -514,7 +514,7 @@ export default function MainForm({ onReportGenerated, selectedHistory }: MainFor
                     {isLoading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
                     開始分析
                   </button>
-                  <p className="text-xs text-[var(--text-secondary)] text-center mt-2">
+                  <p className="text-[13px] text-[var(--text-secondary)] text-center mt-2">
                     系統將引導您進行 5-Why 根本原因分析
                   </p>
                 </div>
@@ -531,10 +531,10 @@ export default function MainForm({ onReportGenerated, selectedHistory }: MainFor
               <div className="p-4 border-b border-[var(--border-color)] flex items-center justify-between">
                 <div>
                   <h2 className="text-sm font-semibold">原因分析對話</h2>
-                  <p className="text-xs text-[var(--text-secondary)]">與專家系統互動</p>
+                  <p className="text-[13px] text-[var(--text-secondary)]">與專家系統互動</p>
                 </div>
                 {isAnalyzing && (
-                  <div className="flex items-center gap-2 text-xs text-[var(--accent)]">
+                  <div className="flex items-center gap-2 text-[13px] text-[var(--accent)]">
                     <Loader2 className="w-3 h-3 animate-spin" />
                     {analysisProgress}%
                   </div>
@@ -543,7 +543,7 @@ export default function MainForm({ onReportGenerated, selectedHistory }: MainFor
 
               {/* Progress Bar */}
               {isAnalyzing && (
-                <div className="h-0.5 bg-gray-100 dark:bg-gray-800">
+                <div className="h-0.5 bg-[var(--border-color)]">
                   <div
                     className="h-full bg-[var(--accent)] transition-all duration-300"
                     style={{ width: `${analysisProgress}%` }}
@@ -558,7 +558,7 @@ export default function MainForm({ onReportGenerated, selectedHistory }: MainFor
                     <div className={`max-w-[85%] p-3 rounded text-sm whitespace-pre-wrap ${
                       msg.role === "user"
                         ? "bg-[var(--accent)] text-white"
-                        : "bg-gray-100 dark:bg-gray-800 text-[var(--text-primary)]"
+                        : "bg-[var(--bg-base)] text-[var(--text-primary)] border border-[var(--border-color)]"
                     }`}>
                       {msg.content}
                     </div>
@@ -567,7 +567,7 @@ export default function MainForm({ onReportGenerated, selectedHistory }: MainFor
                 
                 {currentMessage && (
                   <div className="flex justify-start">
-                    <div className="max-w-[85%] p-3 rounded bg-gray-100 dark:bg-gray-800 text-sm whitespace-pre-wrap">
+                    <div className="max-w-[85%] p-3 rounded bg-[var(--bg-base)] text-[var(--text-primary)] border border-[var(--border-color)] text-sm whitespace-pre-wrap">
                       {currentMessage}
                       <Loader2 className="w-3 h-3 animate-spin mt-2 inline opacity-40 ml-1" />
                     </div>
@@ -589,7 +589,7 @@ export default function MainForm({ onReportGenerated, selectedHistory }: MainFor
                       }
                     }}
                     placeholder="輸入您的回答..."
-                    className="w-full bg-white dark:bg-[var(--bg-surface)] border border-gray-300 dark:border-gray-600 rounded p-3 pr-12 text-sm resize-none focus:outline-none focus:border-[var(--accent)]"
+                    className="w-full bg-[var(--bg-surface)] text-[var(--text-primary)] border border-[var(--border-color)] rounded p-3 pr-12 text-sm resize-none focus:outline-none focus:border-[var(--accent)]"
                     rows={3}
                     disabled={isLoading}
                   />
@@ -602,10 +602,10 @@ export default function MainForm({ onReportGenerated, selectedHistory }: MainFor
                   </button>
                 </div>
                 <div className="flex justify-between items-center mt-2">
-                  <p className="text-xs text-[var(--text-secondary)]">Enter 發送，Shift+Enter 換行</p>
+                  <p className="text-[13px] text-[var(--text-secondary)]">Enter 發送，Shift+Enter 換行</p>
                   <button
                     onClick={() => { setStep("final"); generateReport(); }}
-                    className="text-xs text-[var(--accent)] hover:underline"
+                    className="text-[13px] text-[var(--accent)] hover:underline"
                   >
                     跳過分析，直接生成報告 →
                   </button>
@@ -618,15 +618,15 @@ export default function MainForm({ onReportGenerated, selectedHistory }: MainFor
               {/* Risk Assessment */}
               {riskResult && (
                 <div className="card p-4 flex items-center gap-4">
-                  <span className="text-xs font-medium text-[var(--text-secondary)]">風險評估</span>
-                  <span className={`px-2 py-0.5 rounded text-xs font-medium ${
-                    riskResult.priority === 'high' ? 'bg-red-100 text-red-700' :
-                    riskResult.priority === 'medium' ? 'bg-yellow-100 text-yellow-700' :
-                    'bg-green-100 text-green-700'
+                  <span className="text-[13px] font-medium text-[var(--text-secondary)]">風險評估</span>
+                  <span className={`px-2 py-0.5 rounded text-[13px] font-medium ${
+                    riskResult.priority === 'high' ? 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300' :
+                    riskResult.priority === 'medium' ? 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300' :
+                    'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300'
                   }`}>
                     {riskResult.priority === 'high' ? '高優先級' : riskResult.priority === 'medium' ? '中優先級' : '低優先級'}
                   </span>
-                  <span className="text-xs text-[var(--text-secondary)] ml-auto">
+                  <span className="text-[13px] text-[var(--text-secondary)] ml-auto">
                     RPN: <span className="font-mono font-semibold">{riskResult.rpn}</span>
                   </span>
                 </div>
@@ -638,7 +638,7 @@ export default function MainForm({ onReportGenerated, selectedHistory }: MainFor
                   <p className="text-sm font-medium text-blue-800 dark:text-blue-300 mb-1">
                     相關歷史案例 ({similarItems.length})
                   </p>
-                  <p className="text-xs text-blue-600 dark:text-blue-400">
+                  <p className="text-[13px] text-blue-600 dark:text-blue-400">
                     {similarItems.slice(0, 3).map((c: any, i: number) => `#${c.caseId} (${c.similarity}%)`).join('、')}
                   </p>
                 </div>
@@ -672,28 +672,28 @@ export default function MainForm({ onReportGenerated, selectedHistory }: MainFor
         {step === "final" && (
           <div className="card overflow-hidden">
             {/* Header */}
-            <div className="p-4 border-b border-[var(--border-color)] flex items-center justify-between bg-gray-50 dark:bg-[var(--bg-surface)]">
+            <div className="p-4 border-b border-[var(--border-color)] flex items-center justify-between bg-[var(--bg-surface)]">
               <div className="flex items-center gap-3">
                 <CheckCircle className="w-5 h-5 text-green-600" />
                 <div>
                   <h2 className="text-sm font-semibold">報告已完成</h2>
-                  <p className="text-xs text-[var(--text-secondary)]">可匯出為不同格式</p>
+                  <p className="text-[13px] text-[var(--text-secondary)]">可匯出為不同格式</p>
                 </div>
               </div>
               <div className="flex gap-2">
-                <button onClick={() => setStep("input")} className="btn btn-ghost text-xs">
+                <button onClick={() => setStep("input")} className="btn btn-ghost text-[13px]">
                   重新開始
                 </button>
-                <button onClick={copyToClipboard} className="btn btn-secondary text-xs">
+                <button onClick={copyToClipboard} className="btn btn-secondary text-[13px]">
                   複製內容
                 </button>
-                <button onClick={downloadWord} className="btn btn-secondary text-xs">
+                <button onClick={downloadWord} className="btn btn-secondary text-[13px]">
                   <FileDown className="w-3.5 h-3.5 mr-1.5" />Word
                 </button>
-                <button onClick={downloadHtml} className="btn btn-secondary text-xs">
+                <button onClick={downloadHtml} className="btn btn-secondary text-[13px]">
                   <FileText className="w-3.5 h-3.5 mr-1.5" />HTML
                 </button>
-                <button onClick={downloadPdf} className="btn btn-primary text-xs">
+                <button onClick={downloadPdf} className="btn btn-primary text-[13px]">
                   <FileDown className="w-3.5 h-3.5 mr-1.5" />PDF
                 </button>
               </div>

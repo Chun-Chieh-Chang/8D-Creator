@@ -2,35 +2,35 @@
 
 @theme {
   /* 企業級配色系統 - 穩重專業 */
-  --color-brand-bg: #F5F5F5;
+  --color-brand-bg: #F9FAFB;
   --color-brand-surface: #FFFFFF;
-  --color-brand-text: #1A1A1A;
-  --color-brand-muted: #666666;
-  --color-brand-border: #E0E0E0;
+  --color-brand-text: #111827;
+  --color-brand-muted: #6B7280;
+  --color-brand-border: #E5E7EB;
   
   /* 主色 - 深藍穩重 */
   --color-brand-primary: #1E3A5F;
   --color-brand-primary-light: #2C4A6E;
-  --color-brand-accent: #2B5C8A;
+  --color-brand-accent: #3B82F6;
   
   /* 狀態色 - 低調清晰 */
-  --color-brand-success: #1A7F5C;
-  --color-brand-warning: #B8860B;
-  --color-brand-error: #A03030;
-  --color-brand-info: #1E6BB8;
+  --color-brand-success: #10B981;
+  --color-brand-warning: #F59E0B;
+  --color-brand-error: #EF4444;
+  --color-brand-info: #3B82F6;
 
-  /* 深色主題 */
-  --color-brand-dark-bg: #0D1117;
-  --color-brand-dark-surface: #161B22;
-  --color-brand-dark-text: #E6EDF3;
-  --color-brand-dark-muted: #8B949E;
-  --color-brand-dark-border: #30363D;
+  /* 深色主題 (Color Master Palette) */
+  --color-brand-dark-bg: #0F172A;
+  --color-brand-dark-surface: #1E293B;
+  --color-brand-dark-text: #F1F5F9;
+  --color-brand-dark-muted: #94A3B8;
+  --color-brand-dark-border: #334155;
   
   --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 }
 
 @layer base {
-  :root {
+  :root, :root.light, html.light {
     --bg-base: var(--color-brand-bg);
     --bg-surface: var(--color-brand-surface);
     --text-primary: var(--color-brand-text);
@@ -54,6 +54,7 @@
       --text-primary: var(--color-brand-dark-text);
       --text-secondary: var(--color-brand-dark-muted);
       --accent: var(--color-brand-accent);
+      --accent-hover: #60A5FA;
       --border-color: var(--color-brand-dark-border);
       --shadow-sm: 0 1px 2px rgba(0,0,0,0.3);
       --shadow-md: 0 2px 4px rgba(0,0,0,0.4);
@@ -61,12 +62,13 @@
     }
   }
 
-  :root.dark {
+  :root.dark, html.dark {
     --bg-base: var(--color-brand-dark-bg);
     --bg-surface: var(--color-brand-dark-surface);
     --text-primary: var(--color-brand-dark-text);
     --text-secondary: var(--color-brand-dark-muted);
     --accent: var(--color-brand-accent);
+    --accent-hover: #60A5FA;
     --border-color: var(--color-brand-dark-border);
     --shadow-sm: 0 1px 2px rgba(0,0,0,0.3);
     --shadow-md: 0 2px 4px rgba(0,0,0,0.4);
@@ -92,22 +94,42 @@
     box-shadow: var(--shadow-sm);
   }
   
-  /* 輸入框 - 標準企業風格 */
+  /* 輸入框 - 標準企業風格高對比 */
   .input {
-    @apply w-full h-[38px] px-3 bg-white border border-gray-300 rounded text-[14px] 
+    @apply w-full h-[38px] px-3 rounded text-[14px] 
     focus:outline-none focus:border-[var(--accent)] focus:ring-1 focus:ring-[var(--accent)]/20
     transition-colors duration-150;
+    background-color: var(--bg-surface);
+    border: 1px solid var(--border-color);
     color: var(--text-primary);
   }
   
-  .dark .input, [data-theme="dark"] .input {
-    @apply bg-[var(--bg-surface)] border-[var(--border-color)] text-[var(--text-primary)];
-  }
-  
   .textarea {
-    @apply w-full min-h-[120px] px-3 py-2 bg-white border border-gray-300 rounded text-[14px] leading-relaxed
+    @apply w-full min-h-[120px] px-3 py-2 rounded text-[14px] leading-relaxed
     focus:outline-none focus:border-[var(--accent)] focus:ring-1 focus:ring-[var(--accent)]/20 resize-y
     transition-colors duration-150;
+    background-color: var(--bg-surface);
+    border: 1px solid var(--border-color);
+    color: var(--text-primary);
+  }
+
+  .input::placeholder, .textarea::placeholder {
+    color: var(--text-secondary);
+    opacity: 0.85;
+  }
+
+  /* 原生 Date 選擇器圖示高對比適配 */
+  input[type="date"] {
+    color-scheme: light;
+  }
+  
+  :root.dark input[type="date"], html.dark input[type="date"] {
+    color-scheme: dark;
+  }
+
+  /* Select 下拉選單 Option 高對比 */
+  select.input option {
+    background-color: var(--bg-surface);
     color: var(--text-primary);
   }
   
@@ -122,24 +144,23 @@
   }
   
   .btn-secondary {
-    @apply bg-white text-[var(--text-primary)] border border-gray-300 hover:bg-gray-50 hover:border-gray-400;
-  }
-  
-  .dark .btn-secondary {
-    @apply bg-[var(--bg-surface)] border-[var(--border-color)] hover:bg-[var(--bg-base)];
+    background-color: var(--bg-surface);
+    color: var(--text-primary);
+    border: 1px solid var(--border-color);
+    @apply hover:opacity-90;
   }
   
   .btn-ghost {
-    @apply bg-transparent text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-gray-100;
+    @apply bg-transparent text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-gray-100 dark:hover:bg-gray-800;
   }
   
   .btn-danger {
     @apply bg-[var(--error)] text-white hover:bg-red-700 border border-transparent;
   }
   
-  /* 標籤 */
+  /* 標籤 (最小 13px) */
   .label {
-    @apply block text-[12px] font-medium text-[var(--text-secondary)] mb-1;
+    @apply block text-[13px] font-medium text-[var(--text-secondary)] mb-1;
   }
   
   /* 標題 */

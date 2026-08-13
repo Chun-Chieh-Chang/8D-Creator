@@ -30,13 +30,11 @@ export default function Sidebar({
 
   useEffect(() => {
     const saved = localStorage.getItem("theme") as "light" | "dark";
-    if (saved) {
-      setThemeState(saved);
-      document.documentElement.classList.toggle("dark", saved === "dark");
-    } else if (window.matchMedia("(prefers-color-scheme: dark)").matches) {
-      setThemeState("dark");
-      document.documentElement.classList.add("dark");
-    }
+    const isDark = saved ? saved === "dark" : window.matchMedia("(prefers-color-scheme: dark)").matches;
+    const currentTheme = isDark ? "dark" : "light";
+    setThemeState(currentTheme);
+    document.documentElement.classList.toggle("dark", isDark);
+    document.documentElement.classList.toggle("light", !isDark);
     setMounted(true);
   }, []);
 
@@ -72,6 +70,7 @@ export default function Sidebar({
     setThemeState(newTheme);
     localStorage.setItem("theme", newTheme);
     document.documentElement.classList.toggle("dark", newTheme === "dark");
+    document.documentElement.classList.toggle("light", newTheme === "light");
   };
 
   const filteredHistory = history.filter((report) => {
@@ -93,7 +92,7 @@ export default function Sidebar({
             </div>
             <div>
               <h1 className="text-sm font-semibold tracking-tight">8D 報告系統</h1>
-              <p className="text-[10px] text-[var(--text-secondary)]">Quality Management</p>
+              <p className="text-[13px] text-[var(--text-secondary)]">Quality Management</p>
             </div>
           </div>
           <div className="flex items-center gap-1">
@@ -135,7 +134,7 @@ export default function Sidebar({
               </div>
               <ArrowRight className="w-3 h-3 transition-transform group-open:rotate-90" />
             </summary>
-            <div className="px-3 pb-3 space-y-2 text-xs text-[var(--text-secondary)]">
+            <div className="px-3 pb-3 space-y-2 text-[13px] text-[var(--text-secondary)]">
               <ul className="space-y-1 list-disc list-inside">
                 <li>填寫問題描述後開始分析</li>
                 <li>與專家對話進行 5-Why 推導</li>
@@ -147,12 +146,12 @@ export default function Sidebar({
 
           {/* Provider Setting */}
           <div className="space-y-3">
-            <h2 className="text-xs font-medium text-[var(--text-secondary)] uppercase tracking-wide">AI 引擎設定</h2>
+            <h2 className="text-[13px] font-medium text-[var(--text-secondary)] uppercase tracking-wide">AI 引擎設定</h2>
             
             <div className="flex p-1 bg-gray-100 dark:bg-gray-800 rounded-lg">
               <button
                 onClick={() => handleProviderChange("agnes")}
-                className={`flex-1 py-1.5 rounded text-xs font-medium transition-all ${
+                className={`flex-1 py-1.5 rounded text-[13px] font-medium transition-all ${
                   provider === "agnes" ? "bg-white dark:bg-gray-700 shadow text-[var(--accent)]" : "text-[var(--text-secondary)]"
                 }`}
               >
@@ -160,7 +159,7 @@ export default function Sidebar({
               </button>
               <button
                 onClick={() => handleProviderChange("gemini")}
-                className={`flex-1 py-1.5 rounded text-xs font-medium transition-all ${
+                className={`flex-1 py-1.5 rounded text-[13px] font-medium transition-all ${
                   provider === "gemini" ? "bg-white dark:bg-gray-700 shadow text-[var(--accent)]" : "text-[var(--text-secondary)]"
                 }`}
               >
@@ -174,9 +173,9 @@ export default function Sidebar({
                 placeholder={provider === "agnes" ? "Agnes API Key" : "Gemini API Key"}
                 value={apiKey}
                 onChange={(e) => handleKeyChange(e.target.value, provider)}
-                className="input text-xs"
+                className="input text-[13px]"
               />
-              <p className="text-[10px] text-[var(--text-secondary)]">
+              <p className="text-[13px] text-[var(--text-secondary)]">
                 {provider === "agnes" ? (
                   <span>前往 <a href="https://apihub.agnes-ai.com" target="_blank" rel="noreferrer" className="text-[var(--accent)] underline">Agnes AI Hub</a> 取得金鑰</span>
                 ) : (
@@ -191,9 +190,9 @@ export default function Sidebar({
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <History className="w-4 h-4 text-[var(--text-secondary)]" />
-                <h2 className="text-xs font-medium text-[var(--text-secondary)] uppercase tracking-wide">報告紀錄</h2>
+                <h2 className="text-[13px] font-medium text-[var(--text-secondary)] uppercase tracking-wide">報告紀錄</h2>
               </div>
-              <span className="text-[10px] text-[var(--text-secondary)] bg-gray-100 dark:bg-gray-800 px-2 py-0.5 rounded-full">
+              <span className="text-[13px] text-[var(--text-secondary)] bg-gray-100 dark:bg-gray-800 px-2 py-0.5 rounded-full">
                 {history.length}
               </span>
             </div>
@@ -206,7 +205,7 @@ export default function Sidebar({
                 placeholder="搜尋..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="input pl-9 text-xs py-1.5"
+                className="input pl-9 text-[13px] py-1.5"
               />
             </div>
 
@@ -214,7 +213,7 @@ export default function Sidebar({
             <select
               value={filterCustomer}
               onChange={(e) => setFilterCustomer(e.target.value)}
-              className="input text-xs py-1.5 appearance-none"
+              className="input text-[13px] py-1.5 appearance-none"
             >
               <option value="">所有客戶</option>
               {Array.from(new Set(history.map(h => h.customerName).filter(Boolean)))
@@ -226,7 +225,7 @@ export default function Sidebar({
             {/* History List */}
             <div className="space-y-1.5">
               {filteredHistory.length === 0 ? (
-                <div className="text-center py-8 text-[var(--text-secondary)] text-xs">
+                <div className="text-center py-8 text-[var(--text-secondary)] text-[13px]">
                   <Clock className="w-8 h-8 mx-auto mb-2 opacity-30" />
                   <p>{history.length === 0 ? "尚無報告紀錄" : "無符合搜尋結果"}</p>
                 </div>
@@ -235,12 +234,12 @@ export default function Sidebar({
                   <div
                     key={report.id}
                     onClick={() => onSelectHistory(report)}
-                    className="group p-3 hover:bg-gray-50 dark:hover:bg-gray-800/50 rounded border border-transparent hover:border-[var(--border-color)] cursor-pointer transition-all"
+                    className="group p-3 hover:bg-gray-100 dark:hover:bg-gray-800/50 rounded border border-transparent hover:border-[var(--border-color)] cursor-pointer transition-all"
                   >
                     <div className="flex items-start justify-between gap-2">
                       <div className="min-w-0">
-                        <p className="text-xs font-medium truncate">{report.productInfo || "未命名報告"}</p>
-                        <p className="text-[10px] text-[var(--text-secondary)] mt-0.5">{report.date}</p>
+                        <p className="text-[13px] font-medium truncate">{report.productInfo || "未命名報告"}</p>
+                        <p className="text-[13px] text-[var(--text-secondary)] mt-0.5">{report.date}</p>
                       </div>
                       <button
                         onClick={(e) => {

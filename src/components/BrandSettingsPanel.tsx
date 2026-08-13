@@ -95,7 +95,7 @@ export default function BrandSettingsPanel({ onClose }: { onClose: () => void })
             </div>
             <div>
               <h2 className="text-base font-bold text-neutral-900 dark:text-white">品牌設定</h2>
-              <p className="text-xs text-neutral-500 dark:text-neutral-400">自訂報告外觀與識別</p>
+              <p className="text-[13px] text-neutral-500 dark:text-neutral-400">自訂報告外觀與識別</p>
             </div>
           </div>
           <button
@@ -148,7 +148,7 @@ export default function BrandSettingsPanel({ onClose }: { onClose: () => void })
                       style={{ backgroundColor: preset.accent }}
                     />
                   </div>
-                  <span className="text-[10px] font-medium text-neutral-600 dark:text-neutral-400">{preset.name}</span>
+                  <span className="text-[13px] font-medium text-neutral-600 dark:text-neutral-400">{preset.name}</span>
                 </button>
               ))}
             </div>
