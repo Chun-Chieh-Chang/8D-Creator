@@ -1,8 +1,8 @@
 import { 
   FileText, Trash2, Clock, History,
   ShieldCheck, Key, LayoutTemplate,
-  BoxSelect, Globe, Sun, Moon,
-  Info, ArrowRight
+  Sun, Moon,
+  Info, ArrowRight, Sparkles
 } from "lucide-react";
 import { ReportHistoryItem } from "@/lib/historyManager";
 import { useEffect, useState } from "react";
@@ -20,7 +20,7 @@ export default function Sidebar({
   onDeleteHistory, 
   onNewReport
 }: SidebarProps) {
-  const [provider, setProvider] = useState<"ollama" | "gemini">("gemini");
+  const [provider, setProvider] = useState<"agnes" | "gemini">("agnes");
   const [apiKey, setApiKey] = useState("");
   const [templateMode, setTemplateModeState] = useState<"standard" | "custom" | "uploaded">("standard");
   const [theme, setThemeState] = useState<"light" | "dark">("dark");
@@ -44,8 +44,8 @@ export default function Sidebar({
   useEffect(() => {
     const loadConfig = async () => {
       // 1. Load from localStorage first
-      const savedProvider = localStorage.getItem("ai-provider") as "ollama" | "gemini";
-      const savedKey = localStorage.getItem("gemini-api-key") || "";
+      const savedProvider = localStorage.getItem("ai-provider") as "agnes" | "gemini";
+      const savedKey = localStorage.getItem("agnes-api-key") || localStorage.getItem("gemini-api-key") || "";
       const savedTemplateMode = (localStorage.getItem("8d-template-mode") as "standard" | "custom" | "uploaded") || "standard";
       
       if (savedProvider) {
@@ -53,21 +53,28 @@ export default function Sidebar({
       }
       setApiKey(savedKey);
       setTemplateModeState(savedTemplateMode);
-
-      // Note: Config fetch removed to prevent 404 records in production console.
     };
 
     loadConfig();
   }, [theme]);
 
-  const handleProviderChange = (p: "ollama" | "gemini") => {
+  const handleProviderChange = (p: "agnes" | "gemini") => {
     setProvider(p);
     localStorage.setItem("ai-provider", p);
+    // Migrate old gemini key to new key storage
+    const oldKey = localStorage.getItem("gemini-api-key") || "";
+    if (oldKey && !localStorage.getItem("agnes-api-key")) {
+      localStorage.setItem("agnes-api-key", oldKey);
+    }
   };
 
-  const handleKeyChange = (k: string) => {
+  const handleKeyChange = (k: string, providerType?: "agnes" | "gemini") => {
     setApiKey(k);
-    localStorage.setItem("gemini-api-key", k);
+    // Store in appropriate key based on provider type or current provider
+    const keyStorage = providerType === "agnes" ? "agnes-api-key" : 
+                       providerType === "gemini" ? "gemini-api-key" : 
+                       provider === "agnes" ? "agnes-api-key" : "gemini-api-key";
+    localStorage.setItem(keyStorage, k);
   };
 
   const handleTemplateModeChange = (mode: "standard" | "custom" | "uploaded") => {
@@ -162,12 +169,12 @@ export default function Sidebar({
           
           <div className="flex p-1 bg-(--bg-base) rounded-xl border border-(--border-color)">
             <button 
-              onClick={() => handleProviderChange("ollama")}
+              onClick={() => handleProviderChange("agnes")}
               className={`flex-1 flex items-center justify-center gap-2 py-1.5 rounded-lg text-xs font-bold transition-all ${
-                provider === "ollama" ? "bg-(--bg-surface) shadow-sm text-(--accent)" : "text-(--text-secondary) hover:text-(--text-primary)"
+                provider === "agnes" ? "bg-(--bg-surface) shadow-sm text-(--accent)" : "text-(--text-secondary) hover:text-(--text-primary)"
               }`}
             >
-              <BoxSelect className="w-3.5 h-3.5" /> Ollama
+              <Sparkles className="w-3.5 h-3.5" /> Agnes AI
             </button>
             <button 
               onClick={() => handleProviderChange("gemini")}
@@ -179,6 +186,25 @@ export default function Sidebar({
             </button>
           </div>
 
+          {provider === "agnes" && (
+            <div className="space-y-4 animate-in slide-in-from-top-2 duration-300">
+              <div className="p-3 bg-(--accent)/5 rounded-xl border border-(--accent)/10">
+                <p className="text-[12px] text-(--text-secondary) leading-relaxed">
+                  請前往 <a href="https://apihub.agnes-ai.com" target="_blank" rel="noreferrer" className="text-(--accent) font-bold hover:underline decoration-2 underline-offset-4">Agnes AI Hub</a> 取得您的 API Key (使用 AGNES_API_KEY)。
+                </p>
+              </div>
+              <div className="relative group/input">
+                <input
+                  type="password"
+                  placeholder="Paste your Agnes API Key..."
+                  className="premium-input pl-11 h-12 text-[14px] w-full px-3 py-2 bg-(--bg-surface) border border-(--border-color) rounded-lg focus:ring-2 focus:ring-(--accent)/10 focus:border-(--accent) outline-none transition-all"
+                  value={apiKey}
+                  onChange={(e) => handleKeyChange(e.target.value, "agnes")}
+                />
+                <Key className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-(--accent)" />
+              </div>
+            </div>
+          )}
           {provider === "gemini" && (
             <div className="space-y-4 animate-in slide-in-from-top-2 duration-300">
               <div className="p-3 bg-(--accent)/5 rounded-xl border border-(--accent)/10">
@@ -192,7 +218,7 @@ export default function Sidebar({
                   placeholder="Paste your Gemini API Key..."
                   className="premium-input pl-11 h-12 text-[14px] w-full px-3 py-2 bg-(--bg-surface) border border-(--border-color) rounded-lg focus:ring-2 focus:ring-(--accent)/10 focus:border-(--accent) outline-none transition-all"
                   value={apiKey}
-                  onChange={(e) => handleKeyChange(e.target.value)}
+                  onChange={(e) => handleKeyChange(e.target.value, "gemini")}
                 />
                 <Key className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-(--accent)" />
               </div>

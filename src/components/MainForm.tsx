@@ -6,7 +6,7 @@ import {
   Settings as SettingsIcon, LayoutTemplate
 } from "lucide-react";
 import ReactMarkdown from "react-markdown";
-import { generate8DReport, generate5WhyQuestion } from "@/lib/ollamaClient";
+import { generateAgnesReport, generateAgnes5Why } from "@/lib/agnesClient";
 import { generateGeminiReport, generateGemini5Why } from "@/lib/geminiClient";
 import { exportToDocx } from "@/lib/docxExporter";
 import { ReportHistoryItem, saveHistory } from "@/lib/historyManager";
@@ -72,8 +72,8 @@ export default function MainForm({ onReportGenerated, selectedHistory }: MainFor
   if (!isMounted) return <div className="flex-1 bg-(--bg-surface) animate-pulse" />;
 
   const getAISettings = () => {
-    const provider = localStorage.getItem("ai-provider") || "gemini";
-    const apiKey = localStorage.getItem("gemini-api-key") || "";
+    const provider = localStorage.getItem("ai-provider") || "agnes";
+    const apiKey = localStorage.getItem("agnes-api-key") || localStorage.getItem("gemini-api-key") || "";
     return { provider, apiKey };
   };
 
@@ -141,13 +141,17 @@ export default function MainForm({ onReportGenerated, selectedHistory }: MainFor
 
       if (provider === "gemini" && apiKey) {
         await generateGemini5Why(apiKey, fullContext, [], callback);
+      } else if (provider === "agnes" && apiKey) {
+        await generateAgnes5Why(apiKey, fullContext, [], callback);
       } else {
-        await generate5WhyQuestion(fullContext, [], callback);
+        setErrorMsg("請設定 API Key");
+        setIsGenerating(false);
+        return;
       }
       
       setAnalysisHistory([{ role: "assistant", content: firstQuestion }]);
     } catch {
-      setErrorMsg(provider === "gemini" ? "Gemini 連線失敗，請檢查 API Key" : "Ollama 分析初始化失敗");
+      setErrorMsg(provider === "gemini" ? "Gemini 連線失敗，請檢查 API Key" : "Agnes AI 連線失敗，請檢查 API Key");
     } finally {
       setIsGenerating(false);
     }
@@ -175,8 +179,10 @@ export default function MainForm({ onReportGenerated, selectedHistory }: MainFor
 
       if (provider === "gemini" && apiKey) {
         await generateGemini5Why(apiKey, fullContext, newHistory, callback);
+      } else if (provider === "agnes" && apiKey) {
+        await generateAgnes5Why(apiKey, fullContext, newHistory, callback);
       } else {
-        await generate5WhyQuestion(fullContext, newHistory, callback);
+        setErrorMsg("分析過程中斷 - 請檢查 API Key");
       }
 
       if (nextQuestion.includes("[FINISH_ANALYSIS]")) {
@@ -242,8 +248,10 @@ export default function MainForm({ onReportGenerated, selectedHistory }: MainFor
     try {
       if (provider === "gemini" && apiKey) {
         await generateGeminiReport(apiKey, prompt, callback);
+      } else if (provider === "agnes" && apiKey) {
+        await generateAgnesReport(apiKey, prompt, callback);
       } else {
-        await generate8DReport(prompt, callback);
+        setErrorMsg("最終生成失敗 - 請檢查 API Key");
       }
       
       const newHistory = saveHistory({
