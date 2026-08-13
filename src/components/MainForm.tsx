@@ -352,7 +352,16 @@ ${generatedContent}`;
 
   const handleExportHtml = () => {
     if (!generatedContent) return;
-    exportToHtml(generatedContent, "8D_Report_" + (formData.productInfo || "Draft"));
+    exportToHtml(generatedContent, {
+      title: "8D_Report_" + (formData.productInfo || "Draft"),
+      metadata: {
+        date: formData.date,
+        customer: formData.customerName,
+        product: formData.productInfo,
+        defectQuantity: formData.defectQuantity,
+        location: formData.location
+      }
+    });
   };
 
   return (
