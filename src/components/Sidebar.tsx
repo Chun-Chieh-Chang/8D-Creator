@@ -84,7 +84,7 @@ export default function Sidebar({
 
   return (
     <>
-      <aside className="w-72 border-r border-[var(--border-color)] bg-[var(--bg-surface)] flex flex-col h-screen sticky top-0">
+      <aside className="w-72 border-r border-[var(--border-color)] bg-[var(--bg-surface)] flex flex-col h-full sticky top-0">
         {/* Header */}
         <div className="p-5 border-b border-[var(--border-color)] flex items-center justify-between">
           <div className="flex items-center gap-3">

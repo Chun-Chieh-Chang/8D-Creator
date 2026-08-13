@@ -309,7 +309,7 @@ export default function MainForm({ onReportGenerated, selectedHistory }: MainFor
   };
 
   return (
-    <div className="flex-1 overflow-y-auto bg-[var(--bg-base)]">
+    <div className="flex-1 overflow-y-auto bg-[var(--bg-base)] min-h-screen">
       <div className="max-w-7xl mx-auto p-6 space-y-6">
         
         {/* Step Indicator */}
