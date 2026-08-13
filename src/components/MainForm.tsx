@@ -9,6 +9,7 @@ import ReactMarkdown from "react-markdown";
 import { generateAgnesReport, generateAgnes5Why } from "@/lib/agnesClient";
 import { generateGeminiReport, generateGemini5Why } from "@/lib/geminiClient";
 import { exportToDocx } from "@/lib/docxExporter";
+import { exportToHtml } from "@/lib/htmlExporter";
 import { ReportHistoryItem, saveHistory } from "@/lib/historyManager";
 import { parseFile } from "@/lib/fileParser";
 import { getActivePromptTemplate } from "@/lib/templateStore";
@@ -320,6 +321,11 @@ ${generatedContent}`;
   const handleDownload = () => {
     if (!generatedContent) return;
     exportToDocx(generatedContent, "8D_Report_" + (formData.productInfo || "Draft"));
+  };
+
+  const handleExportHtml = () => {
+    if (!generatedContent) return;
+    exportToHtml(generatedContent, "8D_Report_" + (formData.productInfo || "Draft"));
   };
 
   return (
@@ -692,6 +698,9 @@ ${generatedContent}`;
                     </button>
                     <button onClick={handleDownload} className="btn-secondary h-10 px-6">
                       <FileDown className="w-4 h-4 mr-2" /> 匯出 Word
+                    </button>
+                    <button onClick={handleExportHtml} className="btn-secondary h-10 px-6">
+                      <FileText className="w-4 h-4 mr-2" /> 匯出 HTML
                     </button>
                   </div>
                 </div>
