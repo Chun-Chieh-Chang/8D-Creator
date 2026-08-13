@@ -43,13 +43,15 @@ next-env.d.ts
 # Local config
 /config.json
 
-# Generated reports
+# Generated reports & temporary uploads
 *.docx
+upload_*
 
 # Antigravity brain
 /brain/
 /.gemini/
 /DEV_LOG.md
+
 
 # Env files
 .env*

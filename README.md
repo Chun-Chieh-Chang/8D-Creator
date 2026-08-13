@@ -1,36 +1,43 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 8D 報告智能生成系統 (AI 8D Creator)
 
-## Getting Started
+企業級 AI 驅動的 8D 問題解決報告生成與分析系統。支援雙 AI 引擎 (Agnes AI / Gemini)、5-Why 根本原因推導、風險評估 (RPN) 與多格式專業匯出 (Word, HTML, PDF)。
 
-First, run the development server:
+---
 
+## 🌟 核心特色 (Features)
+
+- **雙 AI 引擎靈活切換**：支援 Agnes AI Hub 與 Google Gemini AI。
+- **5-Why 專家引導分析**：互動式對話進行 5-Why 根本原因拆解與推導。
+- **色彩大師規範 (Color Master Palette)**：
+  - **Light Mode**：`#F9FAFB` 高質感微灰底、`#FFFFFF` 純白卡片與 `#111827` 高對比文字。
+  - **Dark Mode**：`#0F172A` Slate 900 深色底、`#1E293B` Slate 800 卡片與 `#F1F5F9` 舒適亮字。
+- **全站 13px+ 讀寫規範**：符合最小字級 13px 標準與高對比欄位視覺。
+- **多格式匯出**：一鍵匯出 Word (.docx)、高質感 HTML (.html) 與 PDF 報告。
+- **歷史案例記錄**：支援 localStorage 自動儲存、模糊搜尋與客戶篩選。
+
+---
+
+## 🚀 快速開始 (Getting Started)
+
+### 本地開發
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+```
+瀏覽器開啟 [http://localhost:3000](http://localhost:3000)。
+
+### 確效與構建
+```bash
+npx tsc --noEmit
+npm run build
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+---
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## 🛠️ 技術棧 (Tech Stack)
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+- **Framework**: Next.js 16 (App Router)
+- **Styling**: Tailwind CSS v4 + Vanilla CSS Design Tokens
+- **Icons**: Lucide React
+- **Exporting**: docx, html2pdf.js, custom HTML templates
 
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
