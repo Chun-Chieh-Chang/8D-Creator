@@ -12,7 +12,7 @@ import { exportToDocx } from "@/lib/docxExporter";
 import { exportToHtml } from "@/lib/htmlExporter";
 import { ReportHistoryItem, saveHistory } from "@/lib/historyManager";
 import { parseFile } from "@/lib/fileParser";
-import { getActivePromptTemplate } from "@/lib/templateStore";
+import { getTemplateContent } from "@/lib/templateStore";
 import { buildEnhancedReportPrompt } from "@/lib/tools/promptBuilder";
 
 interface MainFormProps {
