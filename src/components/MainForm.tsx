@@ -359,7 +359,13 @@ ${generatedContent}`;
         customer: formData.customerName,
         product: formData.productInfo,
         defectQuantity: formData.defectQuantity,
-        location: formData.location
+        location: formData.location,
+        problemDescription: formData.problemTitle + '\n\n' + formData.defectDescription
+      },
+      bumpVersion: 'patch',
+      changelog: ['初始生成'],
+      brandSettings: {
+        companyName: formData.customerName || 'AI 8D Generator'
       }
     });
   };
