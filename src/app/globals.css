@@ -153,6 +153,14 @@
   }
 }
 
+/* 布局容器 */
+.layout-container {
+  display: flex;
+  min-height: 100vh;
+  background-color: var(--bg-base);
+  color: var(--text-primary);
+}
+
 /* 滾動條 - 低調 */
 ::-webkit-scrollbar {
   width: 6px;
