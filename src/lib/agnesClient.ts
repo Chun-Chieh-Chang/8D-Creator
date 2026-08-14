@@ -3,17 +3,6 @@ import { ChatMessage, StreamCallback } from "./types";
 const AGNES_BASE_URL = "https://apihub.agnes-ai.com/v1";
 const AGNES_MODEL = "agnes-2.5-flash";
 
-interface ChatChoice {
-  message: {
-    role: string;
-    content: string;
-  };
-}
-
-interface ChatResponse {
-  choices: ChatChoice[];
-}
-
 // Exponential backoff retry helper
 async function withRetry<T>(
   fn: () => Promise<T>,

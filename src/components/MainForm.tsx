@@ -13,7 +13,7 @@ import { exportToPdf } from "@/lib/pdfExporter";
 import { ReportHistoryItem, saveHistory } from "@/lib/historyManager";
 import { parseFile } from "@/lib/fileParser";
 import { buildEnhancedReportPrompt } from "@/lib/tools/promptBuilder";
-import { calculateRPN, findSimilarCases } from "@/lib/tools/analysisTools";
+import { calculateRPN, findSimilarCases, SimilarCase } from "@/lib/tools/analysisTools";
 import { getHistory } from "@/lib/historyManager";
 
 interface MainFormProps {
@@ -36,6 +36,7 @@ export default function MainForm({ onReportGenerated, selectedHistory }: MainFor
     date: selectedHistory?.date || new Date().toISOString().split("T")[0],
     defectQuantity: selectedHistory?.defectQuantity || 1,
     productInfo: selectedHistory?.productInfo || "",
+    productBatch: selectedHistory?.productBatch || "",
     customerName: selectedHistory?.customerName || "",
   });
 
@@ -56,7 +57,7 @@ export default function MainForm({ onReportGenerated, selectedHistory }: MainFor
 
   // Assessment state
   const [riskResult, setRiskResult] = useState<{ rpn: number; priority: string } | null>(null);
-  const [similarItems, setSimilarItems] = useState<any[]>([]);
+  const [similarItems, setSimilarItems] = useState<SimilarCase[]>([]);
   const [analysisProgress, setAnalysisProgress] = useState(0);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
 
@@ -257,6 +258,7 @@ export default function MainForm({ onReportGenerated, selectedHistory }: MainFor
       const newItem = saveHistory({
         date: formData.date,
         productInfo: formData.productInfo,
+        productBatch: formData.productBatch,
         customerName: formData.customerName,
         defectQuantity: formData.defectQuantity,
         problemDescription: [formData.problemTitle, formData.defectDescription].filter(Boolean).join('\n'),
@@ -292,6 +294,7 @@ export default function MainForm({ onReportGenerated, selectedHistory }: MainFor
         date: formData.date,
         customer: formData.customerName,
         product: formData.productInfo,
+        productBatch: formData.productBatch,
         defectQuantity: formData.defectQuantity,
         location: formData.location
       }
@@ -501,6 +504,11 @@ export default function MainForm({ onReportGenerated, selectedHistory }: MainFor
                 </div>
                 
                 <div>
+                  <label className="label">產品批號</label>
+                  <input type="text" name="productBatch" value={formData.productBatch} onChange={handleChange} placeholder="例：B2026-0813-01" className="input" />
+                </div>
+                
+                <div>
                   <label className="label">客戶名稱</label>
                   <input type="text" name="customerName" value={formData.customerName} onChange={handleChange} placeholder="輸入客戶" className="input" />
                 </div>
@@ -639,7 +647,7 @@ export default function MainForm({ onReportGenerated, selectedHistory }: MainFor
                     相關歷史案例 ({similarItems.length})
                   </p>
                   <p className="text-[13px] text-blue-600 dark:text-blue-400">
-                    {similarItems.slice(0, 3).map((c: any, i: number) => `#${c.caseId} (${c.similarity}%)`).join('、')}
+                    {similarItems.slice(0, 3).map((c: SimilarCase) => `#${c.caseId} (${c.similarity}%)`).join('、')}
                   </p>
                 </div>
               )}

@@ -1,6 +1,8 @@
 // src/lib/tools/analysisTools.ts
 // 專門用於 8D 報告分析的 AI 工具集合
 
+import { ReportHistoryItem } from '../historyManager';
+
 export interface AnalysisResult {
   causeType: 'systemic' | 'human' | 'equipment' | 'material' | 'method' | 'environment';
   confidence: number; // 0-100
@@ -27,10 +29,7 @@ export interface SimilarCase {
  * 工具 1：根本原因分類與評估
  * 分析用戶輸入，判斷根本原因類型並評估置信度
  */
-export function classifyRootCause(
-  causeStatement: string,
-  context: string
-): AnalysisResult {
+export function classifyRootCause(): AnalysisResult {
   // AI 會使用這個工具來分析根本原因
   const result: AnalysisResult = {
     causeType: 'systemic', // 預設值，AI 會根據實際內容調整
@@ -81,7 +80,7 @@ export function findSimilarCases(
     product: string;
     location: string;
   },
-  history: any[]
+  history: ReportHistoryItem[]
 ): SimilarCase[] {
   // 實作簡易匹配邏輯
   const matches: SimilarCase[] = [];
@@ -197,8 +196,7 @@ export function checkReportCompleteness(
  */
 export function predictMeasureEffectiveness(
   measure: string,
-  causeType: string,
-  historicalData: any[]
+  causeType: string
 ): {
   predictedReduction: number; // 預計降低百分比
   confidence: number;

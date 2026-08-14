@@ -3,11 +3,28 @@
 
 import { getHistory } from '../historyManager';
 import { 
-  classifyRootCause, 
-  calculateRPN, 
-  findSimilarCases,
-  checkReportCompleteness 
+  findSimilarCases
 } from './analysisTools';
+
+/**
+ * 報告生成所需的表單輸入資料
+ */
+export interface ReportInputData {
+  problemTitle?: string;
+  occurrenceTime?: string;
+  location?: string;
+  customerName?: string;
+  productInfo?: string;
+  productBatch?: string;
+  defectQuantity?: number;
+  date?: string;
+  defectDescription?: string;
+  detectionMethod?: string;
+  impactScope?: string;
+  preliminaryCause?: string;
+  processStage?: string;
+  severity?: number;
+}
 
 /**
  * 生成增強型 5-Why 分析提示
@@ -141,7 +158,7 @@ ${nextQuestion}
  */
 export function buildEnhancedReportPrompt(
   analysisSummary: string,
-  formData: any
+  formData: ReportInputData
 ): string {
   
   const template = `# 8D 問題解決報告
@@ -158,6 +175,7 @@ export function buildEnhancedReportPrompt(
 **發生地點/線別**：${formData.location || '待確認'}  
 **客戶名稱**：${formData.customerName || '待確認'}  
 **產品/型號**：${formData.productInfo || '待確認'}  
+**產品批號**：${formData.productBatch || '待確認'}  
 **不良數量**：${formData.defectQuantity || '待確認'} pcs  
 
 ### 缺陷現象詳細描述

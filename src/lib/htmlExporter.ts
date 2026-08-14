@@ -3,7 +3,7 @@
  * 支援版本追蹤、品牌客製化、PDF 品質輸出
  */
 
-import { getLatestVersion, createVersionRecord, generateNewVersion } from './versionTracker';
+import { createVersionRecord } from './versionTracker';
 import { getBrandConfig } from './brandConfig';
 
 // ==================== Types ====================
@@ -13,6 +13,7 @@ interface ReportMetadata {
   date: string;
   customer: string;
   product: string;
+  productBatch: string;
   defectQuantity: number;
   problemDescription: string;
   location: string;
@@ -106,6 +107,10 @@ function parseMetadata(markdown: string, fallback: Partial<ReportMetadata>): Rep
       meta.product = trimmed.replace(/^(產品|Product|型號).*[:：]\s*/, '');
     }
     
+    if (/^(產品批號|Product Batch).*[:：]/i.test(trimmed)) {
+      meta.productBatch = trimmed.replace(/^(產品批號|Product Batch).*[:：]\s*/, '');
+    }
+    
     if (/^不良數.*(量)?[:：]/i.test(trimmed)) {
       const match = trimmed.match(/(\d+)/);
       if (match) meta.defectQuantity = parseInt(match[1], 10);
@@ -121,6 +126,7 @@ function parseMetadata(markdown: string, fallback: Partial<ReportMetadata>): Rep
     date: fallback.date || meta.date || new Date().toLocaleDateString('zh-TW'),
     customer: fallback.customer || meta.customer || '待填寫',
     product: fallback.product || meta.product || '待填寫',
+    productBatch: fallback.productBatch || meta.productBatch || '待填寫',
     defectQuantity: fallback.defectQuantity || meta.defectQuantity || 0,
     problemDescription: fallback.problemDescription || meta.problemDescription || '',
     location: fallback.location || meta.location || '待填寫'
@@ -865,6 +871,10 @@ function generateHtmlDocument(options: DocOptions): string {
         <div class="meta-item">
           <span class="meta-label">產品型號</span>
           <span class="meta-value">${escapeHtml(metadata.product)}</span>
+        </div>
+        <div class="meta-item">
+          <span class="meta-label">產品批號</span>
+          <span class="meta-value">${escapeHtml(metadata.productBatch)}</span>
         </div>
         <div class="meta-item">
           <span class="meta-label">不良數量</span>

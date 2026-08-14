@@ -4,6 +4,7 @@ export interface ReportHistoryItem {
   timestamp: number;
   date: string;
   productInfo: string;
+  productBatch: string;
   customerName: string;
   defectQuantity: number;
   problemDescription: string;

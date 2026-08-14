@@ -2,7 +2,7 @@
 import { 
   Document, Packer, Paragraph, TextRun, HeadingLevel, 
   Table, TableRow, TableCell, WidthType, AlignmentType,
-  BorderStyle, ShadingType, PageBreak
+  BorderStyle, ShadingType
 } from "docx";
 import { saveAs } from "file-saver";
 

@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
 import { 
-  Settings as SettingsIcon, 
   Building2, 
   Palette, 
   Type, 
@@ -49,15 +48,17 @@ export default function BrandSettingsPanel({ onClose }: { onClose: () => void })
   const [saved, setSaved] = useState(false);
 
   useEffect(() => {
-    setMounted(true);
+    requestAnimationFrame(() => setMounted(true));
     const saved = getBrandConfig();
     if (saved) {
-      setSettings({
-        companyName: saved.companyName || '',
-        primaryColor: saved.primaryColor || DEFAULT_SETTINGS.primaryColor,
-        accentColor: saved.accentColor || DEFAULT_SETTINGS.accentColor,
-        customFont: saved.customFont || DEFAULT_SETTINGS.customFont,
-        watermarkText: saved.watermarkText || '',
+      requestAnimationFrame(() => {
+        setSettings({
+          companyName: saved.companyName || '',
+          primaryColor: saved.primaryColor || DEFAULT_SETTINGS.primaryColor,
+          accentColor: saved.accentColor || DEFAULT_SETTINGS.accentColor,
+          customFont: saved.customFont || DEFAULT_SETTINGS.customFont,
+          watermarkText: saved.watermarkText || '',
+        });
       });
     }
   }, []);

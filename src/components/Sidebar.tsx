@@ -32,10 +32,12 @@ export default function Sidebar({
     const saved = localStorage.getItem("theme") as "light" | "dark";
     const isDark = saved ? saved === "dark" : window.matchMedia("(prefers-color-scheme: dark)").matches;
     const currentTheme = isDark ? "dark" : "light";
-    setThemeState(currentTheme);
+    requestAnimationFrame(() => {
+      setThemeState(currentTheme);
+      setMounted(true);
+    });
     document.documentElement.classList.toggle("dark", isDark);
     document.documentElement.classList.toggle("light", !isDark);
-    setMounted(true);
   }, []);
 
   useEffect(() => {
@@ -256,6 +258,13 @@ export default function Sidebar({
               )}
             </div>
           </div>
+        </div>
+
+        {/* Author Info */}
+        <div className="p-4 border-t border-[var(--border-color)] bg-[var(--bg-surface)]">
+          <p className="text-[13px] text-[var(--text-secondary)] text-center opacity-70">
+            Developed by Wesley Chang @Mouldex, Aug-2006.
+          </p>
         </div>
       </aside>
 
