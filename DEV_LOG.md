@@ -1,4 +1,4 @@
-# 8D Creator — 開發日誌 (DEV_LOG)
+﻿# 8D Creator — 開發日誌 (DEV_LOG)
 
 專案開發歷程、設計標準、失敗紀錄 (RCA) 與版更紀錄。本文件隨專案變更同步更新。
 
@@ -87,4 +87,4 @@
 
 ---
 
-*Developed by Wesley Chang @Mouldex, Aug-2006.*
+*Developed by Wesley Chang @Mouldex, Aug-2026.*

@@ -1,4 +1,4 @@
-# 8D Creator (AI 8D Problem Solving System)
+﻿# 8D Creator (AI 8D Problem Solving System)
 
 企業級 AI 驅動 8D 問題解決報告系統。支援 AI 引導 (Agnes AI / Gemini) 的 5-Why 根本原因分析、風險評估 (RPN)、相似案例比對與專業檔案匯出 (Word, HTML, PDF)。
 
@@ -67,4 +67,4 @@ npm run build      # 生產建置
 
 ---
 
-*Developed by Wesley Chang @Mouldex, Aug-2006.*
+*Developed by Wesley Chang @Mouldex, Aug-2026.*

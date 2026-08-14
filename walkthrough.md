@@ -1,4 +1,4 @@
-# 8D Creator — Walkthrough（專案 Wiki）
+﻿# 8D Creator — Walkthrough（專案 Wiki）
 
 本文件說明 8D Creator 的整體架構、操作流程與部署方式，作為專案 wiki 使用。
 
@@ -107,4 +107,4 @@ A: 瀏覽器可能封鎖彈出視窗，請允許 `localhost` 或 GitHub Pages �
 
 ---
 
-*Developed by Wesley Chang @Mouldex, Aug-2006.*
+*Developed by Wesley Chang @Mouldex, Aug-2026.*

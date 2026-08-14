@@ -1,4 +1,4 @@
-import { 
+﻿import { 
   FileText, Trash2, Clock, History,
   Sun, Moon, Search,
   Info, ArrowRight, Palette
@@ -263,7 +263,7 @@ export default function Sidebar({
         {/* Author Info */}
         <div className="p-4 border-t border-[var(--border-color)] bg-[var(--bg-surface)]">
           <p className="text-[13px] text-[var(--text-secondary)] text-center opacity-70">
-            Developed by Wesley Chang @Mouldex, Aug-2006.
+            Developed by Wesley Chang @Mouldex, Aug-2026.
           </p>
         </div>
       </aside>
