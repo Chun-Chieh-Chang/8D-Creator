@@ -22,8 +22,6 @@ export interface AIConfig {
 
 export const AGNES_BASE_URL = "https://apihub.agnes-ai.com/v1";
 export const GEMINI_BASE_URL = "https://generativelanguage.googleapis.com";
-export const DEFAULT_MODEL = "agnes-2.5-flash";
-export const DEFAULT_GEMINI_MODEL = "gemini-2.5-flash";
 
 export const OFFICIAL_MODELS = {
   agnes: [
@@ -47,6 +45,10 @@ export const OFFICIAL_MODELS = {
     { id: "gemini-1.5-pro", name: "gemini-1.5-pro (經典長文本)" }
   ]
 } as const;
+
+// 預設模型直接取自可選清單首位（清單增刪時自動跟隨，無需另行維護）
+export const DEFAULT_MODEL: string = OFFICIAL_MODELS.agnes[0].id;
+export const DEFAULT_GEMINI_MODEL: string = OFFICIAL_MODELS.gemini3[0].id;
 
 export class EightDAIService {
   private providerKey = "ai-provider";
