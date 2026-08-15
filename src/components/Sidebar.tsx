@@ -1,11 +1,13 @@
 ﻿import { 
   FileText, Trash2, Clock, History,
   Sun, Moon, Search,
-  Info, ArrowRight, Palette
+  Info, ArrowRight, Palette, Settings2
 } from "lucide-react";
 import { ReportHistoryItem } from "@/lib/historyManager";
 import { useEffect, useState } from "react";
 import BrandSettingsPanel from "./BrandSettingsPanel";
+import AISettingsModal from "./AISettingsModal";
+import { aiService, DEFAULT_MODEL, DEFAULT_GEMINI_MODEL } from "@/lib/ai_service";
 
 interface SidebarProps {
   onSelectHistory: (report: ReportHistoryItem) => void;
@@ -27,6 +29,7 @@ export default function Sidebar({
   const [searchQuery, setSearchQuery] = useState("");
   const [filterCustomer, setFilterCustomer] = useState("");
   const [showBrandSettings, setShowBrandSettings] = useState(false);
+  const [showAISettings, setShowAISettings] = useState(false);
 
   useEffect(() => {
     const saved = localStorage.getItem("theme") as "light" | "dark";
@@ -53,10 +56,18 @@ export default function Sidebar({
   const handleProviderChange = (p: "agnes" | "gemini") => {
     setProvider(p);
     localStorage.setItem("ai-provider", p);
+    // 同步預設模型，確保快速切換與進階設定一致
+    localStorage.setItem("8D_AI_MODEL", p === "gemini" ? DEFAULT_GEMINI_MODEL : DEFAULT_MODEL);
     const oldKey = localStorage.getItem("gemini-api-key") || "";
     if (oldKey && !localStorage.getItem("agnes-api-key")) {
       localStorage.setItem("agnes-api-key", oldKey);
     }
+  };
+
+  const refreshConfig = () => {
+    const conf = aiService.getConfig();
+    setProvider(conf.provider);
+    setApiKey(conf.apiKey);
   };
 
   const handleKeyChange = (k: string, providerType?: "agnes" | "gemini") => {
@@ -98,6 +109,13 @@ export default function Sidebar({
             </div>
           </div>
           <div className="flex items-center gap-1">
+            <button
+              onClick={() => setShowAISettings(true)}
+              className="p-2 hover:bg-[var(--bg-base)] rounded text-[var(--text-secondary)] hover:text-[var(--accent)] transition-colors"
+              title="AI 引擎設定"
+            >
+              <Settings2 className="w-4 h-4" />
+            </button>
             <button
               onClick={() => setShowBrandSettings(true)}
               className="p-2 hover:bg-[var(--bg-base)] rounded text-[var(--text-secondary)] hover:text-[var(--accent)] transition-colors"
@@ -271,6 +289,14 @@ export default function Sidebar({
       {/* Brand Settings Modal */}
       {showBrandSettings && (
         <BrandSettingsPanel onClose={() => setShowBrandSettings(false)} />
+      )}
+
+      {/* AI Engine Settings Modal */}
+      {showAISettings && (
+        <AISettingsModal
+          onClose={() => setShowAISettings(false)}
+          onSaved={refreshConfig}
+        />
       )}
     </>
   );

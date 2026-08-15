@@ -33,6 +33,7 @@
 
 | 日期 | 版本 | 內容 |
 |------|------|------|
+| 2026-08-15 | v0.1.x | 多 Provider 模型適配整合：新增 `lib/ai_service.ts` 統一設定服務（Agnes 官方端點 + Google AI Studio Gemini 3.x/2.5/1.5 全系列 + 自訂 OpenAI-compatible 模型、Base URL 可設定、連線測試）；新增 `AISettingsModal` 進階設定（模型下拉 / API Key / Base URL / 測試連線）；agnes/gemini client 模型改為可設定（保留串流體驗）；Sidebar 快速切換與進階設定同步；相容既有 localStorage 設定 |
 | 2026-08-14 | v0.1.x | 專案優化作業：全面清理死碼與冗餘資源（移除未用依賴 pdfjs-dist、AI 工具快取、預設 SVG、無關截圖、死碼 barrel 檔）；同步 README / Wiki / DEV_LOG；修復 19 項 ESLint 問題（未用 import、`any` 型別、setState-in-effect）；新增產品批號欄位與作者資訊；建立版本基準並推送 |
 | 2026-08-13 | v0.1.x | 品牌設定面板重構為 CSS Design Tokens（AAA 對比度）；水平掃描對比度強化；企業級乾淨 UI 全面去除 AI 風格化設計 |
 | 2026-08-13 | v0.1.x | 專業 HTML 匯出（版本追蹤、品牌客製化、深淺色主題）；結構化問題描述（5W2H 卡片） |

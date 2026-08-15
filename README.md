@@ -6,7 +6,7 @@
 
 ## 功能特色 (Features)
 
-- **雙 AI 引擎**：支援 [Agnes AI Hub](https://apihub.agnes-ai.com) 與 Google Gemini API，可即時切換
+- **雙 AI 引擎**：支援 [Agnes AI Hub](https://apihub.agnes-ai.com) 與 Google AI Studio，可即時切換；完整模型適配（Agnes 官方端點 / Gemini 3.x・2.5・1.5 全系列 / 自訂 OpenAI-compatible 閘道），含進階設定面板與連線測試
 - **5-Why 專家引導分析**：透過互動對話逐步推導根本原因，自動生成 D1-D8 完整報告
 - **風險評估**：依 RPN (嚴重度 × 發生頻率 × 偵測難度) 自動分級高/中/低風險
 - **相似案例比對**：從歷史報告中自動尋找相似問題案例

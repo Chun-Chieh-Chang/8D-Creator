@@ -7,6 +7,7 @@ import {
 import ReactMarkdown from "react-markdown";
 import { generateAgnesReport, generateAgnes5Why } from "@/lib/agnesClient";
 import { generateGeminiReport, generateGemini5Why } from "@/lib/geminiClient";
+import { aiService } from "@/lib/ai_service";
 import { exportToDocx } from "@/lib/docxExporter";
 import { exportToHtml } from "@/lib/htmlExporter";
 import { exportToPdf } from "@/lib/pdfExporter";
@@ -68,9 +69,13 @@ export default function MainForm({ onReportGenerated, selectedHistory }: MainFor
   }, [chatHistory, currentMessage, step]);
 
   const getSettings = () => {
-    const provider = localStorage.getItem("ai-provider") || "agnes";
-    const apiKey = localStorage.getItem("agnes-api-key") || localStorage.getItem("gemini-api-key") || "";
-    return { provider, apiKey };
+    const conf = aiService.getConfig();
+    return {
+      provider: conf.provider,
+      apiKey: conf.apiKey,
+      model: aiService.getEffectiveModel(conf),
+      baseUrl: aiService.getEffectiveBaseUrl(conf)
+    };
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -125,7 +130,7 @@ export default function MainForm({ onReportGenerated, selectedHistory }: MainFor
     setIsLoading(true);
     setCurrentMessage("");
 
-    const { provider, apiKey } = getSettings();
+    const { provider, apiKey, model, baseUrl } = getSettings();
     const fileContext = uploadedFiles.map(f => `檔案 [${f.name}]:\n${f.content}`).join("\n\n");
     
     const context = [
@@ -153,9 +158,9 @@ export default function MainForm({ onReportGenerated, selectedHistory }: MainFor
       };
 
       if (provider === "gemini" && apiKey) {
-        await generateGemini5Why(apiKey, fullContext, [], callback);
+        await generateGemini5Why(apiKey, model, fullContext, [], callback);
       } else if (provider === "agnes" && apiKey) {
-        await generateAgnes5Why(apiKey, fullContext, [], callback);
+        await generateAgnes5Why(apiKey, model, baseUrl, fullContext, [], callback);
       } else {
         setErrorMsg("請設定 API Key");
         setIsAnalyzing(false);
@@ -184,7 +189,7 @@ export default function MainForm({ onReportGenerated, selectedHistory }: MainFor
     setAnalysisProgress(60);
     setCurrentMessage("");
 
-    const { provider, apiKey } = getSettings();
+    const { provider, apiKey, model, baseUrl } = getSettings();
     const fileContext = uploadedFiles.map(f => `檔案 [${f.name}]:\n${f.content}`).join("\n\n");
     
     const context = [
@@ -206,9 +211,9 @@ export default function MainForm({ onReportGenerated, selectedHistory }: MainFor
       };
 
       if (provider === "gemini" && apiKey) {
-        await generateGemini5Why(apiKey, fullContext, newHistory, callback);
+        await generateGemini5Why(apiKey, model, fullContext, newHistory, callback);
       } else if (provider === "agnes" && apiKey) {
-        await generateAgnes5Why(apiKey, fullContext, newHistory, callback);
+        await generateAgnes5Why(apiKey, model, baseUrl, fullContext, newHistory, callback);
       } else {
         setErrorMsg("請檢查 API Key");
       }
@@ -232,7 +237,7 @@ export default function MainForm({ onReportGenerated, selectedHistory }: MainFor
     setReportContent("");
     setIsLoading(true);
     
-    const { provider, apiKey } = getSettings();
+    const { provider, apiKey, model, baseUrl } = getSettings();
     
     const analysisSummary = history
       .map(h => `${h.role === "user" ? "用戶回答" : "專家"}: ${h.content}`)
@@ -248,9 +253,9 @@ export default function MainForm({ onReportGenerated, selectedHistory }: MainFor
 
     try {
       if (provider === "gemini" && apiKey) {
-        await generateGeminiReport(apiKey, reportPrompt, callback);
+        await generateGeminiReport(apiKey, model, reportPrompt, callback);
       } else if (provider === "agnes" && apiKey) {
-        await generateAgnesReport(apiKey, reportPrompt, callback);
+        await generateAgnesReport(apiKey, model, baseUrl, reportPrompt, callback);
       } else {
         setErrorMsg("生成失敗 - 請檢查 API Key");
       }

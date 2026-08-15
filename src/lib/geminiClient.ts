@@ -24,15 +24,16 @@ async function withRetry<T>(
 
 export async function generateGeminiReport(
   apiKey: string,
+  model: string,
   prompt: string,
   onChunk: StreamCallback
 ) {
   try {
     const genAI = new GoogleGenerativeAI(apiKey);
-    const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
+    const geminiModel = genAI.getGenerativeModel({ model });
 
     await withRetry(async () => {
-      const result = await model.generateContentStream(prompt);
+      const result = await geminiModel.generateContentStream(prompt);
 
       for await (const chunk of result.stream) {
         const chunkText = chunk.text();
@@ -47,10 +48,11 @@ export async function generateGeminiReport(
 
 export async function generateGemini5Why(
   apiKey: string,
+  model: string,
   context: string,
   history: ChatMessage[],
   onChunk: StreamCallback
 ) {
   const enhancedPrompt = buildEnhanced5WhyPrompt(context, history);
-  return generateGeminiReport(apiKey, enhancedPrompt, onChunk);
+  return generateGeminiReport(apiKey, model, enhancedPrompt, onChunk);
 }

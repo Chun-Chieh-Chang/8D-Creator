@@ -1,8 +1,5 @@
 import { ChatMessage, StreamCallback } from "./types";
 
-const AGNES_BASE_URL = "https://apihub.agnes-ai.com/v1";
-const AGNES_MODEL = "agnes-2.5-flash";
-
 // Exponential backoff retry helper
 async function withRetry<T>(
   fn: () => Promise<T>,
@@ -24,17 +21,19 @@ async function withRetry<T>(
 
 async function streamChatCompletions(
   apiKey: string,
+  model: string,
+  baseUrl: string,
   messages: { role: string; content: string }[],
   onChunk: StreamCallback
 ) {
-  const response = await fetch(`${AGNES_BASE_URL}/chat/completions`, {
+  const response = await fetch(`${baseUrl}/chat/completions`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
       Authorization: `Bearer ${apiKey}`,
     },
     body: JSON.stringify({
-      model: AGNES_MODEL,
+      model,
       messages,
       stream: true,
     }),
@@ -69,6 +68,8 @@ async function streamChatCompletions(
 
 export async function generateAgnesReport(
   apiKey: string,
+  model: string,
+  baseUrl: string,
   prompt: string,
   onChunk: StreamCallback,
   systemMessage?: string
@@ -82,7 +83,7 @@ export async function generateAgnesReport(
     
     messages.push({ role: "user", content: prompt });
     
-    await withRetry(() => streamChatCompletions(apiKey, messages, onChunk));
+    await withRetry(() => streamChatCompletions(apiKey, model, baseUrl, messages, onChunk));
   } catch (error) {
     console.error("Agnes Report Error:", error);
     throw error;
@@ -93,10 +94,12 @@ import { buildEnhanced5WhyPrompt } from './tools/promptBuilder';
 
 export async function generateAgnes5Why(
   apiKey: string,
+  model: string,
+  baseUrl: string,
   context: string,
   history: ChatMessage[],
   onChunk: StreamCallback
 ) {
   const enhancedPrompt = buildEnhanced5WhyPrompt(context, history);
-  return generateAgnesReport(apiKey, enhancedPrompt, onChunk);
+  return generateAgnesReport(apiKey, model, baseUrl, enhancedPrompt, onChunk);
 }
