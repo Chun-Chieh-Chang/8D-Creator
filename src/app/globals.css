@@ -90,14 +90,14 @@
   .card {
     background-color: var(--bg-surface);
     border: 1px solid var(--border-color);
-    border-radius: 6px;
+    border-radius: 8px;
     box-shadow: var(--shadow-sm);
   }
   
   /* 輸入框 - 標準企業風格高對比 */
   .input {
-    @apply w-full h-[38px] px-3 rounded text-[14px] 
-    focus:outline-none focus:border-[var(--accent)] focus:ring-1 focus:ring-[var(--accent)]/20
+    @apply w-full h-[42px] px-3.5 rounded-lg text-[14px] 
+    focus:outline-none focus:border-[var(--accent)] focus:ring-2 focus:ring-[var(--accent)]/20
     transition-colors duration-150;
     background-color: var(--bg-surface);
     border: 1px solid var(--border-color);
@@ -105,8 +105,8 @@
   }
   
   .textarea {
-    @apply w-full min-h-[120px] px-3 py-2 rounded text-[14px] leading-relaxed
-    focus:outline-none focus:border-[var(--accent)] focus:ring-1 focus:ring-[var(--accent)]/20 resize-y
+    @apply w-full min-h-[120px] px-3.5 py-2.5 rounded-lg text-[14px] leading-relaxed
+    focus:outline-none focus:border-[var(--accent)] focus:ring-2 focus:ring-[var(--accent)]/20 resize-y
     transition-colors duration-150;
     background-color: var(--bg-surface);
     border: 1px solid var(--border-color);
@@ -133,10 +133,10 @@
     color: var(--text-primary);
   }
   
-  /* 按鈕 - 實用為主 */
+  /* 按鈕 - 實用為主 (觸控友善與多態支持) */
   .btn {
-    @apply h-[36px] px-4 inline-flex items-center justify-center rounded text-[13px] font-medium
-    transition-all duration-150 disabled:opacity-50 disabled:cursor-not-allowed;
+    @apply min-h-[40px] px-4 py-2 inline-flex items-center justify-center rounded-lg text-[14px] font-medium
+    transition-all duration-150 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer select-none active:scale-[0.98];
   }
   
   .btn-primary {
@@ -158,14 +158,14 @@
     @apply bg-[var(--error)] text-white hover:bg-red-700 border border-transparent;
   }
   
-  /* 標籤 (最小 13px) */
+  /* 標籤 (14px) */
   .label {
-    @apply block text-[13px] font-medium text-[var(--text-secondary)] mb-1;
+    @apply block text-[14px] font-medium text-[var(--text-secondary)] mb-1.5;
   }
   
   /* 標題 */
   .section-title {
-    @apply text-[15px] font-semibold text-[var(--text-primary)] mb-3;
+    @apply text-[16px] font-semibold text-[var(--text-primary)] mb-3;
   }
   
   /* 分隔線 */

@@ -118,10 +118,10 @@ export default function AISettingsModal({ onClose, onSaved }: AISettingsModalPro
         </div>
 
         {/* Content */}
-        <div className="px-6 py-4 space-y-5 max-h-[60vh] overflow-y-auto">
+        <div className="px-4 sm:px-6 py-4 space-y-5 max-h-[70vh] overflow-y-auto">
 
           {/* Model Selection */}
-          <div className="space-y-2">
+          <div className="space-y-1.5">
             <label className="flex items-center gap-2 text-sm font-semibold text-[var(--text-primary)]">
               <Cpu className="w-4 h-4 text-[var(--accent)]" />
               模型選擇 (Model)
@@ -129,7 +129,7 @@ export default function AISettingsModal({ onClose, onSaved }: AISettingsModalPro
             <select
               value={model}
               onChange={(e) => handleModelChange(e.target.value)}
-              className="w-full h-10 px-3 bg-[var(--bg-base)] text-[var(--text-primary)] border border-[var(--border-color)] rounded-lg text-sm focus:ring-2 focus:ring-[var(--accent)]/20 focus:border-[var(--accent)] outline-none"
+              className="w-full h-11 px-3.5 bg-[var(--bg-base)] text-[var(--text-primary)] border border-[var(--border-color)] rounded-lg text-sm focus:ring-2 focus:ring-[var(--accent)]/20 focus:border-[var(--accent)] outline-none"
             >
               <optgroup label="🌟 Agnes AI 官方模型">
                 {OFFICIAL_MODELS.agnes.map((m) => (
@@ -169,7 +169,7 @@ export default function AISettingsModal({ onClose, onSaved }: AISettingsModalPro
 
           {/* Custom Model ID */}
           {model === "custom" && (
-            <div className="space-y-2">
+            <div className="space-y-1.5">
               <label className="flex items-center gap-2 text-sm font-semibold text-[var(--text-primary)]">
                 <Cpu className="w-4 h-4 text-[var(--accent)]" />
                 自訂 Model ID
@@ -179,13 +179,13 @@ export default function AISettingsModal({ onClose, onSaved }: AISettingsModalPro
                 value={customModel}
                 onChange={(e) => setCustomModel(e.target.value)}
                 placeholder="例如: agnes-2.5-flash, custom-llm"
-                className="w-full h-10 px-3 bg-[var(--bg-base)] text-[var(--text-primary)] placeholder:text-[var(--text-secondary)] placeholder:opacity-80 border border-[var(--border-color)] rounded-lg text-sm focus:ring-2 focus:ring-[var(--accent)]/20 focus:border-[var(--accent)] outline-none transition-all"
+                className="w-full h-11 px-3.5 bg-[var(--bg-base)] text-[var(--text-primary)] placeholder:text-[var(--text-secondary)] placeholder:opacity-80 border border-[var(--border-color)] rounded-lg text-sm focus:ring-2 focus:ring-[var(--accent)]/20 focus:border-[var(--accent)] outline-none transition-all"
               />
             </div>
           )}
 
           {/* API Key */}
-          <div className="space-y-2">
+          <div className="space-y-1.5">
             <label className="flex items-center gap-2 text-sm font-semibold text-[var(--text-primary)]">
               <KeyRound className="w-4 h-4 text-[var(--accent)]" />
               API Key / Bearer Token
@@ -195,9 +195,9 @@ export default function AISettingsModal({ onClose, onSaved }: AISettingsModalPro
               value={apiKey}
               onChange={(e) => setApiKey(e.target.value)}
               placeholder="輸入 AGNES_API_KEY 或 GEMINI_API_KEY..."
-              className="w-full h-10 px-3 bg-[var(--bg-base)] text-[var(--text-primary)] placeholder:text-[var(--text-secondary)] placeholder:opacity-80 border border-[var(--border-color)] rounded-lg text-sm focus:ring-2 focus:ring-[var(--accent)]/20 focus:border-[var(--accent)] outline-none transition-all"
+              className="w-full h-11 px-3.5 bg-[var(--bg-base)] text-[var(--text-primary)] placeholder:text-[var(--text-secondary)] placeholder:opacity-80 border border-[var(--border-color)] rounded-lg text-sm focus:ring-2 focus:ring-[var(--accent)]/20 focus:border-[var(--accent)] outline-none transition-all"
             />
-            <p className="text-[13px] text-[var(--text-secondary)]">
+            <p className="text-xs sm:text-[13px] text-[var(--text-secondary)]">
               {selectedProvider === "gemini" ? (
                 <span>前往 <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noreferrer" className="text-[var(--accent)] font-medium underline">Google AI Studio</a> 免費申請金鑰</span>
               ) : (
@@ -207,7 +207,7 @@ export default function AISettingsModal({ onClose, onSaved }: AISettingsModalPro
           </div>
 
           {/* Base URL */}
-          <div className="space-y-2">
+          <div className="space-y-1.5">
             <label className="flex items-center gap-2 text-sm font-semibold text-[var(--text-primary)]">
               <Link2 className="w-4 h-4 text-[var(--accent)]" />
               API Base URL
@@ -217,16 +217,16 @@ export default function AISettingsModal({ onClose, onSaved }: AISettingsModalPro
               value={baseUrl}
               onChange={(e) => setBaseUrl(e.target.value)}
               placeholder="https://apihub.agnes-ai.com/v1"
-              className="w-full h-10 px-3 bg-[var(--bg-base)] text-[var(--text-primary)] placeholder:text-[var(--text-secondary)] placeholder:opacity-80 border border-[var(--border-color)] rounded-lg text-sm focus:ring-2 focus:ring-[var(--accent)]/20 focus:border-[var(--accent)] outline-none transition-all"
+              className="w-full h-11 px-3.5 bg-[var(--bg-base)] text-[var(--text-primary)] placeholder:text-[var(--text-secondary)] placeholder:opacity-80 border border-[var(--border-color)] rounded-lg text-sm focus:ring-2 focus:ring-[var(--accent)]/20 focus:border-[var(--accent)] outline-none transition-all"
             />
-            <p className="text-[13px] text-[var(--text-secondary)]">
+            <p className="text-xs sm:text-[13px] text-[var(--text-secondary)]">
               支援 Agnes 官方端點、Google AI Studio 或任何 OpenAI 相容 Proxy Gateway
             </p>
           </div>
 
           {/* Test Result */}
           {testResult && (
-            <div className={`p-3 rounded-lg text-[13px] border ${
+            <div className={`p-3 rounded-lg text-sm border ${
               testResult.success
                 ? "bg-green-500/10 text-green-600 dark:text-green-400 border-green-500/30"
                 : "bg-red-500/10 text-red-600 dark:text-red-400 border-red-500/30"
@@ -237,26 +237,26 @@ export default function AISettingsModal({ onClose, onSaved }: AISettingsModalPro
         </div>
 
         {/* Footer Actions */}
-        <div className="flex items-center justify-between px-6 py-4 border-t border-[var(--border-color)] bg-[var(--bg-base)]">
+        <div className="flex flex-wrap items-center justify-between gap-3 px-4 sm:px-6 py-4 border-t border-[var(--border-color)] bg-[var(--bg-base)]">
           <button
             onClick={handleTest}
             disabled={testing}
-            className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-[var(--accent)] hover:bg-[var(--accent)]/10 rounded-lg transition-colors disabled:opacity-50"
+            className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-[var(--accent)] hover:bg-[var(--accent)]/10 rounded-lg transition-colors disabled:opacity-50 min-h-[40px]"
           >
             <Zap className="w-4 h-4" />
             {testing ? "測試中..." : "測試連線"}
           </button>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3 ml-auto">
             <button
               onClick={onClose}
-              className="px-4 py-2 text-sm font-medium text-[var(--text-secondary)] hover:bg-[var(--bg-surface)] hover:text-[var(--text-primary)] rounded-lg transition-colors"
+              className="px-3.5 sm:px-4 py-2 text-sm font-medium text-[var(--text-secondary)] hover:bg-[var(--bg-surface)] hover:text-[var(--text-primary)] rounded-lg transition-colors min-h-[40px]"
             >
               取消
             </button>
             <button
               onClick={handleSave}
-              className="flex items-center gap-2 px-5 py-2 bg-[var(--accent)] hover:bg-[var(--accent-hover)] text-white text-sm font-semibold rounded-lg transition-colors shadow-lg shadow-[var(--accent)]/20"
+              className="flex items-center gap-2 px-4 sm:px-5 py-2 bg-[var(--accent)] hover:bg-[var(--accent-hover)] text-white text-sm font-semibold rounded-lg transition-colors shadow-md shadow-[var(--accent)]/20 min-h-[40px]"
             >
               <CheckCircle2 className="w-4 h-4" />
               儲存設定

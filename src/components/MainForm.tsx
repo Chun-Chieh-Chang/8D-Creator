@@ -317,37 +317,37 @@ export default function MainForm({ onReportGenerated, selectedHistory }: MainFor
   };
 
   return (
-    <div className="flex-1 overflow-y-auto bg-[var(--bg-base)] min-h-screen">
-      <div className="max-w-7xl mx-auto p-6 space-y-6">
+    <div className="flex-1 overflow-y-auto bg-[var(--bg-base)] h-full">
+      <div className="max-w-7xl mx-auto p-3.5 sm:p-6 space-y-4 sm:space-y-6">
         
         {/* Step Indicator */}
-        <div className="flex items-center gap-2 text-sm">
+        <div className="flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm overflow-x-auto pb-1 no-scrollbar">
           {[
             { key: "input", label: "填寫資訊" },
             { key: "analysis", label: "原因分析" },
             { key: "final", label: "輸出報告" }
           ].map((s, i, arr) => (
-            <div key={s.key} className="flex items-center gap-2">
-              <div className={`px-3 py-1.5 rounded ${
+            <div key={s.key} className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+              <div className={`px-2.5 sm:px-3 py-1.5 rounded-md font-medium ${
                 step === s.key 
-                  ? "bg-[var(--accent)] text-white" 
+                  ? "bg-[var(--accent)] text-white shadow-xs" 
                   : step !== s.key && ["input","analysis","final"].indexOf(step) > i
                   ? "bg-green-600 text-white" 
                   : "bg-[var(--bg-surface)] border border-[var(--border-color)] text-[var(--text-secondary)]"
               }`}>
                 {s.label}
               </div>
-              {i < arr.length - 1 && <ArrowRight className="w-4 h-4 text-gray-400 opacity-40" />}
+              {i < arr.length - 1 && <ArrowRight className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-gray-400 opacity-40 shrink-0" />}
             </div>
           ))}
         </div>
 
         {/* Error Message */}
         {errorMsg && (
-          <div className="flex items-start gap-3 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded text-sm text-red-700 dark:text-red-300">
+          <div className="flex items-start gap-3 p-3.5 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-sm text-red-700 dark:text-red-300 shadow-xs">
             <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
-            <div className="flex-1">{errorMsg}</div>
-            <button onClick={() => setErrorMsg("")} className="text-red-400 hover:text-red-600">
+            <div className="flex-1 text-sm">{errorMsg}</div>
+            <button onClick={() => setErrorMsg("")} className="text-red-400 hover:text-red-600 p-1 min-h-[32px] min-w-[32px] flex items-center justify-center">
               <X className="w-4 h-4" />
             </button>
           </div>
@@ -355,14 +355,16 @@ export default function MainForm({ onReportGenerated, selectedHistory }: MainFor
 
         {/* STEP 1: INPUT FORM */}
         {step === "input" && (
-          <div className="card p-6">
-            <h1 className="text-lg font-semibold mb-1">8D 報告參數設定</h1>
-            <p className="text-sm text-[var(--text-secondary)] mb-6">請填寫以下基礎資訊，以便進行後續分析</p>
+          <div className="card p-4 sm:p-6 space-y-6">
+            <div>
+              <h1 className="text-base sm:text-lg font-semibold tracking-tight text-[var(--text-primary)] mb-1">8D 報告參數設定</h1>
+              <p className="text-[13px] sm:text-sm text-[var(--text-secondary)]">請填寫以下基礎資訊，以便進行後續 5-Why 專家系統分析</p>
+            </div>
             
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8">
               {/* Left: Problem Details */}
-              <div className="space-y-5">
-                <h2 className="text-sm font-medium text-[var(--text-secondary)] uppercase tracking-wide">問題描述</h2>
+              <div className="space-y-4 sm:space-y-5">
+                <h2 className="text-[13px] font-semibold text-[var(--text-secondary)] uppercase tracking-wider pb-1 border-b border-[var(--border-color)]">問題描述</h2>
                 
                 <div>
                   <label className="label">問題標題 <span className="text-red-500">*</span></label>
@@ -376,7 +378,7 @@ export default function MainForm({ onReportGenerated, selectedHistory }: MainFor
                   />
                 </div>
                 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <label className="label">發生日期 <span className="text-red-500">*</span></label>
                     <input
@@ -408,7 +410,7 @@ export default function MainForm({ onReportGenerated, selectedHistory }: MainFor
                     onChange={handleChange}
                     placeholder="請詳細描述缺陷表現、嚴重程度、頻率等..."
                     className="textarea"
-                    rows={5}
+                    rows={4}
                   />
                 </div>
                 
@@ -453,7 +455,7 @@ export default function MainForm({ onReportGenerated, selectedHistory }: MainFor
                   <label className="label">上傳參考資料</label>
                   <div
                     onClick={() => fileInputRef.current?.click()}
-                    className="border-2 border-dashed border-[var(--border-color)] hover:border-[var(--accent)] rounded p-4 cursor-pointer text-center transition-colors"
+                    className="border-2 border-dashed border-[var(--border-color)] hover:border-[var(--accent)] rounded-lg p-5 cursor-pointer text-center transition-colors bg-[var(--bg-base)]/50"
                   >
                     <input
                       type="file"
@@ -463,7 +465,7 @@ export default function MainForm({ onReportGenerated, selectedHistory }: MainFor
                       className="hidden"
                       accept=".xlsx,.xls,.docx,.pdf,.txt"
                     />
-                    <Upload className="w-5 h-5 mx-auto mb-2 text-[var(--accent)] opacity-80" />
+                    <Upload className="w-6 h-6 mx-auto mb-2 text-[var(--accent)] opacity-80" />
                     <p className="text-sm font-medium text-[var(--text-primary)]">
                       {isReadingFile ? "讀取中..." : "點擊或拖拽上傳文件"}
                     </p>
@@ -471,15 +473,19 @@ export default function MainForm({ onReportGenerated, selectedHistory }: MainFor
                   </div>
                   
                   {uploadedFiles.length > 0 && (
-                    <div className="mt-2 space-y-1">
+                    <div className="mt-2 space-y-1.5">
                       {uploadedFiles.map((file, idx) => (
-                        <div key={idx} className="flex items-center justify-between p-2 bg-[var(--bg-base)] border border-[var(--border-color)] rounded text-[13px]">
-                          <div className="flex items-center gap-2 overflow-hidden">
-                            <FileText className="w-3.5 h-3.5 text-[var(--accent)] shrink-0" />
+                        <div key={idx} className="flex items-center justify-between p-2.5 bg-[var(--bg-base)] border border-[var(--border-color)] rounded-lg text-sm">
+                          <div className="flex items-center gap-2 overflow-hidden min-w-0">
+                            <FileText className="w-4 h-4 text-[var(--accent)] shrink-0" />
                             <span className="truncate text-[var(--text-primary)] font-medium">{file.name}</span>
                           </div>
-                          <button onClick={() => removeFile(idx)} className="text-[var(--text-secondary)] hover:text-red-500 transition-colors">
-                            <X className="w-3.5 h-3.5" />
+                          <button 
+                            onClick={() => removeFile(idx)} 
+                            className="text-[var(--text-secondary)] hover:text-red-500 transition-colors p-1 min-w-[32px] min-h-[32px] flex items-center justify-center"
+                            aria-label="移除檔案"
+                          >
+                            <X className="w-4 h-4" />
                           </button>
                         </div>
                       ))}
@@ -489,10 +495,10 @@ export default function MainForm({ onReportGenerated, selectedHistory }: MainFor
               </div>
 
               {/* Right: Basic Info */}
-              <div className="space-y-5">
-                <h2 className="text-sm font-medium text-[var(--text-secondary)] uppercase tracking-wide">基本資料</h2>
+              <div className="space-y-4 sm:space-y-5">
+                <h2 className="text-[13px] font-semibold text-[var(--text-secondary)] uppercase tracking-wider pb-1 border-b border-[var(--border-color)]">基本資料</h2>
                 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <label className="label">發生日期</label>
                     <input type="date" name="date" value={formData.date} onChange={handleChange} className="input" />
@@ -518,16 +524,16 @@ export default function MainForm({ onReportGenerated, selectedHistory }: MainFor
                   <input type="text" name="customerName" value={formData.customerName} onChange={handleChange} placeholder="輸入客戶" className="input" />
                 </div>
 
-                <div className="pt-4 border-t border-[var(--border-color)]">
+                <div className="pt-4 sm:pt-6 border-t border-[var(--border-color)] space-y-2">
                   <button
                     onClick={startAnalysis}
                     disabled={isLoading || isReadingFile}
-                    className="btn btn-primary w-full h-[42px] text-base"
+                    className="btn btn-primary w-full min-h-[46px] text-base font-semibold shadow-sm"
                   >
                     {isLoading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
                     開始分析
                   </button>
-                  <p className="text-[13px] text-[var(--text-secondary)] text-center mt-2">
+                  <p className="text-[13px] text-[var(--text-secondary)] text-center">
                     系統將引導您進行 5-Why 根本原因分析
                   </p>
                 </div>
@@ -538,17 +544,17 @@ export default function MainForm({ onReportGenerated, selectedHistory }: MainFor
 
         {/* STEP 2: ANALYSIS */}
         {step === "analysis" && (
-          <div className="grid grid-cols-1 xl:grid-cols-12 gap-6">
+          <div className="grid grid-cols-1 xl:grid-cols-12 gap-5 sm:gap-6">
             {/* Chat Panel */}
-            <div className="xl:col-span-5 card flex flex-col" style={{ height: "calc(100vh - 180px)" }}>
-              <div className="p-4 border-b border-[var(--border-color)] flex items-center justify-between">
+            <div className="xl:col-span-5 card flex flex-col h-[520px] xl:h-[calc(100vh-170px)] overflow-hidden">
+              <div className="p-3.5 sm:p-4 border-b border-[var(--border-color)] flex items-center justify-between bg-[var(--bg-surface)]">
                 <div>
-                  <h2 className="text-sm font-semibold">原因分析對話</h2>
-                  <p className="text-[13px] text-[var(--text-secondary)]">與專家系統互動</p>
+                  <h2 className="text-sm sm:text-base font-semibold text-[var(--text-primary)]">原因分析對話</h2>
+                  <p className="text-[13px] text-[var(--text-secondary)]">與專家系統互動推導 5-Why</p>
                 </div>
                 {isAnalyzing && (
-                  <div className="flex items-center gap-2 text-[13px] text-[var(--accent)]">
-                    <Loader2 className="w-3 h-3 animate-spin" />
+                  <div className="flex items-center gap-1.5 text-xs font-semibold text-[var(--accent)] bg-[var(--accent)]/10 px-2 py-1 rounded">
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
                     {analysisProgress}%
                   </div>
                 )}
@@ -556,7 +562,7 @@ export default function MainForm({ onReportGenerated, selectedHistory }: MainFor
 
               {/* Progress Bar */}
               {isAnalyzing && (
-                <div className="h-0.5 bg-[var(--border-color)]">
+                <div className="h-1 bg-[var(--border-color)] w-full overflow-hidden">
                   <div
                     className="h-full bg-[var(--accent)] transition-all duration-300"
                     style={{ width: `${analysisProgress}%` }}
@@ -565,13 +571,13 @@ export default function MainForm({ onReportGenerated, selectedHistory }: MainFor
               )}
 
               {/* Chat Messages */}
-              <div className="flex-1 overflow-y-auto p-4 space-y-4">
+              <div className="flex-1 overflow-y-auto p-3.5 sm:p-4 space-y-3.5 bg-[var(--bg-base)]/40">
                 {chatHistory.map((msg, idx) => (
                   <div key={idx} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
-                    <div className={`max-w-[85%] p-3 rounded text-sm whitespace-pre-wrap ${
+                    <div className={`max-w-[90%] sm:max-w-[85%] p-3 rounded-lg text-sm leading-relaxed whitespace-pre-wrap ${
                       msg.role === "user"
-                        ? "bg-[var(--accent)] text-white"
-                        : "bg-[var(--bg-base)] text-[var(--text-primary)] border border-[var(--border-color)]"
+                        ? "bg-[var(--accent)] text-white shadow-xs"
+                        : "bg-[var(--bg-surface)] text-[var(--text-primary)] border border-[var(--border-color)] shadow-xs"
                     }`}>
                       {msg.content}
                     </div>
@@ -580,9 +586,9 @@ export default function MainForm({ onReportGenerated, selectedHistory }: MainFor
                 
                 {currentMessage && (
                   <div className="flex justify-start">
-                    <div className="max-w-[85%] p-3 rounded bg-[var(--bg-base)] text-[var(--text-primary)] border border-[var(--border-color)] text-sm whitespace-pre-wrap">
+                    <div className="max-w-[90%] sm:max-w-[85%] p-3 rounded-lg bg-[var(--bg-surface)] text-[var(--text-primary)] border border-[var(--border-color)] text-sm leading-relaxed whitespace-pre-wrap shadow-xs">
                       {currentMessage}
-                      <Loader2 className="w-3 h-3 animate-spin mt-2 inline opacity-40 ml-1" />
+                      <Loader2 className="w-3.5 h-3.5 animate-spin mt-2 inline opacity-50 ml-1.5 text-[var(--accent)]" />
                     </div>
                   </div>
                 )}
@@ -590,7 +596,7 @@ export default function MainForm({ onReportGenerated, selectedHistory }: MainFor
               </div>
 
               {/* Input Area */}
-              <div className="p-4 border-t border-[var(--border-color)]">
+              <div className="p-3.5 sm:p-4 border-t border-[var(--border-color)] bg-[var(--bg-surface)] space-y-2">
                 <div className="relative">
                   <textarea
                     value={userInput}
@@ -602,23 +608,24 @@ export default function MainForm({ onReportGenerated, selectedHistory }: MainFor
                       }
                     }}
                     placeholder="輸入您的回答..."
-                    className="w-full bg-[var(--bg-surface)] text-[var(--text-primary)] border border-[var(--border-color)] rounded p-3 pr-12 text-sm resize-none focus:outline-none focus:border-[var(--accent)]"
-                    rows={3}
+                    className="w-full bg-[var(--bg-base)] text-[var(--text-primary)] border border-[var(--border-color)] rounded-lg p-3 pr-12 text-sm resize-none focus:outline-none focus:border-[var(--accent)] focus:ring-2 focus:ring-[var(--accent)]/20 transition-all"
+                    rows={2}
                     disabled={isLoading}
                   />
                   <button
                     onClick={sendReply}
                     disabled={!userInput.trim() || isLoading}
-                    className="absolute right-2 bottom-2 p-2 bg-[var(--accent)] text-white rounded hover:bg-[var(--accent-hover)] disabled:opacity-40 transition-colors"
+                    className="absolute right-2.5 bottom-2.5 min-w-[36px] min-h-[36px] flex items-center justify-center bg-[var(--accent)] text-white rounded-md hover:bg-[var(--accent-hover)] active:scale-95 disabled:opacity-40 transition-all shadow-xs"
+                    aria-label="發送訊息"
                   >
                     <ArrowRight className="w-4 h-4" />
                   </button>
                 </div>
-                <div className="flex justify-between items-center mt-2">
-                  <p className="text-[13px] text-[var(--text-secondary)]">Enter 發送，Shift+Enter 換行</p>
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-1.5">
+                  <p className="text-xs text-[var(--text-secondary)]">Enter 發送，Shift+Enter 換行</p>
                   <button
                     onClick={() => { setStep("final"); generateReport(); }}
-                    className="text-[13px] text-[var(--accent)] hover:underline"
+                    className="text-xs sm:text-[13px] font-medium text-[var(--accent)] hover:underline py-1"
                   >
                     跳過分析，直接生成報告 →
                   </button>
@@ -630,48 +637,48 @@ export default function MainForm({ onReportGenerated, selectedHistory }: MainFor
             <div className="xl:col-span-7 space-y-4">
               {/* Risk Assessment */}
               {riskResult && (
-                <div className="card p-4 flex items-center gap-4">
-                  <span className="text-[13px] font-medium text-[var(--text-secondary)]">風險評估</span>
-                  <span className={`px-2 py-0.5 rounded text-[13px] font-medium ${
+                <div className="card p-3.5 sm:p-4 flex flex-wrap items-center gap-3">
+                  <span className="text-sm font-medium text-[var(--text-secondary)]">風險評估</span>
+                  <span className={`px-2.5 py-0.5 rounded text-xs font-semibold ${
                     riskResult.priority === 'high' ? 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300' :
                     riskResult.priority === 'medium' ? 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300' :
                     'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300'
                   }`}>
                     {riskResult.priority === 'high' ? '高優先級' : riskResult.priority === 'medium' ? '中優先級' : '低優先級'}
                   </span>
-                  <span className="text-[13px] text-[var(--text-secondary)] ml-auto">
-                    RPN: <span className="font-mono font-semibold">{riskResult.rpn}</span>
+                  <span className="text-sm text-[var(--text-secondary)] ml-auto">
+                    RPN: <span className="font-mono font-bold text-[var(--text-primary)]">{riskResult.rpn}</span>
                   </span>
                 </div>
               )}
 
               {/* Similar Cases */}
               {similarItems.length > 0 && (
-                <div className="card p-4 bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800">
-                  <p className="text-sm font-medium text-blue-800 dark:text-blue-300 mb-1">
+                <div className="card p-3.5 sm:p-4 bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800">
+                  <p className="text-sm font-semibold text-blue-800 dark:text-blue-300 mb-1">
                     相關歷史案例 ({similarItems.length})
                   </p>
-                  <p className="text-[13px] text-blue-600 dark:text-blue-400">
+                  <p className="text-xs sm:text-[13px] text-blue-600 dark:text-blue-400">
                     {similarItems.slice(0, 3).map((c: SimilarCase) => `#${c.caseId} (${c.similarity}%)`).join('、')}
                   </p>
                 </div>
               )}
 
               {/* Report Preview */}
-              <div className="card" style={{ height: "calc(100vh - 280px)", display: "flex", flexDirection: "column" }}>
-                <div className="p-3 border-b border-[var(--border-color)] flex items-center justify-between">
-                  <span className="text-sm font-medium">即時預覽</span>
+              <div className="card h-[400px] xl:h-[calc(100vh-270px)] flex flex-col overflow-hidden">
+                <div className="p-3 sm:p-3.5 border-b border-[var(--border-color)] flex items-center justify-between bg-[var(--bg-surface)]">
+                  <span className="text-sm font-semibold">即時報告預覽</span>
                   <div className="flex gap-1.5">
                     <div className="w-2.5 h-2.5 rounded-full bg-red-400" />
                     <div className="w-2.5 h-2.5 rounded-full bg-yellow-400" />
                     <div className="w-2.5 h-2.5 rounded-full bg-green-400" />
                   </div>
                 </div>
-                <div className="flex-1 p-5 overflow-y-auto prose prose-sm max-w-none dark:prose-invert">
+                <div className="flex-1 p-4 sm:p-6 overflow-y-auto prose prose-sm max-w-none dark:prose-invert">
                   {reportContent ? (
                     <ReactMarkdown>{reportContent}</ReactMarkdown>
                   ) : (
-                    <div className="text-center py-20 text-[var(--text-secondary)]">
+                    <div className="text-center py-16 text-[var(--text-secondary)]">
                       <p className="text-sm">完成分析或點擊「直接生成」查看報告預覽</p>
                     </div>
                   )}
@@ -684,46 +691,46 @@ export default function MainForm({ onReportGenerated, selectedHistory }: MainFor
         {/* STEP 3: FINAL REPORT */}
         {step === "final" && (
           <div className="card overflow-hidden">
-            {/* Header */}
-            <div className="p-4 border-b border-[var(--border-color)] flex items-center justify-between bg-[var(--bg-surface)]">
+            {/* Header Toolbar */}
+            <div className="p-4 border-b border-[var(--border-color)] flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-[var(--bg-surface)]">
               <div className="flex items-center gap-3">
-                <CheckCircle className="w-5 h-5 text-green-600" />
+                <CheckCircle className="w-5 h-5 text-green-600 shrink-0" />
                 <div>
-                  <h2 className="text-sm font-semibold">報告已完成</h2>
-                  <p className="text-[13px] text-[var(--text-secondary)]">可匯出為不同格式</p>
+                  <h2 className="text-sm sm:text-base font-semibold text-[var(--text-primary)]">8D 報告已完成</h2>
+                  <p className="text-[13px] text-[var(--text-secondary)]">可匯出為不同企業格式</p>
                 </div>
               </div>
-              <div className="flex gap-2">
-                <button onClick={() => setStep("input")} className="btn btn-ghost text-[13px]">
-                  重新開始
+              <div className="flex flex-wrap items-center gap-2">
+                <button onClick={() => setStep("input")} className="btn btn-ghost text-sm flex-1 sm:flex-none">
+                  重新填寫
                 </button>
-                <button onClick={copyToClipboard} className="btn btn-secondary text-[13px]">
+                <button onClick={copyToClipboard} className="btn btn-secondary text-sm flex-1 sm:flex-none">
                   複製內容
                 </button>
-                <button onClick={downloadWord} className="btn btn-secondary text-[13px]">
-                  <FileDown className="w-3.5 h-3.5 mr-1.5" />Word
+                <button onClick={downloadWord} className="btn btn-secondary text-sm flex-1 sm:flex-none">
+                  <FileDown className="w-4 h-4 mr-1.5" />Word
                 </button>
-                <button onClick={downloadHtml} className="btn btn-secondary text-[13px]">
-                  <FileText className="w-3.5 h-3.5 mr-1.5" />HTML
+                <button onClick={downloadHtml} className="btn btn-secondary text-sm flex-1 sm:flex-none">
+                  <FileText className="w-4 h-4 mr-1.5" />HTML
                 </button>
-                <button onClick={downloadPdf} className="btn btn-primary text-[13px]">
-                  <FileDown className="w-3.5 h-3.5 mr-1.5" />PDF
+                <button onClick={downloadPdf} className="btn btn-primary text-sm w-full sm:w-auto font-semibold">
+                  <FileDown className="w-4 h-4 mr-1.5" />下載 PDF
                 </button>
               </div>
             </div>
 
             {/* Loading State */}
             {isLoading ? (
-              <div className="p-20 flex flex-col items-center gap-4">
+              <div className="p-16 flex flex-col items-center gap-4">
                 <Loader2 className="w-8 h-8 animate-spin text-[var(--accent)]" />
-                <p className="text-sm text-[var(--text-secondary)]">正在生成報告...</p>
+                <p className="text-sm text-[var(--text-secondary)]">正在以專業架構生成 8D 完整報告...</p>
               </div>
             ) : reportContent ? (
-              <div className="p-8 prose prose-sm max-w-none">
+              <div className="p-4 sm:p-8 prose prose-sm max-w-none dark:prose-invert">
                 <ReactMarkdown>{reportContent}</ReactMarkdown>
               </div>
             ) : (
-              <div className="p-20 text-center text-[var(--text-secondary)]">
+              <div className="p-16 text-center text-[var(--text-secondary)]">
                 <p className="text-sm">尚未生成報告，請先完成分析步驟</p>
               </div>
             )}

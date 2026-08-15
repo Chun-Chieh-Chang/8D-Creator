@@ -49,6 +49,7 @@ upload_*
 
 # AI tool runtime cache
 /.agnes/
+/.omo/
 
 # Antigravity brain
 /brain/

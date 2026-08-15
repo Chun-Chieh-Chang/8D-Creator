@@ -1,4 +1,4 @@
-﻿# 8D Creator (AI 8D Problem Solving System)
+# 8D Creator (AI 8D Problem Solving System)
 
 企業級 AI 驅動 8D 問題解決報告系統。支援 AI 引導 (Agnes AI / Gemini) 的 5-Why 根本原因分析、風險評估 (RPN)、相似案例比對與專業檔案匯出 (Word, HTML, PDF)。
 
@@ -16,7 +16,8 @@
 - **品牌設定**：公司名稱、主色、字型、浮水印客製化
 - **檔案上傳分析**：支援 Excel / Word / PDF / TXT 附件作為分析背景資料
 - **PWA 相容**：可安裝至手機主畫面（Web App Manifest + Service Worker），離線完整可用、iOS/Android 圖示與安全區域支援
-- **深淺色主題**：符合 Color Master Palette 規範，全介面最低字體 13px 確保可讀性
+- **行動端極致適配**：375px~768px 完美自適應，支援 Off-canvas Drawer 抽屜導航、自適應表單網格與防溢出操作列，按鈕具備 ≥40-46px 觸控熱區
+- **深淺色主題**：符合 Color Master Palette 規範，全介面維持 ≥14px 確保極致閱讀體驗
 
 ---
 

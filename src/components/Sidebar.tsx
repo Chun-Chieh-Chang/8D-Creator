@@ -1,4 +1,4 @@
-﻿import { 
+import { 
   FileText, Trash2, Clock, History,
   Sun, Moon, Search,
   Info, ArrowRight, Palette, Cpu
@@ -14,13 +14,17 @@ interface SidebarProps {
   history: ReportHistoryItem[];
   onDeleteHistory: (id: string) => void;
   onNewReport?: () => void;
+  isOpen?: boolean;
+  onClose?: () => void;
 }
 
 export default function Sidebar({ 
   onSelectHistory, 
   history = [], 
   onDeleteHistory, 
-  onNewReport
+  onNewReport,
+  isOpen = false,
+  onClose
 }: SidebarProps) {
   const [provider, setProvider] = useState<"agnes" | "gemini">("agnes");
   const [model, setModel] = useState("");
@@ -74,55 +78,96 @@ export default function Sidebar({
     return matchesSearch && matchesCustomer;
   });
 
+  const handleSelectItem = (report: ReportHistoryItem) => {
+    onSelectHistory(report);
+    if (onClose) onClose();
+  };
+
+  const handleCreateNew = () => {
+    if (onNewReport) {
+      onNewReport();
+    } else {
+      window.location.reload();
+    }
+    if (onClose) onClose();
+  };
+
   return (
     <>
-      <aside className="w-72 border-r border-[var(--border-color)] bg-[var(--bg-surface)] flex flex-col h-full sticky top-0">
+      {/* Mobile Backdrop Overlay */}
+      {isOpen && (
+        <div 
+          className="fixed inset-0 bg-black/60 z-40 md:hidden backdrop-blur-xs transition-opacity duration-200"
+          onClick={onClose}
+          aria-hidden="true"
+        />
+      )}
+
+      {/* Sidebar Drawer */}
+      <aside 
+        className={`fixed inset-y-0 left-0 z-50 w-72 max-w-[85vw] bg-[var(--bg-surface)] border-r border-[var(--border-color)] flex flex-col h-full shadow-2xl md:shadow-none md:static md:translate-x-0 transition-transform duration-300 ease-in-out ${
+          isOpen ? "translate-x-0" : "-translate-x-full"
+        }`}
+      >
         {/* Header */}
-        <div className="p-5 border-b border-[var(--border-color)] flex items-center justify-between">
+        <div className="p-4 md:p-5 border-b border-[var(--border-color)] flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-lg bg-[var(--accent)] flex items-center justify-center text-white">
+            <div className="w-10 h-10 rounded-lg bg-[var(--accent)] flex items-center justify-center text-white shrink-0 shadow-sm">
               <FileText className="w-5 h-5" />
             </div>
-            <div>
-              <h1 className="text-sm font-semibold tracking-tight">8D 報告系統</h1>
+            <div className="min-w-0">
+              <h1 className="text-sm font-semibold tracking-tight text-[var(--text-primary)] truncate">8D 報告系統</h1>
               <p className="text-[13px] text-[var(--text-secondary)]">Quality Management</p>
             </div>
           </div>
           <div className="flex items-center gap-1">
             <button
               onClick={() => setShowBrandSettings(true)}
-              className="p-2 hover:bg-[var(--bg-base)] rounded text-[var(--text-secondary)] hover:text-[var(--accent)] transition-colors"
+              className="w-9 h-9 flex items-center justify-center hover:bg-[var(--bg-base)] rounded-lg text-[var(--text-secondary)] hover:text-[var(--accent)] transition-colors"
               title="品牌設定"
+              aria-label="品牌設定"
             >
               <Palette className="w-4 h-4" />
             </button>
             <button
               onClick={toggleTheme}
-              className="p-2 hover:bg-[var(--bg-base)] rounded text-[var(--text-secondary)] hover:text-[var(--accent)] transition-colors"
+              className="w-9 h-9 flex items-center justify-center hover:bg-[var(--bg-base)] rounded-lg text-[var(--text-secondary)] hover:text-[var(--accent)] transition-colors"
+              title="切換主題"
+              aria-label="切換主題"
             >
               {mounted ? (
                 theme === "light" ? <Moon className="w-4 h-4" /> : <Sun className="w-4 h-4" />
               ) : <div className="w-4 h-4" />}
             </button>
+            {/* Mobile Close Button */}
+            {onClose && (
+              <button
+                onClick={onClose}
+                className="w-9 h-9 flex md:hidden items-center justify-center hover:bg-[var(--bg-base)] rounded-lg text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors ml-1"
+                aria-label="關閉選單"
+              >
+                ✕
+              </button>
+            )}
           </div>
         </div>
         
         <div className="flex-1 overflow-y-auto px-4 pb-6 space-y-5 mt-4">
           
-          {/* New Report */}
+          {/* New Report Button */}
           <button
-            onClick={() => onNewReport ? onNewReport() : window.location.reload()}
-            className="w-full flex items-center justify-center gap-2 py-2.5 bg-[var(--accent)] text-white rounded text-sm font-medium hover:bg-[var(--accent-hover)] transition-colors"
+            onClick={handleCreateNew}
+            className="w-full flex items-center justify-center gap-2 min-h-[44px] py-2.5 bg-[var(--accent)] text-white rounded-lg text-sm font-medium hover:bg-[var(--accent-hover)] active:scale-[0.98] transition-all shadow-sm"
           >
             <FileText className="w-4 h-4" />
-            新報告
+            新建報告
           </button>
 
           {/* Help */}
-          <details className="bg-[var(--bg-base)] rounded border border-[var(--border-color)]">
-            <summary className="flex items-center justify-between cursor-pointer p-3 text-sm font-medium text-[var(--text-primary)]">
+          <details className="bg-[var(--bg-base)] rounded-lg border border-[var(--border-color)]">
+            <summary className="flex items-center justify-between cursor-pointer p-3 text-sm font-medium text-[var(--text-primary)] select-none">
               <div className="flex items-center gap-2">
-                <Info className="w-4 h-4 text-[var(--accent)]" />
+                <Info className="w-4 h-4 text-[var(--accent)] shrink-0" />
                 使用說明
               </div>
               <ArrowRight className="w-3.5 h-3.5 text-[var(--text-secondary)] transition-transform group-open:rotate-90" />
@@ -137,12 +182,12 @@ export default function Sidebar({
             </div>
           </details>
 
-          {/* AI Engine Status (唯讀顯示，設定唯一入口為 AISettingsModal) */}
-          <div className="space-y-3">
+          {/* AI Engine Status */}
+          <div className="space-y-2">
             <h2 className="text-[13px] font-medium text-[var(--text-secondary)] uppercase tracking-wide">AI 引擎設定</h2>
 
             <div className="flex items-center justify-between gap-2 p-3 bg-[var(--bg-base)] border border-[var(--border-color)] rounded-lg">
-              <div className="flex items-center gap-2 min-w-0">
+              <div className="flex items-center gap-2.5 min-w-0">
                 <Cpu className="w-4 h-4 text-[var(--accent)] shrink-0" />
                 <div className="min-w-0">
                   <p className="text-[13px] font-medium truncate">
@@ -155,7 +200,7 @@ export default function Sidebar({
               </div>
               <button
                 onClick={() => setShowAISettings(true)}
-                className="shrink-0 px-3 py-1.5 rounded text-[13px] font-medium bg-[var(--accent)] text-white hover:bg-[var(--accent-hover)] transition-colors"
+                className="shrink-0 min-h-[36px] px-3.5 py-1.5 rounded-md text-[13px] font-medium bg-[var(--accent)] text-white hover:bg-[var(--accent-hover)] active:scale-[0.97] transition-all"
               >
                 設定
               </button>
@@ -167,7 +212,7 @@ export default function Sidebar({
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <History className="w-4 h-4 text-[var(--text-secondary)]" />
-                <h2 className="text-[13px] font-medium text-[var(--text-secondary)] uppercase tracking-wide">報告紀錄</h2>
+                <h2 className="text-[13px] font-medium text-[var(--text-secondary)] uppercase tracking-wide">歷史報告</h2>
               </div>
               <span className="text-[13px] text-[var(--text-primary)] bg-[var(--bg-base)] border border-[var(--border-color)] px-2.5 py-0.5 rounded-full font-medium">
                 {history.length}
@@ -176,13 +221,13 @@ export default function Sidebar({
 
             {/* Search */}
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[var(--text-secondary)]" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--text-secondary)]" />
               <input
                 type="text"
-                placeholder="搜尋..."
+                placeholder="搜尋歷史報告..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="input pl-9 text-[13px] py-1.5"
+                className="input pl-9 text-[14px]"
               />
             </div>
 
@@ -190,7 +235,7 @@ export default function Sidebar({
             <select
               value={filterCustomer}
               onChange={(e) => setFilterCustomer(e.target.value)}
-              className="input text-[13px] py-1.5 appearance-none"
+              className="input text-[14px] appearance-none"
             >
               <option value="">所有客戶</option>
               {Array.from(new Set(history.map(h => h.customerName).filter(Boolean)))
@@ -210,12 +255,12 @@ export default function Sidebar({
                 filteredHistory.map((report) => (
                   <div
                     key={report.id}
-                    onClick={() => onSelectHistory(report)}
-                    className="group p-3 hover:bg-[var(--bg-base)] rounded border border-transparent hover:border-[var(--border-color)] cursor-pointer transition-all"
+                    onClick={() => handleSelectItem(report)}
+                    className="group p-3 hover:bg-[var(--bg-base)] rounded-lg border border-transparent hover:border-[var(--border-color)] cursor-pointer transition-all active:scale-[0.99]"
                   >
                     <div className="flex items-start justify-between gap-2">
-                      <div className="min-w-0">
-                        <p className="text-[13px] font-medium truncate">{report.productInfo || "未命名報告"}</p>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-[14px] font-medium truncate text-[var(--text-primary)]">{report.productInfo || "未命名報告"}</p>
                         <p className="text-[13px] text-[var(--text-secondary)] mt-0.5">{report.date}</p>
                       </div>
                       <button
@@ -223,9 +268,11 @@ export default function Sidebar({
                           e.stopPropagation();
                           onDeleteHistory(report.id);
                         }}
-                        className="p-1 opacity-0 group-hover:opacity-100 hover:text-red-500 rounded transition-all"
+                        className="p-1.5 opacity-80 md:opacity-0 group-hover:opacity-100 text-[var(--text-secondary)] hover:text-red-500 rounded transition-all min-w-[32px] min-h-[32px] flex items-center justify-center"
+                        title="刪除紀錄"
+                        aria-label="刪除紀錄"
                       >
-                        <Trash2 className="w-3.5 h-3.5" />
+                        <Trash2 className="w-4 h-4" />
                       </button>
                     </div>
                   </div>
