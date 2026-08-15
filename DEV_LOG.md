@@ -33,6 +33,7 @@
 
 | 日期 | 版本 | 內容 |
 |------|------|------|
+| 2026-08-15 | v0.1.x | PWA 相容整合：Web App Manifest（`manifest.ts`，force-static）+ 4 個自製圖示（192/512/maskable/apple-touch，深藍 `#1E3A5F` + 白色 8D）；Service Worker v2（自我發現預快取 index.html 內同源資源 + manifest/icons/favicon，network-first 導航、stale-while-revalidate 靜態資源、離線完整可用）；iOS 安裝支援（apple-touch-icon 相對路徑、apple-mobile-web-app-capable）；行動端 CSS 強化（safe-area-inset、tap-highlight、text-size-adjust）；Playwright 驗證：首次造訪全資產預快取（19 項）、瀏覽器重啟 + 伺服器離線重載 0 錯誤 |
 | 2026-08-15 | v0.1.x | 多 Provider 模型適配整合：新增 `lib/ai_service.ts` 統一設定服務（Agnes 官方端點 + Google AI Studio Gemini 3.x/2.5/1.5 全系列 + 自訂 OpenAI-compatible 模型、Base URL 可設定、連線測試）；新增 `AISettingsModal` 進階設定（模型下拉 / API Key / Base URL / 測試連線）；agnes/gemini client 模型改為可設定（保留串流體驗）；相容既有 localStorage 設定；預設模型取自可選清單首位（Gemini 預設 gemini-3.7-flash）；AI 引擎設定收斂為單一入口（Sidebar 僅顯示唯讀狀態卡，符合 MECE） |
 | 2026-08-14 | v0.1.x | 專案優化作業：全面清理死碼與冗餘資源（移除未用依賴 pdfjs-dist、AI 工具快取、預設 SVG、無關截圖、死碼 barrel 檔）；同步 README / Wiki / DEV_LOG；修復 19 項 ESLint 問題（未用 import、`any` 型別、setState-in-effect）；新增產品批號欄位與作者資訊；建立版本基準並推送 |
 | 2026-08-13 | v0.1.x | 品牌設定面板重構為 CSS Design Tokens（AAA 對比度）；水平掃描對比度強化；企業級乾淨 UI 全面去除 AI 風格化設計 |
