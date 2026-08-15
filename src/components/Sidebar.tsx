@@ -1,13 +1,13 @@
 ﻿import { 
   FileText, Trash2, Clock, History,
   Sun, Moon, Search,
-  Info, ArrowRight, Palette, Settings2
+  Info, ArrowRight, Palette, Cpu
 } from "lucide-react";
 import { ReportHistoryItem } from "@/lib/historyManager";
 import { useEffect, useState } from "react";
 import BrandSettingsPanel from "./BrandSettingsPanel";
 import AISettingsModal from "./AISettingsModal";
-import { aiService, DEFAULT_MODEL, DEFAULT_GEMINI_MODEL } from "@/lib/ai_service";
+import { aiService } from "@/lib/ai_service";
 
 interface SidebarProps {
   onSelectHistory: (report: ReportHistoryItem) => void;
@@ -23,7 +23,7 @@ export default function Sidebar({
   onNewReport
 }: SidebarProps) {
   const [provider, setProvider] = useState<"agnes" | "gemini">("agnes");
-  const [apiKey, setApiKey] = useState("");
+  const [model, setModel] = useState("");
   const [theme, setThemeState] = useState<"light" | "dark">("dark");
   const [mounted, setMounted] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -44,38 +44,18 @@ export default function Sidebar({
   }, []);
 
   useEffect(() => {
-    const loadConfig = async () => {
-      const savedProvider = localStorage.getItem("ai-provider") as "agnes" | "gemini";
-      const savedKey = localStorage.getItem("agnes-api-key") || localStorage.getItem("gemini-api-key") || "";
-      if (savedProvider) setProvider(savedProvider);
-      setApiKey(savedKey);
-    };
-    loadConfig();
+    // 唯讀顯示目前引擎狀態（設定唯一入口為 AISettingsModal）
+    requestAnimationFrame(() => {
+      const conf = aiService.getConfig();
+      setProvider(conf.provider);
+      setModel(aiService.getEffectiveModel(conf));
+    });
   }, []);
-
-  const handleProviderChange = (p: "agnes" | "gemini") => {
-    setProvider(p);
-    localStorage.setItem("ai-provider", p);
-    // 同步預設模型，確保快速切換與進階設定一致
-    localStorage.setItem("8D_AI_MODEL", p === "gemini" ? DEFAULT_GEMINI_MODEL : DEFAULT_MODEL);
-    const oldKey = localStorage.getItem("gemini-api-key") || "";
-    if (oldKey && !localStorage.getItem("agnes-api-key")) {
-      localStorage.setItem("agnes-api-key", oldKey);
-    }
-  };
 
   const refreshConfig = () => {
     const conf = aiService.getConfig();
     setProvider(conf.provider);
-    setApiKey(conf.apiKey);
-  };
-
-  const handleKeyChange = (k: string, providerType?: "agnes" | "gemini") => {
-    setApiKey(k);
-    const keyStorage = providerType === "agnes" ? "agnes-api-key" : 
-                       providerType === "gemini" ? "gemini-api-key" : 
-                       provider === "agnes" ? "agnes-api-key" : "gemini-api-key";
-    localStorage.setItem(keyStorage, k);
+    setModel(aiService.getEffectiveModel(conf));
   };
 
   const toggleTheme = () => {
@@ -109,13 +89,6 @@ export default function Sidebar({
             </div>
           </div>
           <div className="flex items-center gap-1">
-            <button
-              onClick={() => setShowAISettings(true)}
-              className="p-2 hover:bg-[var(--bg-base)] rounded text-[var(--text-secondary)] hover:text-[var(--accent)] transition-colors"
-              title="AI 引擎設定"
-            >
-              <Settings2 className="w-4 h-4" />
-            </button>
             <button
               onClick={() => setShowBrandSettings(true)}
               className="p-2 hover:bg-[var(--bg-base)] rounded text-[var(--text-secondary)] hover:text-[var(--accent)] transition-colors"
@@ -164,44 +137,28 @@ export default function Sidebar({
             </div>
           </details>
 
-          {/* Provider Setting */}
+          {/* AI Engine Status (唯讀顯示，設定唯一入口為 AISettingsModal) */}
           <div className="space-y-3">
             <h2 className="text-[13px] font-medium text-[var(--text-secondary)] uppercase tracking-wide">AI 引擎設定</h2>
-            
-            <div className="flex p-1 bg-[var(--bg-base)] border border-[var(--border-color)] rounded-lg">
-              <button
-                onClick={() => handleProviderChange("agnes")}
-                className={`flex-1 py-1.5 rounded text-[13px] font-medium transition-all ${
-                  provider === "agnes" ? "bg-[var(--accent)] text-white shadow-sm font-semibold" : "text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
-                }`}
-              >
-                Agnes AI
-              </button>
-              <button
-                onClick={() => handleProviderChange("gemini")}
-                className={`flex-1 py-1.5 rounded text-[13px] font-medium transition-all ${
-                  provider === "gemini" ? "bg-[var(--accent)] text-white shadow-sm font-semibold" : "text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
-                }`}
-              >
-                Gemini
-              </button>
-            </div>
 
-            <div className="space-y-2">
-              <input
-                type="password"
-                placeholder={provider === "agnes" ? "Agnes API Key" : "Gemini API Key"}
-                value={apiKey}
-                onChange={(e) => handleKeyChange(e.target.value, provider)}
-                className="input text-[13px]"
-              />
-              <p className="text-[13px] text-[var(--text-secondary)]">
-                {provider === "agnes" ? (
-                  <span>前往 <a href="https://apihub.agnes-ai.com" target="_blank" rel="noreferrer" className="text-[var(--accent)] font-medium underline">Agnes AI Hub</a> 取得金鑰</span>
-                ) : (
-                  <span>前往 <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noreferrer" className="text-[var(--accent)] font-medium underline">Google AI Studio</a> 免費申請</span>
-                )}
-              </p>
+            <div className="flex items-center justify-between gap-2 p-3 bg-[var(--bg-base)] border border-[var(--border-color)] rounded-lg">
+              <div className="flex items-center gap-2 min-w-0">
+                <Cpu className="w-4 h-4 text-[var(--accent)] shrink-0" />
+                <div className="min-w-0">
+                  <p className="text-[13px] font-medium truncate">
+                    {provider === "gemini" ? "Google Gemini" : "Agnes AI"}
+                  </p>
+                  <p className="text-[13px] text-[var(--text-secondary)] truncate" title={model}>
+                    {model || "未設定"}
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowAISettings(true)}
+                className="shrink-0 px-3 py-1.5 rounded text-[13px] font-medium bg-[var(--accent)] text-white hover:bg-[var(--accent-hover)] transition-colors"
+              >
+                設定
+              </button>
             </div>
           </div>
 
