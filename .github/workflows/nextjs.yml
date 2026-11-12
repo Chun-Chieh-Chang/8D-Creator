@@ -40,6 +40,12 @@ jobs:
       - name: Build with Next.js
         run: npx next build
 
+      - name: Install Chromium for browser checks
+        run: npx playwright install --with-deps --only-shell chromium
+
+      - name: Check the project map
+        run: npm run test:project-map
+
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:

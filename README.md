@@ -36,6 +36,10 @@ npm run build
 
 Next.js 將靜態檔案寫入 `out`。推送至 `main` 時，GitHub Actions 會建置並部署至 [GitHub Pages](https://chun-chieh-chang.github.io/8D-Creator/)。
 
+建置完成後，GitHub Actions 使用 Chromium 檢查本機與遠端地圖、操作入口，以及本機服務停止時的顯示。測試使用臨時來源資料夾與儲存庫。檢查通過後才發佈。
+
+在本機重跑檢查前，先關閉使用連接埠 3188 的本機服務。執行 `npm run build`、`npx playwright install --only-shell chromium` 和 `npm run test:project-map`。
+
 ## 專案文件
 
 - [案件工作區與系統圖](./docs/案件工作區.md)

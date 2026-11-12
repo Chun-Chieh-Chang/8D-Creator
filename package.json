@@ -9,6 +9,7 @@
     "lint": "eslint",
     "kb": "node scripts/quality-kb/kb.mjs",
     "lint:terms": "node scripts/check-terms.mjs",
+    "test:project-map": "node --test scripts/project-map.test.mjs",
     "local": "node scripts/quality-kb/local.mjs"
   },
   "dependencies": {
@@ -33,6 +34,7 @@
     "babel-plugin-react-compiler": "1.0.0",
     "eslint": "^9",
     "eslint-config-next": "16.2.1",
+    "playwright": "1.65.0",
     "tailwindcss": "^4",
     "typescript": "^5"
   }
