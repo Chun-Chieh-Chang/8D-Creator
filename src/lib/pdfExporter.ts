@@ -1,6 +1,6 @@
 /**
  * PDF 匯出工具
- * 提供專業的 PDF 生成能力
+ * 匯出 PDF
  */
 
 export interface PdfExportOptions {
@@ -25,7 +25,7 @@ export interface PdfExportOptions {
 export function exportToPdf(options: PdfExportOptions): void {
   const { title, content, metadata = {}, brandSettings = {} } = options;
   
-  // 生成臨時 iframe 用於列印
+  // 建立列印用的暫存 iframe
   const printWindow = window.open('', '_blank');
   if (!printWindow) {
     console.error('無法開啟列印視窗，請檢查瀏覽器設定');
@@ -51,7 +51,7 @@ export function exportToPdf(options: PdfExportOptions): void {
 }
 
 /**
- * 生成列印用 HTML
+ * 產生列印用 HTML
  */
 function generatePrintHtml(options: {
   title: string;

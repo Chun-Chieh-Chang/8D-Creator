@@ -14,8 +14,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "AI 8D報告生成器 - 辦公室智能工具",
-  description: "專業智能8D問題解決報告生成器",
+  title: "8D Creator",
+  description: "使用 5-Why 分析根本原因。產生並匯出 8D 報告。",
   applicationName: "8D Creator",
   icons: {
     icon: [{ url: "favicon.ico" }],
@@ -52,7 +52,7 @@ export default function RootLayout({
 }>) {
   return (
     <html
-      lang="en"
+      lang="zh-Hant"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">

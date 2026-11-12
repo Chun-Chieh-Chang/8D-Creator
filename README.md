@@ -1,72 +1,48 @@
-# 8D Creator (AI 8D Problem Solving System)
+# 8D Creator
 
-企業級 AI 驅動 8D 問題解決報告系統。支援 AI 引導 (Agnes AI / Gemini) 的 5-Why 根本原因分析、風險評估 (RPN)、相似案例比對與專業檔案匯出 (Word, HTML, PDF)。
+8D Creator 使用 5-Why 分析根本原因，並產生 8D 報告。本機版優先使用專案 Agent。未偵測到 Agent 時，可在「AI 設定」選擇 Agnes AI 或 Gemini。
 
----
+## 功能
 
-## 功能特色 (Features)
+- 填寫報告資料。可加入 Excel、Word、PDF 或 TXT 參考附件。
+- 用 5-Why 分析根本原因。查看風險優先數（RPN）和相似案件。
+- 產生 8D 報告。可匯出 Word、HTML、PDF 或知識庫草稿。
+- 從「歷史報告」開啟已儲存的報告。可按客戶名稱篩選。
+- 在「品牌設定」選擇報告的字型、配色和浮水印。
+- 在手機上將應用程式加入主畫面。使用模型 API 時需要網路連線。
 
-- **雙 AI 引擎**：支援 [Agnes AI Hub](https://apihub.agnes-ai.com) 與 Google AI Studio，可即時切換；完整模型適配（Agnes 官方端點 / Gemini 3.x・2.5・1.5 全系列 / 自訂 OpenAI-compatible 閘道），含進階設定面板與連線測試
-- **5-Why 專家引導分析**：透過互動對話逐步推導根本原因，自動生成 D1-D8 完整報告
-- **風險評估**：依 RPN (嚴重度 × 發生頻率 × 偵測難度) 自動分級高/中/低風險
-- **相似案例比對**：從歷史報告中自動尋找相似問題案例
-- **完整表單欄位**：問題標題、發生日期/地點、缺陷描述、發現方式、影響範圍、產品/型號、產品批號、客戶名稱、不良數量等
-- **多格式匯出**：Word (.docx)、專業 HTML（含版本追蹤與品牌客製化）、PDF
-- **歷史報告管理**：localStorage 持久化，支援關鍵字搜尋與客戶篩選
-- **品牌設定**：公司名稱、主色、字型、浮水印客製化
-- **檔案上傳分析**：支援 Excel / Word / PDF / TXT 附件作為分析背景資料
-- **PWA 相容**：可安裝至手機主畫面（Web App Manifest + Service Worker），離線完整可用、iOS/Android 圖示與安全區域支援
-- **行動端極致適配**：375px~768px 完美自適應，支援 Off-canvas Drawer 抽屜導航、自適應表單網格與防溢出操作列，按鈕具備 ≥40-46px 觸控熱區
-- **深淺色主題**：符合 Color Master Palette 規範，全介面維持 ≥14px 確保極致閱讀體驗
+## 技術
 
----
+- Next.js App Router 產生靜態頁面。
+- Tailwind CSS 與 CSS 變數控制介面樣式。介面支援深色和淺色主題。
+- Lucide 提供圖示。SheetJS 和 Mammoth 讀取附件。
 
-## 快速開始 (Getting Started)
+## 本機開發
 
-### 本機開發
+1. 執行 `npm ci`。
+2. 執行 `npm run dev`。
+3. 開啟 [本機 8D Creator](http://localhost:3000/8D-Creator)。
 
-```bash
-npm install
-npm run dev
-```
-
-瀏覽器開啟 [http://localhost:3000](http://localhost:3000)
-
-### 品質驗證
+## 檢查變更
 
 ```bash
-npx tsc --noEmit   # TypeScript 型別檢查
-npm run lint       # ESLint 檢查
-npm run build      # 生產建置
+npm run lint:terms
+npx tsc --noEmit
+npm run lint
+npm run build
 ```
 
----
+## 部署
 
-## 技術棧 (Tech Stack)
+Next.js 將靜態檔案寫入 `out`。推送至 `main` 時，GitHub Actions 會建置並部署至 [GitHub Pages](https://chun-chieh-chang.github.io/8D-Creator/)。
 
-- **Framework**: Next.js 16 (App Router, static export)
-- **Styling**: Tailwind CSS v4 + Vanilla CSS Design Tokens
-- **Icons**: Lucide React
-- **Exporting**: docx (Word), 自訂 HTML/PDF 輸出模板
-- **File Parsing**: xlsx, mammoth（動態載入）
+## 專案文件
 
----
-
-## 部署 (Deployment)
-
-靜態匯出 (static export) 至 GitHub Pages，見 `.github/workflows/nextjs.yml`。
-
-- 正式站點: <https://chun-chieh-chang.github.io/8D-Creator/>
-- 每次推送到 `main` 分支即自動建置部署
-
----
-
-## 文件索引 (Documentation)
-
-- [DEV_LOG.md](./DEV_LOG.md) — 開發日誌與版更紀錄
-- [walkthrough.md](./walkthrough.md) — 架構說明與操作指南（Wiki）
-- [AGENTS.md](./AGENTS.md) — 專案開發規則
-
----
+- [案件工作區與系統圖](./docs/案件工作區.md)
+- [用語與寫作規範](./docs/用語與寫作規範.md)
+- [操作與架構指南](./walkthrough.md)
+- [異常知識庫整合藍圖](./docs/異常知識庫整合藍圖.md)
+- [開發日誌](./DEV_LOG.md)
+- [開發規則](./AGENTS.md)
 
 *Developed by Wesley Chang @Mouldex, Aug-2026.*

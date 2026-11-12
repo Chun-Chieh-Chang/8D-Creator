@@ -10,6 +10,8 @@ import AISettingsModal from "./AISettingsModal";
 import { aiService } from "@/lib/ai_service";
 
 interface SidebarProps {
+  projectAgent: string | null | undefined;
+  onOpenMap: () => void;
   onSelectHistory: (report: ReportHistoryItem) => void;
   history: ReportHistoryItem[];
   onDeleteHistory: (id: string) => void;
@@ -19,6 +21,8 @@ interface SidebarProps {
 }
 
 export default function Sidebar({ 
+  projectAgent,
+  onOpenMap,
   onSelectHistory, 
   history = [], 
   onDeleteHistory, 
@@ -116,8 +120,7 @@ export default function Sidebar({
               <FileText className="w-5 h-5" />
             </div>
             <div className="min-w-0">
-              <h1 className="text-sm font-semibold tracking-tight text-[var(--text-primary)] truncate">8D 報告系統</h1>
-              <p className="text-[13px] text-[var(--text-secondary)]">Quality Management</p>
+              <h1 className="text-sm font-semibold tracking-tight text-[var(--text-primary)] truncate">8D Creator</h1>
             </div>
           </div>
           <div className="flex items-center gap-1">
@@ -160,50 +163,43 @@ export default function Sidebar({
             className="w-full flex items-center justify-center gap-2 min-h-[44px] py-2.5 bg-[var(--accent)] text-white rounded-lg text-sm font-medium hover:bg-[var(--accent-hover)] active:scale-[0.98] transition-all shadow-sm"
           >
             <FileText className="w-4 h-4" />
-            新建報告
+            新增報告
           </button>
 
           {/* Help */}
-          <details className="bg-[var(--bg-base)] rounded-lg border border-[var(--border-color)]">
-            <summary className="flex items-center justify-between cursor-pointer p-3 text-sm font-medium text-[var(--text-primary)] select-none">
-              <div className="flex items-center gap-2">
+          <button type="button" onClick={onOpenMap}
+            className="flex w-full items-center justify-between rounded-lg border border-[var(--border-color)] bg-[var(--bg-base)] p-3 text-sm font-medium hover:border-[var(--accent)]">
+              <span className="flex items-center gap-2">
                 <Info className="w-4 h-4 text-[var(--accent)] shrink-0" />
                 使用說明
-              </div>
-              <ArrowRight className="w-3.5 h-3.5 text-[var(--text-secondary)] transition-transform group-open:rotate-90" />
-            </summary>
-            <div className="px-3 pb-3 space-y-2 text-[13px] text-[var(--text-secondary)] border-t border-[var(--border-color)] pt-2 mt-1">
-              <ul className="space-y-1 list-disc list-inside">
-                <li>填寫問題描述後開始分析</li>
-                <li>與專家對話進行 5-Why 推導</li>
-                <li>完成分析後生成完整報告</li>
-                <li>支援 Word / HTML / PDF 匯出</li>
-              </ul>
-            </div>
-          </details>
+              </span>
+              <ArrowRight className="w-3.5 h-3.5 text-[var(--text-secondary)]" />
+          </button>
 
           {/* AI Engine Status */}
           <div className="space-y-2">
-            <h2 className="text-[13px] font-medium text-[var(--text-secondary)] uppercase tracking-wide">AI 引擎設定</h2>
+            <h2 className="text-[13px] font-medium text-[var(--text-secondary)] uppercase tracking-wide">
+              {projectAgent === null ? "AI 設定" : "AI 連線"}
+            </h2>
 
             <div className="flex items-center justify-between gap-2 p-3 bg-[var(--bg-base)] border border-[var(--border-color)] rounded-lg">
               <div className="flex items-center gap-2.5 min-w-0">
                 <Cpu className="w-4 h-4 text-[var(--accent)] shrink-0" />
                 <div className="min-w-0">
                   <p className="text-[13px] font-medium truncate">
-                    {provider === "gemini" ? "Google Gemini" : "Agnes AI"}
+                    {projectAgent === undefined ? "正在偵測專案 Agent" : projectAgent ?? (provider === "gemini" ? "Google Gemini" : "Agnes AI")}
                   </p>
                   <p className="text-[13px] text-[var(--text-secondary)] truncate" title={model}>
-                    {model || "未設定"}
+                    {projectAgent ? "使用專案 Agent" : projectAgent === null ? model || "未設定" : ""}
                   </p>
                 </div>
               </div>
-              <button
+              {projectAgent === null && <button
                 onClick={() => setShowAISettings(true)}
                 className="shrink-0 min-h-[36px] px-3.5 py-1.5 rounded-md text-[13px] font-medium bg-[var(--accent)] text-white hover:bg-[var(--accent-hover)] active:scale-[0.97] transition-all"
               >
                 設定
-              </button>
+              </button>}
             </div>
           </div>
 
@@ -224,7 +220,7 @@ export default function Sidebar({
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--text-secondary)]" />
               <input
                 type="text"
-                placeholder="搜尋歷史報告..."
+                placeholder="搜尋歷史報告"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="input pl-9 text-[14px]"
@@ -249,7 +245,7 @@ export default function Sidebar({
               {filteredHistory.length === 0 ? (
                 <div className="text-center py-8 text-[var(--text-secondary)] text-[13px]">
                   <Clock className="w-8 h-8 mx-auto mb-2 opacity-30" />
-                  <p>{history.length === 0 ? "尚無報告紀錄" : "無符合搜尋結果"}</p>
+                  <p>{history.length === 0 ? "目前沒有歷史報告" : "找不到符合條件的報告"}</p>
                 </div>
               ) : (
                 filteredHistory.map((report) => (
@@ -269,8 +265,8 @@ export default function Sidebar({
                           onDeleteHistory(report.id);
                         }}
                         className="p-1.5 opacity-80 md:opacity-0 group-hover:opacity-100 text-[var(--text-secondary)] hover:text-red-500 rounded transition-all min-w-[32px] min-h-[32px] flex items-center justify-center"
-                        title="刪除紀錄"
-                        aria-label="刪除紀錄"
+                        title="刪除報告"
+                        aria-label="刪除報告"
                       >
                         <Trash2 className="w-4 h-4" />
                       </button>
@@ -296,7 +292,7 @@ export default function Sidebar({
       )}
 
       {/* AI Engine Settings Modal */}
-      {showAISettings && (
+      {projectAgent === null && showAISettings && (
         <AISettingsModal
           onClose={() => setShowAISettings(false)}
           onSaved={refreshConfig}

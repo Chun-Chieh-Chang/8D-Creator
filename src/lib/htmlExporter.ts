@@ -61,7 +61,7 @@ export function exportToHtml(
   // 解析元數據
   const parsedMeta = parseMetadata(content, optsMetadata);
   
-  // 生成並保存版本記錄
+  // 產生並儲存版本紀錄
   const versionRecord = createVersionRecord(bumpVersion, changelog);
   
   // 處理 Markdown
@@ -72,7 +72,7 @@ export function exportToHtml(
   const brandConfig = getBrandConfig();
   const finalBrandSettings = { ...brandConfig, ...brandSettings };
   
-  // 生成 HTML
+  // 產生 HTML
   const htmlContent = generateHtmlDocument({
     title,
     metadata: parsedMeta,
@@ -877,7 +877,7 @@ function generateHtmlDocument(options: DocOptions): string {
           <span class="meta-value">${escapeHtml(metadata.productBatch)}</span>
         </div>
         <div class="meta-item">
-          <span class="meta-label">不良數量</span>
+          <span class="meta-label">不良品數量</span>
           <span class="meta-value">${metadata.defectQuantity || '—'} pcs</span>
         </div>
         <div class="meta-item">

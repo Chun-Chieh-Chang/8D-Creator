@@ -7,7 +7,7 @@
  * - 靜態資源: stale-while-revalidate（_next/static 內容 hash 不可變，快取安全）
  * - activate: 清除舊版快取 + clients.claim
  */
-const CACHE_NAME = "8d-creator-v2";
+const CACHE_NAME = "8d-creator-v3";
 // 相對 SW script 所在位置（GitHub Pages basePath 相容）
 const SHELL_URL = "./";
 
@@ -58,6 +58,7 @@ self.addEventListener("fetch", (event) => {
 
   const url = new URL(request.url);
   if (url.origin !== self.location.origin) return;
+  if (url.pathname.startsWith(new URL("./api/kb/", self.location.href).pathname)) return;
 
   // 導航請求：網路優先，失敗回退快取，成功時更新快取
   if (request.mode === "navigate") {

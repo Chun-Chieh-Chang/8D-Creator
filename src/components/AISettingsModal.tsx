@@ -12,6 +12,7 @@ import {
 import {
   aiService,
   OFFICIAL_MODELS,
+  DEFAULT_MODEL,
   AGNES_BASE_URL,
   GEMINI_BASE_URL
 } from "@/lib/ai_service";
@@ -29,7 +30,7 @@ interface TestResult {
 
 export default function AISettingsModal({ onClose, onSaved }: AISettingsModalProps) {
   const [apiKey, setApiKey] = useState("");
-  const [model, setModel] = useState("agnes-2.5-flash");
+  const [model, setModel] = useState(DEFAULT_MODEL);
   const [customModel, setCustomModel] = useState("");
   const [baseUrl, setBaseUrl] = useState(AGNES_BASE_URL);
   const [testing, setTesting] = useState(false);
@@ -48,17 +49,17 @@ export default function AISettingsModal({ onClose, onSaved }: AISettingsModalPro
       setModel(conf.model);
     } else {
       setModel("custom");
-      setCustomModel(conf.model);
+      setCustomModel(conf.model === "custom" ? conf.customModel ?? "" : conf.model);
     }
   }, []);
 
-  const handleModelChange = (selectedModel: string) => {
+  const handleModelChange = (selectedModel: string): void => {
+    const currentProvider = aiService.getEffectiveProvider({ model, customModel, baseUrl });
+    const nextBase = selectedModel.startsWith("gemini-") ? GEMINI_BASE_URL : selectedModel === "custom" ? "" : AGNES_BASE_URL;
+    const nextProvider = aiService.getEffectiveProvider({ model: selectedModel, customModel, baseUrl: nextBase });
     setModel(selectedModel);
-    if (selectedModel.startsWith("agnes-")) {
-      setBaseUrl(AGNES_BASE_URL);
-    } else if (selectedModel.startsWith("gemini-")) {
-      setBaseUrl(GEMINI_BASE_URL);
-    }
+    setBaseUrl(nextBase);
+    if (currentProvider !== nextProvider) setApiKey(aiService.getStoredApiKey(nextProvider));
   };
 
   const handleSave = () => {
@@ -70,13 +71,12 @@ export default function AISettingsModal({ onClose, onSaved }: AISettingsModalPro
   const handleTest = async () => {
     setTesting(true);
     setTestResult(null);
-    aiService.saveConfig({ apiKey, model, customModel, baseUrl });
     try {
-      await aiService.testConnection();
-      setTestResult({ success: true, msg: "✓ 連線測試成功！" });
+      await aiService.testConnection({ provider: model.startsWith("gemini-") ? "gemini" : "agnes", apiKey: apiKey.trim(), model, customModel, baseUrl: baseUrl.trim().replace(/\/+$/, "") });
+      setTestResult({ success: true, msg: "連線成功。" });
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : String(error);
-      setTestResult({ success: false, msg: `✗ 連線失敗: ${message}` });
+      setTestResult({ success: false, msg: `連線失敗。 ${message}` });
     } finally {
       setTesting(false);
     }
@@ -105,8 +105,7 @@ export default function AISettingsModal({ onClose, onSaved }: AISettingsModalPro
               <Cpu className="w-5 h-5 text-[var(--accent)]" />
             </div>
             <div>
-              <h2 className="text-base font-bold text-[var(--text-primary)]">AI 模型引擎設定</h2>
-              <p className="text-[13px] text-[var(--text-secondary)]">Agnes AI / Google AI Studio 多模型適配</p>
+              <h2 className="text-base font-bold text-[var(--text-primary)]">AI 設定</h2>
             </div>
           </div>
           <button
@@ -124,44 +123,30 @@ export default function AISettingsModal({ onClose, onSaved }: AISettingsModalPro
           <div className="space-y-1.5">
             <label className="flex items-center gap-2 text-sm font-semibold text-[var(--text-primary)]">
               <Cpu className="w-4 h-4 text-[var(--accent)]" />
-              模型選擇 (Model)
+              AI 模型
             </label>
             <select
               value={model}
               onChange={(e) => handleModelChange(e.target.value)}
               className="w-full h-11 px-3.5 bg-[var(--bg-base)] text-[var(--text-primary)] border border-[var(--border-color)] rounded-lg text-sm focus:ring-2 focus:ring-[var(--accent)]/20 focus:border-[var(--accent)] outline-none"
             >
-              <optgroup label="🌟 Agnes AI 官方模型">
+              <optgroup label="Agnes AI 模型">
                 {OFFICIAL_MODELS.agnes.map((m) => (
                   <option key={m.id} value={m.id} className="bg-[var(--bg-surface)] text-[var(--text-primary)]">
                     {m.name}
                   </option>
                 ))}
               </optgroup>
-              <optgroup label="⚡ Google Gemini 3.x 系列 (最新旗艦)">
-                {OFFICIAL_MODELS.gemini3.map((m) => (
+              <optgroup label="Google AI Studio 免費層">
+                {OFFICIAL_MODELS.geminiFree.map((m) => (
                   <option key={m.id} value={m.id} className="bg-[var(--bg-surface)] text-[var(--text-primary)]">
                     {m.name}
                   </option>
                 ))}
               </optgroup>
-              <optgroup label="⚡ Google Gemini 2.5 系列 (成熟穩定)">
-                {OFFICIAL_MODELS.gemini25.map((m) => (
-                  <option key={m.id} value={m.id} className="bg-[var(--bg-surface)] text-[var(--text-primary)]">
-                    {m.name}
-                  </option>
-                ))}
-              </optgroup>
-              <optgroup label="⚡ Google Gemini 1.5 系列 (經典相容)">
-                {OFFICIAL_MODELS.geminiLegacy.map((m) => (
-                  <option key={m.id} value={m.id} className="bg-[var(--bg-surface)] text-[var(--text-primary)]">
-                    {m.name}
-                  </option>
-                ))}
-              </optgroup>
-              <optgroup label="🧩 自訂模型">
+              <optgroup label="自訂模型">
                 <option value="custom" className="bg-[var(--bg-surface)] text-[var(--text-primary)]">
-                  自訂模型名稱 (Custom Model ID)...
+                  自訂模型
                 </option>
               </optgroup>
             </select>
@@ -172,13 +157,13 @@ export default function AISettingsModal({ onClose, onSaved }: AISettingsModalPro
             <div className="space-y-1.5">
               <label className="flex items-center gap-2 text-sm font-semibold text-[var(--text-primary)]">
                 <Cpu className="w-4 h-4 text-[var(--accent)]" />
-                自訂 Model ID
+                自訂模型 ID
               </label>
               <input
                 type="text"
                 value={customModel}
                 onChange={(e) => setCustomModel(e.target.value)}
-                placeholder="例如: agnes-2.5-flash, custom-llm"
+                placeholder="例如: agnes-3.0-flash, custom-llm"
                 className="w-full h-11 px-3.5 bg-[var(--bg-base)] text-[var(--text-primary)] placeholder:text-[var(--text-secondary)] placeholder:opacity-80 border border-[var(--border-color)] rounded-lg text-sm focus:ring-2 focus:ring-[var(--accent)]/20 focus:border-[var(--accent)] outline-none transition-all"
               />
             </div>
@@ -188,7 +173,7 @@ export default function AISettingsModal({ onClose, onSaved }: AISettingsModalPro
           <div className="space-y-1.5">
             <label className="flex items-center gap-2 text-sm font-semibold text-[var(--text-primary)]">
               <KeyRound className="w-4 h-4 text-[var(--accent)]" />
-              API Key / Bearer Token
+              API 金鑰或 Bearer Token
             </label>
             <input
               type="password"
@@ -199,9 +184,9 @@ export default function AISettingsModal({ onClose, onSaved }: AISettingsModalPro
             />
             <p className="text-xs sm:text-[13px] text-[var(--text-secondary)]">
               {selectedProvider === "gemini" ? (
-                <span>前往 <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noreferrer" className="text-[var(--accent)] font-medium underline">Google AI Studio</a> 免費申請金鑰</span>
+                <span>前往 <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noreferrer" className="text-[var(--accent)] font-medium underline">Google AI Studio</a> 取得 API 金鑰</span>
               ) : (
-                <span>前往 <a href="https://apihub.agnes-ai.com" target="_blank" rel="noreferrer" className="text-[var(--accent)] font-medium underline">Agnes AI Hub</a> 取得金鑰</span>
+                <span>前往 <a href="https://apihub.agnes-ai.com" target="_blank" rel="noreferrer" className="text-[var(--accent)] font-medium underline">Agnes AI Hub</a> 取得 API 金鑰</span>
               )}
             </p>
           </div>
@@ -210,7 +195,7 @@ export default function AISettingsModal({ onClose, onSaved }: AISettingsModalPro
           <div className="space-y-1.5">
             <label className="flex items-center gap-2 text-sm font-semibold text-[var(--text-primary)]">
               <Link2 className="w-4 h-4 text-[var(--accent)]" />
-              API Base URL
+              API 基礎網址
             </label>
             <input
               type="text"
@@ -220,7 +205,7 @@ export default function AISettingsModal({ onClose, onSaved }: AISettingsModalPro
               className="w-full h-11 px-3.5 bg-[var(--bg-base)] text-[var(--text-primary)] placeholder:text-[var(--text-secondary)] placeholder:opacity-80 border border-[var(--border-color)] rounded-lg text-sm focus:ring-2 focus:ring-[var(--accent)]/20 focus:border-[var(--accent)] outline-none transition-all"
             />
             <p className="text-xs sm:text-[13px] text-[var(--text-secondary)]">
-              支援 Agnes 官方端點、Google AI Studio 或任何 OpenAI 相容 Proxy Gateway
+              輸入服務的 API 基礎網址。
             </p>
           </div>
 
@@ -244,7 +229,7 @@ export default function AISettingsModal({ onClose, onSaved }: AISettingsModalPro
             className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-[var(--accent)] hover:bg-[var(--accent)]/10 rounded-lg transition-colors disabled:opacity-50 min-h-[40px]"
           >
             <Zap className="w-4 h-4" />
-            {testing ? "測試中..." : "測試連線"}
+            {testing ? "正在測試連線" : "測試連線"}
           </button>
 
           <div className="flex items-center gap-2 sm:gap-3 ml-auto">

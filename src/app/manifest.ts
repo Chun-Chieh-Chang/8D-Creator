@@ -9,9 +9,9 @@ export const dynamic = "force-static";
  */
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "8D Creator - AI 8D 問題解決報告系統",
+    name: "8D Creator",
     short_name: "8D Creator",
-    description: "企業級 AI 驅動 8D 問題解決報告系統，支援 5-Why 引導分析、風險評估與多格式匯出",
+    description: "執行 5-Why 原因分析、評估風險及匯出 8D 報告。",
     start_url: "./",
     scope: "./",
     display: "standalone",

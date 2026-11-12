@@ -1,6 +1,7 @@
 // src/lib/historyManager.ts
 export interface ReportHistoryItem {
   id: string;
+  caseId?: string;
   timestamp: number;
   date: string;
   productInfo: string;

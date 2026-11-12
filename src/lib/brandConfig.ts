@@ -1,12 +1,12 @@
 /**
  * 品牌客製化系統
- * 允許用戶自定義 Logo、水印和品牌色系
+ * 允許使用者自訂 Logo、浮水印和品牌色系
  */
 
 export interface BrandConfig {
   companyName: string;           // 公司名稱
   logoUrl?: string;              // Logo URL (data URL or external)
-  watermarkText?: string;        // 水印文字
+  watermarkText?: string;        // 浮水印文字
   primaryColor?: string;         // 主色
   accentColor?: string;          // 強調色
   customFont?: string;           // 自訂字體
@@ -47,7 +47,7 @@ export function clearBrandConfig(): void {
 }
 
 /**
- * 生成水印 SVG
+ * 產生浮水印 SVG
  */
 export function generateWatermarkSvg(text: string, color: string = '#E5E7EB'): string {
   return `<svg xmlns="http://www.w3.org/2000/svg" width="400" height="200" viewBox="0 0 400 200">

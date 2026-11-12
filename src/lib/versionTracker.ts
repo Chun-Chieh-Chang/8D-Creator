@@ -1,6 +1,6 @@
 /**
  * 報告版本追蹤系統
- * 自動生成和管理 8D 報告的版本編號
+ * 產生和管理 8D 報告的版本編號
  */
 
 export interface ReportVersion {
@@ -27,7 +27,7 @@ export function getLatestVersion(): ReportVersion | null {
 }
 
 /**
- * 生成新版本號
+ * 產生新版本號
  */
 export function generateNewVersion(bumpType: 'major' | 'minor' | 'patch' = 'patch'): string {
   const latest = getLatestVersion();
@@ -111,7 +111,7 @@ export function clearVersionHistory(): void {
 }
 
 /**
- * 檢查是否為首次生成
+ * 檢查是否為首次產生
  */
 export function isFirstGeneration(): boolean {
   return getLatestVersion() === null;

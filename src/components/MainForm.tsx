@@ -5,38 +5,48 @@ import {
   Upload, X
 } from "lucide-react";
 import ReactMarkdown from "react-markdown";
-import { generateAgnesReport, generateAgnes5Why } from "@/lib/agnesClient";
-import { generateGeminiReport, generateGemini5Why } from "@/lib/geminiClient";
-import { aiService } from "@/lib/ai_service";
+import { saveAs } from "file-saver";
+import { generate8D } from "@/lib/generate8D";
+import type { ChatMessage } from "@/lib/types";
 import { exportToDocx } from "@/lib/docxExporter";
 import { exportToHtml } from "@/lib/htmlExporter";
 import { exportToPdf } from "@/lib/pdfExporter";
 import { ReportHistoryItem, saveHistory } from "@/lib/historyManager";
 import { parseFile } from "@/lib/fileParser";
-import { buildEnhancedReportPrompt } from "@/lib/tools/promptBuilder";
+import { buildEnhanced5WhyPrompt, buildEnhancedReportPrompt } from "@/lib/tools/promptBuilder";
 import { calculateRPN, findSimilarCases, SimilarCase } from "@/lib/tools/analysisTools";
 import { getHistory } from "@/lib/historyManager";
+import { errorText, kbBase, type CaseDetail, type KnowledgeDraft } from "@/lib/knowledgeWorkspace";
+import type { ReportPosition } from "@/components/TaskTrail";
 
 interface MainFormProps {
+  onPositionChange: (position: ReportPosition) => void;
+  projectAgent: string | null | undefined;
+  onAgentUnavailable: () => void;
   onReportGenerated: (item: ReportHistoryItem) => void;
   selectedHistory: ReportHistoryItem | null;
+  caseContext?: CaseDetail;
+  caseId?: string;
+  onSaveCaseDraft?: (id: string, draft: KnowledgeDraft) => Promise<void>;
 }
 
 type Step = "input" | "analysis" | "final";
+type ReferenceFile = { name: string; content: string; source?: string };
 
-export default function MainForm({ onReportGenerated, selectedHistory }: MainFormProps) {
+export default function MainForm({ onReportGenerated, selectedHistory, caseContext, caseId, onSaveCaseDraft, projectAgent, onAgentUnavailable, onPositionChange }: MainFormProps) {
   const [step, setStep] = useState<Step>(selectedHistory ? "final" : "input");
+  const caseDate = caseContext?.category === "capa" ? "" : caseContext?.day;
   const [formData, setFormData] = useState({
-    problemTitle: selectedHistory?.problemDescription || "",
-    occurrenceTime: selectedHistory?.date || new Date().toISOString().split("T")[0],
+    problemTitle: selectedHistory?.problemDescription || caseContext?.title || "",
+    occurrenceTime: selectedHistory?.date ?? caseDate ?? new Date().toISOString().split("T")[0],
     location: "",
     defectDescription: "",
     detectionMethod: "",
     impactScope: "",
     preliminaryCause: "",
-    date: selectedHistory?.date || new Date().toISOString().split("T")[0],
-    defectQuantity: selectedHistory?.defectQuantity || 1,
-    productInfo: selectedHistory?.productInfo || "",
+    date: selectedHistory?.date ?? caseDate ?? new Date().toISOString().split("T")[0],
+    defectQuantity: selectedHistory?.defectQuantity ?? 1,
+    productInfo: selectedHistory?.productInfo || (caseContext?.products.length === 1 ? caseContext.products[0] : ""),
     productBatch: selectedHistory?.productBatch || "",
     customerName: selectedHistory?.customerName || "",
   });
@@ -44,6 +54,14 @@ export default function MainForm({ onReportGenerated, selectedHistory }: MainFor
   const [isLoading, setIsLoading] = useState(false);
   const [reportContent, setReportContent] = useState<string>(selectedHistory?.generatedContent || "");
   const [errorMsg, setErrorMsg] = useState("");
+  const [editing, setEditing] = useState(false);
+  const [savingDraft, setSavingDraft] = useState(false);
+  const [savedDraft, setSavedDraft] = useState(false);
+  const reportReady = !isLoading && Boolean(reportContent.trim());
+
+  useEffect((): void => {
+    onPositionChange({ step, saved: savedDraft, ready: reportReady });
+  }, [onPositionChange, step, savedDraft, reportReady]);
 
   // Analysis state
   const [chatHistory, setChatHistory] = useState<{ role: "user" | "assistant"; content: string }[]>([]);
@@ -52,7 +70,7 @@ export default function MainForm({ onReportGenerated, selectedHistory }: MainFor
   const chatEndRef = useRef<HTMLDivElement>(null);
 
   // File upload state
-  const [uploadedFiles, setUploadedFiles] = useState<{ name: string; content: string }[]>([]);
+  const [uploadedFiles, setUploadedFiles] = useState<ReferenceFile[]>([]);
   const [isReadingFile, setIsReadingFile] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -67,16 +85,6 @@ export default function MainForm({ onReportGenerated, selectedHistory }: MainFor
       chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
     }
   }, [chatHistory, currentMessage, step]);
-
-  const getSettings = () => {
-    const conf = aiService.getConfig();
-    return {
-      provider: conf.provider,
-      apiKey: conf.apiKey,
-      model: aiService.getEffectiveModel(conf),
-      baseUrl: aiService.getEffectiveBaseUrl(conf)
-    };
-  };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }));
@@ -103,6 +111,29 @@ export default function MainForm({ onReportGenerated, selectedHistory }: MainFor
     setUploadedFiles(prev => prev.filter((_, i) => i !== index));
   };
 
+  const addCaseEvidence = async (file: string): Promise<void> => {
+    if (!file || isReadingFile) return;
+    setErrorMsg("");
+    setIsReadingFile(true);
+    try {
+      const params = new URLSearchParams({ file, preview: "1" });
+      const response = await fetch(kbBase + "file?" + params, { cache: "no-store" });
+      if (!response.ok || Number(response.headers.get("content-length")) > 20_000_000) {
+        throw new Error("無法讀取附件，或附件超過 20 MB。");
+      }
+      const content = (await response.text()).slice(0, 300_000);
+      setUploadedFiles((previous: ReferenceFile[]): ReferenceFile[] => (
+        previous.some((entry: ReferenceFile): boolean => entry.source === file)
+          ? previous
+          : [...previous, { name: file.split("/").at(-1) ?? file, content, source: file }]
+      ));
+    } catch (error: unknown) {
+      setErrorMsg(errorText(error));
+    } finally {
+      setIsReadingFile(false);
+    }
+  };
+
   // Run risk assessment
   const runAssessment = () => {
     const rpn = calculateRPN(formData.defectDescription, formData.impactScope, formData.detectionMethod);
@@ -122,7 +153,7 @@ export default function MainForm({ onReportGenerated, selectedHistory }: MainFor
 
   const startAnalysis = async () => {
     if (!formData.problemTitle || !formData.defectDescription) {
-      setErrorMsg("請填寫問題標題與缺陷現象描述");
+      setErrorMsg("填寫問題標題和缺陷描述。");
       return;
     }
     setErrorMsg("");
@@ -130,19 +161,18 @@ export default function MainForm({ onReportGenerated, selectedHistory }: MainFor
     setIsLoading(true);
     setCurrentMessage("");
 
-    const { provider, apiKey, model, baseUrl } = getSettings();
     const fileContext = uploadedFiles.map(f => `檔案 [${f.name}]:\n${f.content}`).join("\n\n");
     
     const context = [
       formData.problemTitle && `【問題標題】${formData.problemTitle}`,
-      formData.location && `【發生地點/線別】${formData.location}`,
+      formData.location && `【發生地點或產線】${formData.location}`,
       formData.detectionMethod && `【發現方式】${formData.detectionMethod}`,
       formData.impactScope && `【影響範圍】${formData.impactScope}`,
-      formData.preliminaryCause && `【初步原因猜測】${formData.preliminaryCause}`,
-      formData.defectDescription && `【缺陷現象詳細描述】\n${formData.defectDescription}`
+      formData.preliminaryCause && `【可能原因】${formData.preliminaryCause}`,
+      formData.defectDescription && `【缺陷描述】\n${formData.defectDescription}`
     ].filter(Boolean).join("\n\n");
     
-    const fullContext = `${context}\n\n[附件資料背景]\n${fileContext}`;
+    const fullContext = `${context}\n\n[參考附件]\n${fileContext}`;
     
     setIsAnalyzing(true);
     setAnalysisProgress(20);
@@ -157,22 +187,15 @@ export default function MainForm({ onReportGenerated, selectedHistory }: MainFor
         setCurrentMessage(prev => prev + chunk);
       };
 
-      if (provider === "gemini" && apiKey) {
-        await generateGemini5Why(apiKey, model, fullContext, [], callback);
-      } else if (provider === "agnes" && apiKey) {
-        await generateAgnes5Why(apiKey, model, baseUrl, fullContext, [], callback);
-      } else {
-        setErrorMsg("請設定 API Key");
-        setIsAnalyzing(false);
-        setIsLoading(false);
-        return;
-      }
+      await generate8D(projectAgent, buildEnhanced5WhyPrompt(fullContext, []), callback, onAgentUnavailable);
       
       setChatHistory([{ role: "assistant", content: question }]);
       setAnalysisProgress(100);
-    } catch {
-      setErrorMsg(provider === "gemini" ? "Gemini 連線失敗" : "Agnes AI 連線失敗");
+    } catch (error: unknown) {
+      setErrorMsg(errorText(error));
+      setStep("input");
     } finally {
+      setCurrentMessage("");
       setIsAnalyzing(false);
       setIsLoading(false);
     }
@@ -182,6 +205,7 @@ export default function MainForm({ onReportGenerated, selectedHistory }: MainFor
     if (!userInput.trim() || isLoading) return;
 
     const newHistory = [...chatHistory, { role: "user" as const, content: userInput }];
+    setErrorMsg("");
     setChatHistory(newHistory);
     setUserInput("");
     setIsLoading(true);
@@ -189,19 +213,18 @@ export default function MainForm({ onReportGenerated, selectedHistory }: MainFor
     setAnalysisProgress(60);
     setCurrentMessage("");
 
-    const { provider, apiKey, model, baseUrl } = getSettings();
     const fileContext = uploadedFiles.map(f => `檔案 [${f.name}]:\n${f.content}`).join("\n\n");
     
     const context = [
       formData.problemTitle && `【問題標題】${formData.problemTitle}`,
-      formData.location && `【發生地點/線別】${formData.location}`,
+      formData.location && `【發生地點或產線】${formData.location}`,
       formData.detectionMethod && `【發現方式】${formData.detectionMethod}`,
       formData.impactScope && `【影響範圍】${formData.impactScope}`,
-      formData.preliminaryCause && `【初步原因猜測】${formData.preliminaryCause}`,
-      formData.defectDescription && `【缺陷現象詳細描述】\n${formData.defectDescription}`
+      formData.preliminaryCause && `【可能原因】${formData.preliminaryCause}`,
+      formData.defectDescription && `【缺陷描述】\n${formData.defectDescription}`
     ].filter(Boolean).join("\n\n");
     
-    const fullContext = `${context}\n\n[附件資料背景]\n${fileContext}`;
+    const fullContext = `${context}\n\n[參考附件]\n${fileContext}`;
 
     try {
       let answer = "";
@@ -210,40 +233,41 @@ export default function MainForm({ onReportGenerated, selectedHistory }: MainFor
         setCurrentMessage(prev => prev + chunk);
       };
 
-      if (provider === "gemini" && apiKey) {
-        await generateGemini5Why(apiKey, model, fullContext, newHistory, callback);
-      } else if (provider === "agnes" && apiKey) {
-        await generateAgnes5Why(apiKey, model, baseUrl, fullContext, newHistory, callback);
-      } else {
-        setErrorMsg("請檢查 API Key");
-      }
+      await generate8D(projectAgent, buildEnhanced5WhyPrompt(fullContext, newHistory), callback, onAgentUnavailable);
 
       if (answer.includes("[FINISH_ANALYSIS]")) {
         setStep("final");
-        generateReport([...newHistory, { role: "assistant", content: answer }]);
+        await generateReport([...newHistory, { role: "assistant", content: answer }]);
       } else {
         setChatHistory(prev => [...prev, { role: "assistant", content: answer }]);
       }
-    } catch {
-      setErrorMsg("分析過程中斷");
+    } catch (error: unknown) {
+      setChatHistory(chatHistory);
+      setUserInput(userInput);
+      setErrorMsg(errorText(error));
     } finally {
+      setCurrentMessage("");
       setIsLoading(false);
       setIsAnalyzing(false);
     }
   };
 
-  const generateReport = async (history = chatHistory) => {
+  const generateReport = async (history: ChatMessage[] = chatHistory): Promise<void> => {
+    setSavedDraft(false);
     setErrorMsg("");
     setReportContent("");
     setIsLoading(true);
     
-    const { provider, apiKey, model, baseUrl } = getSettings();
     
     const analysisSummary = history
-      .map(h => `${h.role === "user" ? "用戶回答" : "專家"}: ${h.content}`)
+      .map(h => `${h.role === "user" ? "使用者回答" : "專家"}: ${h.content}`)
       .join("\n");
 
-    const reportPrompt = buildEnhancedReportPrompt(analysisSummary, formData);
+    const references = uploadedFiles.map((file: ReferenceFile): string => (
+      file.name + "\n" + file.content
+    )).join("\n\n");
+    const reportPrompt = buildEnhancedReportPrompt(analysisSummary, formData) +
+      (references ? "\n\n## 參考附件\n" + references : "");
 
     let result = "";
     const callback = (chunk: string) => {
@@ -252,15 +276,14 @@ export default function MainForm({ onReportGenerated, selectedHistory }: MainFor
     };
 
     try {
-      if (provider === "gemini" && apiKey) {
-        await generateGeminiReport(apiKey, model, reportPrompt, callback);
-      } else if (provider === "agnes" && apiKey) {
-        await generateAgnesReport(apiKey, model, baseUrl, reportPrompt, callback);
-      } else {
-        setErrorMsg("生成失敗 - 請檢查 API Key");
-      }
+      await generate8D(projectAgent, reportPrompt, callback, onAgentUnavailable);
       
+      if (!result.trim()) {
+        setErrorMsg("模型沒有傳回報告。請重試。");
+        return;
+      }
       const newItem = saveHistory({
+        caseId,
         date: formData.date,
         productInfo: formData.productInfo,
         productBatch: formData.productBatch,
@@ -272,8 +295,7 @@ export default function MainForm({ onReportGenerated, selectedHistory }: MainFor
       
       onReportGenerated(newItem);
     } catch (err: unknown) {
-      console.error("Generate error:", err);
-      setErrorMsg("報告生成失敗");
+      setErrorMsg(errorText(err));
     } finally {
       setIsLoading(false);
     }
@@ -316,31 +338,65 @@ export default function MainForm({ onReportGenerated, selectedHistory }: MainFor
     });
   };
 
+  const knowledgeDraft = (): KnowledgeDraft | null => {
+    const markdown = reportContent.trim();
+    if (isLoading || !markdown) return null;
+    return {
+      format: "8d-creator.quality-kb",
+      version: 1,
+      fields: {
+        date: formData.date,
+        product: formData.productInfo,
+        batch: formData.productBatch,
+        customer: formData.customerName,
+        defectQuantity: String(formData.defectQuantity),
+        problem: [formData.problemTitle, formData.defectDescription].filter(Boolean).join("\n"),
+      },
+      markdown,
+    };
+  };
+
+  const downloadKnowledgeDraft = (): void => {
+    const draft = knowledgeDraft();
+    if (!draft) return;
+    const file = new Blob([JSON.stringify(draft)], { type: "application/json;charset=utf-8" });
+    if (file.size > 2_000_000) {
+      setErrorMsg("知識庫草稿不得超過 2 MB");
+      return;
+    }
+    saveAs(file, "8D-kb-" + Date.now() + ".json");
+  };
+
+  const saveCaseDraft = async (): Promise<void> => {
+    const draft = knowledgeDraft();
+    if (!caseId || !onSaveCaseDraft || !draft || savingDraft) return;
+    setSavingDraft(true);
+    setSavedDraft(false);
+    setErrorMsg("");
+    try {
+      await onSaveCaseDraft(caseId, draft);
+      setSavedDraft(true);
+    } catch (error: unknown) {
+      setErrorMsg(errorText(error));
+    } finally {
+      setSavingDraft(false);
+    }
+  };
+
+  const startManualDraft = (): void => {
+    setReportContent((previous: string): string => previous || [
+      "# 8D 報告",
+      "## D1: 團隊成立", "## D2: 問題描述", "## D3: 臨時遏制措施", "## D4: 根本原因分析",
+      "## D5: 矯正措施", "## D6: 預防措施", "## D7: 措施驗證", "## D8: 團隊慶祝",
+    ].join("\n\n"));
+    setEditing(true);
+    setStep("final");
+  };
+
   return (
     <div className="flex-1 overflow-y-auto bg-[var(--bg-base)] h-full">
       <div className="max-w-7xl mx-auto p-3.5 sm:p-6 space-y-4 sm:space-y-6">
         
-        {/* Step Indicator */}
-        <div className="flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm overflow-x-auto pb-1 no-scrollbar">
-          {[
-            { key: "input", label: "填寫資訊" },
-            { key: "analysis", label: "原因分析" },
-            { key: "final", label: "輸出報告" }
-          ].map((s, i, arr) => (
-            <div key={s.key} className="flex items-center gap-1.5 sm:gap-2 shrink-0">
-              <div className={`px-2.5 sm:px-3 py-1.5 rounded-md font-medium ${
-                step === s.key 
-                  ? "bg-[var(--accent)] text-white shadow-xs" 
-                  : step !== s.key && ["input","analysis","final"].indexOf(step) > i
-                  ? "bg-green-600 text-white" 
-                  : "bg-[var(--bg-surface)] border border-[var(--border-color)] text-[var(--text-secondary)]"
-              }`}>
-                {s.label}
-              </div>
-              {i < arr.length - 1 && <ArrowRight className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-gray-400 opacity-40 shrink-0" />}
-            </div>
-          ))}
-        </div>
 
         {/* Error Message */}
         {errorMsg && (
@@ -357,8 +413,8 @@ export default function MainForm({ onReportGenerated, selectedHistory }: MainFor
         {step === "input" && (
           <div className="card p-4 sm:p-6 space-y-6">
             <div>
-              <h1 className="text-base sm:text-lg font-semibold tracking-tight text-[var(--text-primary)] mb-1">8D 報告參數設定</h1>
-              <p className="text-[13px] sm:text-sm text-[var(--text-secondary)]">請填寫以下基礎資訊，以便進行後續 5-Why 專家系統分析</p>
+              <h1 className="text-base sm:text-lg font-semibold tracking-tight text-[var(--text-primary)] mb-1">填寫 8D 報告資料</h1>
+              <p className="text-[13px] sm:text-sm text-[var(--text-secondary)]">填寫必填欄位，再選取「開始分析」。</p>
             </div>
             
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8">
@@ -373,7 +429,7 @@ export default function MainForm({ onReportGenerated, selectedHistory }: MainFor
                     name="problemTitle"
                     value={formData.problemTitle}
                     onChange={handleChange}
-                    placeholder="例：XX產品表面刮傷不良率異常升高"
+                    placeholder="例：產品表面刮傷增加"
                     className="input"
                   />
                 </div>
@@ -390,7 +446,7 @@ export default function MainForm({ onReportGenerated, selectedHistory }: MainFor
                     />
                   </div>
                   <div>
-                    <label className="label">發生地點/線別</label>
+                    <label className="label">發生地點或產線</label>
                     <input
                       type="text"
                       name="location"
@@ -403,12 +459,12 @@ export default function MainForm({ onReportGenerated, selectedHistory }: MainFor
                 </div>
                 
                 <div>
-                  <label className="label">缺陷現象詳細描述 <span className="text-red-500">*</span></label>
+                  <label className="label">缺陷描述 <span className="text-red-500">*</span></label>
                   <textarea
                     name="defectDescription"
                     value={formData.defectDescription}
                     onChange={handleChange}
-                    placeholder="請詳細描述缺陷表現、嚴重程度、頻率等..."
+                    placeholder="例：刮傷位於右側邊緣，長約 5 mm"
                     className="textarea"
                     rows={4}
                   />
@@ -439,7 +495,7 @@ export default function MainForm({ onReportGenerated, selectedHistory }: MainFor
                 </div>
                 
                 <div>
-                  <label className="label">初步原因猜測</label>
+                  <label className="label">可能原因</label>
                   <input
                     type="text"
                     name="preliminaryCause"
@@ -452,7 +508,16 @@ export default function MainForm({ onReportGenerated, selectedHistory }: MainFor
 
                 {/* File Upload */}
                 <div>
-                  <label className="label">上傳參考資料</label>
+                  <label className="label">參考附件</label>
+                  {caseContext && <label className="label mb-2 block">從案件加入參考附件
+                    <select aria-label="從案件加入參考附件" value="" className="input mt-1 w-full" disabled={isReadingFile}
+                      onChange={(event): void => void addCaseEvidence(event.target.value)}>
+                      <option value="">選擇文字或 Office 附件</option>
+                      {caseContext.evidence.filter((file: string): boolean => /\.(txt|csv|docx|xlsx?|xlsm)$/i.test(file))
+                        .map((file: string) => <option key={file} value={file}>{file.split("/").at(-1)}</option>)}
+                    </select>
+                    <span className="mt-1 block text-xs text-[var(--text-secondary)]">使用 AI 分析時，系統會將已加入的附件文字傳給目前的 AI 服務。</span>
+                  </label>}
                   <div
                     onClick={() => fileInputRef.current?.click()}
                     className="border-2 border-dashed border-[var(--border-color)] hover:border-[var(--accent)] rounded-lg p-5 cursor-pointer text-center transition-colors bg-[var(--bg-base)]/50"
@@ -467,7 +532,7 @@ export default function MainForm({ onReportGenerated, selectedHistory }: MainFor
                     />
                     <Upload className="w-6 h-6 mx-auto mb-2 text-[var(--accent)] opacity-80" />
                     <p className="text-sm font-medium text-[var(--text-primary)]">
-                      {isReadingFile ? "讀取中..." : "點擊或拖拽上傳文件"}
+                      {isReadingFile ? "讀取中..." : "選取檔案，或將檔案拖到此處"}
                     </p>
                     <p className="text-[13px] text-[var(--text-secondary)] mt-1">支援 Excel / Word / PDF / TXT</p>
                   </div>
@@ -496,7 +561,7 @@ export default function MainForm({ onReportGenerated, selectedHistory }: MainFor
 
               {/* Right: Basic Info */}
               <div className="space-y-4 sm:space-y-5">
-                <h2 className="text-[13px] font-semibold text-[var(--text-secondary)] uppercase tracking-wider pb-1 border-b border-[var(--border-color)]">基本資料</h2>
+                <h2 className="text-[13px] font-semibold text-[var(--text-secondary)] uppercase tracking-wider pb-1 border-b border-[var(--border-color)]">產品與客戶資料</h2>
                 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
@@ -504,13 +569,13 @@ export default function MainForm({ onReportGenerated, selectedHistory }: MainFor
                     <input type="date" name="date" value={formData.date} onChange={handleChange} className="input" />
                   </div>
                   <div>
-                    <label className="label">不良數量 (pcs)</label>
+                    <label className="label">不良品數量（件）</label>
                     <input type="number" name="defectQuantity" value={formData.defectQuantity} onChange={handleChange} className="input" />
                   </div>
                 </div>
                 
                 <div>
-                  <label className="label">產品/型號</label>
+                  <label className="label">產品或型號</label>
                   <input type="text" name="productInfo" value={formData.productInfo} onChange={handleChange} placeholder="輸入型號" className="input" />
                 </div>
                 
@@ -521,21 +586,21 @@ export default function MainForm({ onReportGenerated, selectedHistory }: MainFor
                 
                 <div>
                   <label className="label">客戶名稱</label>
-                  <input type="text" name="customerName" value={formData.customerName} onChange={handleChange} placeholder="輸入客戶" className="input" />
+                  <input type="text" name="customerName" value={formData.customerName} onChange={handleChange} placeholder="輸入客戶名稱" className="input" />
                 </div>
 
                 <div className="pt-4 sm:pt-6 border-t border-[var(--border-color)] space-y-2">
                   <button
                     onClick={startAnalysis}
-                    disabled={isLoading || isReadingFile}
+                    disabled={isLoading || isReadingFile || projectAgent === undefined}
                     className="btn btn-primary w-full min-h-[46px] text-base font-semibold shadow-sm"
                   >
                     {isLoading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
                     開始分析
                   </button>
-                  <p className="text-[13px] text-[var(--text-secondary)] text-center">
-                    系統將引導您進行 5-Why 根本原因分析
-                  </p>
+                  {caseId && <button type="button" className="btn btn-secondary mt-2 w-full" onClick={startManualDraft}>
+                    手寫 8D 草稿
+                  </button>}
                 </div>
               </div>
             </div>
@@ -549,8 +614,8 @@ export default function MainForm({ onReportGenerated, selectedHistory }: MainFor
             <div className="xl:col-span-5 card flex flex-col h-[520px] xl:h-[calc(100vh-170px)] overflow-hidden">
               <div className="p-3.5 sm:p-4 border-b border-[var(--border-color)] flex items-center justify-between bg-[var(--bg-surface)]">
                 <div>
-                  <h2 className="text-sm sm:text-base font-semibold text-[var(--text-primary)]">原因分析對話</h2>
-                  <p className="text-[13px] text-[var(--text-secondary)]">與專家系統互動推導 5-Why</p>
+                  <h2 className="text-sm sm:text-base font-semibold text-[var(--text-primary)]">5-Why 原因分析</h2>
+                  <p className="text-[13px] text-[var(--text-secondary)]">回答問題，逐步查找根本原因。</p>
                 </div>
                 {isAnalyzing && (
                   <div className="flex items-center gap-1.5 text-xs font-semibold text-[var(--accent)] bg-[var(--accent)]/10 px-2 py-1 rounded">
@@ -607,7 +672,7 @@ export default function MainForm({ onReportGenerated, selectedHistory }: MainFor
                         sendReply();
                       }
                     }}
-                    placeholder="輸入您的回答..."
+                    placeholder="輸入回答"
                     className="w-full bg-[var(--bg-base)] text-[var(--text-primary)] border border-[var(--border-color)] rounded-lg p-3 pr-12 text-sm resize-none focus:outline-none focus:border-[var(--accent)] focus:ring-2 focus:ring-[var(--accent)]/20 transition-all"
                     rows={2}
                     disabled={isLoading}
@@ -616,18 +681,19 @@ export default function MainForm({ onReportGenerated, selectedHistory }: MainFor
                     onClick={sendReply}
                     disabled={!userInput.trim() || isLoading}
                     className="absolute right-2.5 bottom-2.5 min-w-[36px] min-h-[36px] flex items-center justify-center bg-[var(--accent)] text-white rounded-md hover:bg-[var(--accent-hover)] active:scale-95 disabled:opacity-40 transition-all shadow-xs"
-                    aria-label="發送訊息"
+                    aria-label="傳送回答"
                   >
                     <ArrowRight className="w-4 h-4" />
                   </button>
                 </div>
                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-1.5">
-                  <p className="text-xs text-[var(--text-secondary)]">Enter 發送，Shift+Enter 換行</p>
+                  <p className="text-xs text-[var(--text-secondary)]">按 Enter 傳送。按 Shift+Enter 換行。</p>
                   <button
                     onClick={() => { setStep("final"); generateReport(); }}
+                    disabled={isLoading || projectAgent === undefined}
                     className="text-xs sm:text-[13px] font-medium text-[var(--accent)] hover:underline py-1"
                   >
-                    跳過分析，直接生成報告 →
+                    跳過分析並產生報告
                   </button>
                 </div>
               </div>
@@ -644,7 +710,7 @@ export default function MainForm({ onReportGenerated, selectedHistory }: MainFor
                     riskResult.priority === 'medium' ? 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300' :
                     'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300'
                   }`}>
-                    {riskResult.priority === 'high' ? '高優先級' : riskResult.priority === 'medium' ? '中優先級' : '低優先級'}
+                    {riskResult.priority === 'high' ? '高優先順序' : riskResult.priority === 'medium' ? '中優先順序' : '低優先順序'}
                   </span>
                   <span className="text-sm text-[var(--text-secondary)] ml-auto">
                     RPN: <span className="font-mono font-bold text-[var(--text-primary)]">{riskResult.rpn}</span>
@@ -656,7 +722,7 @@ export default function MainForm({ onReportGenerated, selectedHistory }: MainFor
               {similarItems.length > 0 && (
                 <div className="card p-3.5 sm:p-4 bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800">
                   <p className="text-sm font-semibold text-blue-800 dark:text-blue-300 mb-1">
-                    相關歷史案例 ({similarItems.length})
+                    相似案件 ({similarItems.length})
                   </p>
                   <p className="text-xs sm:text-[13px] text-blue-600 dark:text-blue-400">
                     {similarItems.slice(0, 3).map((c: SimilarCase) => `#${c.caseId} (${c.similarity}%)`).join('、')}
@@ -667,7 +733,7 @@ export default function MainForm({ onReportGenerated, selectedHistory }: MainFor
               {/* Report Preview */}
               <div className="card h-[400px] xl:h-[calc(100vh-270px)] flex flex-col overflow-hidden">
                 <div className="p-3 sm:p-3.5 border-b border-[var(--border-color)] flex items-center justify-between bg-[var(--bg-surface)]">
-                  <span className="text-sm font-semibold">即時報告預覽</span>
+                  <span className="text-sm font-semibold">報告預覽</span>
                   <div className="flex gap-1.5">
                     <div className="w-2.5 h-2.5 rounded-full bg-red-400" />
                     <div className="w-2.5 h-2.5 rounded-full bg-yellow-400" />
@@ -679,7 +745,7 @@ export default function MainForm({ onReportGenerated, selectedHistory }: MainFor
                     <ReactMarkdown>{reportContent}</ReactMarkdown>
                   ) : (
                     <div className="text-center py-16 text-[var(--text-secondary)]">
-                      <p className="text-sm">完成分析或點擊「直接生成」查看報告預覽</p>
+                      <p className="text-sm">產生報告後，此處會顯示預覽。</p>
                     </div>
                   )}
                 </div>
@@ -696,34 +762,54 @@ export default function MainForm({ onReportGenerated, selectedHistory }: MainFor
               <div className="flex items-center gap-3">
                 <CheckCircle className="w-5 h-5 text-green-600 shrink-0" />
                 <div>
-                  <h2 className="text-sm sm:text-base font-semibold text-[var(--text-primary)]">8D 報告已完成</h2>
-                  <p className="text-[13px] text-[var(--text-secondary)]">可匯出為不同企業格式</p>
+                  <h2 className="text-sm sm:text-base font-semibold text-[var(--text-primary)]">8D 報告</h2>
                 </div>
               </div>
-              <div className="flex flex-wrap items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2 [&>button]:whitespace-nowrap">
+                {caseId && <>
+                  <button onClick={(): void => setEditing(!editing)} disabled={isLoading} className="btn btn-secondary text-sm">
+                    {editing ? "預覽草稿" : "編輯草稿"}
+                  </button>
+                  <button onClick={(): void => void saveCaseDraft()} disabled={isLoading || savingDraft || !reportContent.trim()} className="btn btn-primary text-sm">
+                    儲存至案件
+                  </button>
+                </>}
                 <button onClick={() => setStep("input")} className="btn btn-ghost text-sm flex-1 sm:flex-none">
                   重新填寫
                 </button>
                 <button onClick={copyToClipboard} className="btn btn-secondary text-sm flex-1 sm:flex-none">
-                  複製內容
+                  複製報告
                 </button>
                 <button onClick={downloadWord} className="btn btn-secondary text-sm flex-1 sm:flex-none">
-                  <FileDown className="w-4 h-4 mr-1.5" />Word
+                  <FileDown className="w-4 h-4 mr-1.5" />匯出 Word
                 </button>
                 <button onClick={downloadHtml} className="btn btn-secondary text-sm flex-1 sm:flex-none">
-                  <FileText className="w-4 h-4 mr-1.5" />HTML
+                  <FileText className="w-4 h-4 mr-1.5" />匯出 HTML
+                </button>
+                <button onClick={downloadKnowledgeDraft} disabled={isLoading || !reportContent.trim()} className="btn btn-secondary text-sm flex-1 sm:flex-none disabled:opacity-50">
+                  <FileDown className="w-4 h-4 mr-1.5" />匯出知識庫草稿
                 </button>
                 <button onClick={downloadPdf} className="btn btn-primary text-sm w-full sm:w-auto font-semibold">
-                  <FileDown className="w-4 h-4 mr-1.5" />下載 PDF
+                  <FileDown className="w-4 h-4 mr-1.5" />匯出 PDF
                 </button>
               </div>
             </div>
+            {savedDraft && <p role="status" className="px-4 pt-3 text-sm">已儲存 8D 草稿。</p>}
 
             {/* Loading State */}
             {isLoading ? (
               <div className="p-16 flex flex-col items-center gap-4">
                 <Loader2 className="w-8 h-8 animate-spin text-[var(--accent)]" />
-                <p className="text-sm text-[var(--text-secondary)]">正在以專業架構生成 8D 完整報告...</p>
+                <p className="text-sm text-[var(--text-secondary)]">正在產生 8D 報告。</p>
+              </div>
+            ) : editing ? (
+              <div className="p-4">
+                <label className="label block">8D 草稿
+                  <textarea rows={16} className="input mt-1 min-h-72 w-full font-mono" value={reportContent} onChange={(event): void => {
+                    setReportContent(event.target.value);
+                    setSavedDraft(false);
+                  }} />
+                </label>
               </div>
             ) : reportContent ? (
               <div className="p-4 sm:p-8 prose prose-sm max-w-none dark:prose-invert">
@@ -731,7 +817,7 @@ export default function MainForm({ onReportGenerated, selectedHistory }: MainFor
               </div>
             ) : (
               <div className="p-16 text-center text-[var(--text-secondary)]">
-                <p className="text-sm">尚未生成報告，請先完成分析步驟</p>
+                <p className="text-sm">目前沒有報告。請返回分析步驟。</p>
               </div>
             )}
           </div>

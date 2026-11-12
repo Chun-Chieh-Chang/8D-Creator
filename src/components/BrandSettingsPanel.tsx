@@ -96,7 +96,6 @@ export default function BrandSettingsPanel({ onClose }: { onClose: () => void })
             </div>
             <div>
               <h2 className="text-base font-bold text-[var(--text-primary)]">品牌設定</h2>
-              <p className="text-[13px] text-[var(--text-secondary)]">自訂報告外觀與識別</p>
             </div>
           </div>
           <button
@@ -197,7 +196,7 @@ export default function BrandSettingsPanel({ onClose }: { onClose: () => void })
           <div className="space-y-1.5">
             <label className="flex items-center gap-2 text-sm font-semibold text-[var(--text-primary)]">
               <Type className="w-4 h-4 text-[var(--accent)]" />
-              字體選擇
+              字型
             </label>
             <select
               value={settings.customFont}
@@ -216,7 +215,7 @@ export default function BrandSettingsPanel({ onClose }: { onClose: () => void })
           <div className="space-y-1.5">
             <label className="flex items-center gap-2 text-sm font-semibold text-[var(--text-primary)]">
               <ImageIcon className="w-4 h-4 text-[var(--accent)]" />
-              水印文字（可選）
+              浮水印文字（可選）
             </label>
             <input
               type="text"
@@ -235,7 +234,7 @@ export default function BrandSettingsPanel({ onClose }: { onClose: () => void })
             className="flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-red-600 hover:bg-red-500/10 rounded-lg transition-colors"
           >
             <Trash2 className="w-4 h-4" />
-            重置
+            還原預設值
           </button>
           
           <div className="flex items-center gap-2 sm:gap-3 ml-auto">

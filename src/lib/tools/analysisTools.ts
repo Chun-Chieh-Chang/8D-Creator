@@ -27,7 +27,7 @@ export interface SimilarCase {
 
 /**
  * 工具 1：根本原因分類與評估
- * 分析用戶輸入，判斷根本原因類型並評估置信度
+ * 分析使用者輸入，判斷根本原因類型並評估信心程度
  */
 export function classifyRootCause(): AnalysisResult {
   // AI 會使用這個工具來分析根本原因
@@ -71,7 +71,7 @@ export function calculateRPN(
 }
 
 /**
- * 工具 3：相似歷史案例匹配
+ * 工具 3：比對相似案件
  * 從历史记录中尋找相似的品質問題案例
  */
 export function findSimilarCases(
@@ -115,7 +115,7 @@ export function findSimilarCases(
         keyFindings: [
           `問題：${item.problemDescription?.substring(0, 100)}...`,
           `客戶：${item.customerName}`,
-          `不良數量：${item.defectQuantity}`
+          `不良品數量：${item.defectQuantity}`
         ],
         effectiveMeasures: [
           '需要進一步分析原始報告以獲取完整措施'

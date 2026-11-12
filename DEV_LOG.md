@@ -2,6 +2,13 @@
 
 專案開發歷程、設計標準、失敗紀錄 (RCA) 與版更紀錄。本文件隨專案變更同步更新。
 
+## 2026-11-12 用語與寫作
+
+- 目的：統一開發溝通、介面和文件用語。
+- 決策：採 ASD-STE100 務實模式。繁體中文使用短句、主動語態和固定術語。
+- 已完成：更新操作指南、介面文案和 8D 提示詞。GitHub Actions 在建置前執行術語檢查。
+- 待處理：新增文案時，人工核對術語、語意及操作步驟。
+
 ---
 
 ## 1. 專案目標 (Project Objectives)
@@ -26,6 +33,20 @@
 - **字體規範**：全介面最小字體 13px（無障礙合規）
 - **設計原則**：企業級乾淨介面、扁平配色、卡片分層、4px 格線
 - **對比度**：深色模式達成 WCAG AAA（15.8:1）
+
+### 行動端設計規範 (Mobile Design Standards)
+
+| 項目 | 規範 |
+|------|------|
+| 最小目標視口 | 375px（驗證視口：375 / 390 / 768） |
+| 觸控目標 | 按鈕/輸入框高度 ≥40px（建議 44px）；圖示按鈕 `w-9 h-9` 起跳 |
+| 字體下限 | 14px（`text-sm` 以上）；13px 僅限輔助說明文字且須有 `sm:` 升級 |
+| 斷點策略 | 手機單欄 `grid-cols-1` → 平板雙欄 `sm:grid-cols-2` → 桌面 `lg:grid-cols-2`；配色網格 `grid-cols-2 sm:grid-cols-3` |
+| 側邊欄 | `<768px` 一律 Off-canvas Drawer（`-translate-x-full` + Backdrop + Mobile Header 漢堡鈕） |
+| 操作列 | 一律 `flex flex-wrap`，手機端 `flex-1 sm:flex-none` 全寬堆疊 |
+| 步驟指示器 | `overflow-x-auto pb-1 no-scrollbar` + 子項 `shrink-0` |
+| Modal | 內容 `max-h-[70vh] overflow-y-auto`；底部操作 `flex-wrap`；鍵盤彈起不遮蔽 |
+| 品質門禁 | 任何 UI 變更必須執行 `mobile-responsive-audit` skill 多視口驗證（含水平溢出檢查與截圖存證） |
 
 ---
 
@@ -80,12 +101,23 @@
 - **修正**：全面重寫為 UTF-8 編碼，並納入本次版本基準
 - **預防**：文件一律以 UTF-8 撰寫，避免從非 UTF-8 來源直接複製
 
+### 案例 D：行動端響應式破版 (Mobile Responsive Regression)
+- **現象**：375px~768px 行動視口下 UI 嚴重破版——Sidebar 佔 77% 寬度、主表單僅剩 87px、報告完成頁 5 按鈕爆版重疊、Modal 被虛擬鍵盤遮蔽、雙欄表單過窄
+- **RCA (5-Why)**：
+  1. 為何破版？→ 元件以桌面優先寫法開發（固定 `w-72`、`grid-cols-2`、橫排按鈕列、`max-h-[60vh]`），無響應式前綴
+  2. 為何用桌面優先寫法？→ 開發與驗證皆在桌面視口進行，從未以行動視口檢視
+  3. 為何未以行動視口測試？→ 品質驗證流程（tsc/lint/build + 功能測試）不含多視口視覺檢查；Playwright 固定桌面 viewport
+  4. 為何流程不含視覺檢查？→ 設計標準僅定義色彩/字體/對比度，無行動端規範（斷點、觸控目標、Drawer 模式）
+  5. **根本原因**→ 品質門禁只涵蓋「功能與型別」，不涵蓋「視覺與響應式」；無強制觸發的行動端審查機制，破版只能靠外部審查事後發現
+- **矯正 (Corrective, 基準 `bc1f42a`)**：Drawer + Backdrop + Mobile Header；表單 `grid-cols-1 sm:grid-cols-2`；按鈕列 `flex-wrap`；步驟指示器 `overflow-x-auto`；全域 14px 字體 + 40-46px 觸控目標；Modal `max-h-[70vh]` + 底部 `flex-wrap`
+- **預防 (Preventive)**：行動端設計規範明文化（見 §2）；建立 `mobile-responsive-audit` skill（375/390/768 三視口 + 水平溢出檢查 + 截圖存證，UI 變更自動觸發）；品質閘門增加視覺驗證環節
+
 ---
 
 ## 6. 維護事項 (Maintenance)
 
 - **Git 追蹤**：`.gitignore` 排除 AI 工具執行快取 (`/.agnes/`)、建置產物 (`/.next/` `/out/` `*.tsbuildinfo`)、環境變數 (`.env*`)、產生檔 (`*.docx`)
-- **品質閘門**：推送前依序執行 `npx tsc --noEmit` → `npm run lint` → `npm run build`
+- **品質閘門**：推送前依序執行 `npx tsc --noEmit` → `npm run lint` → `npm run build`；**UI 變更另須執行 `mobile-responsive-audit` skill**（375/390/768 三視口驗證 + 水平溢出檢查 + 截圖存證）
 - **文件同步**：功能變更後同步更新 README.md / walkthrough.md / DEV_LOG.md
 
 ---

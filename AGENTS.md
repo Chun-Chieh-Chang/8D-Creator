@@ -56,3 +56,9 @@ const result = array.filter((item: Type) => item.condition);
 - **要求** 所有函數參數都有明確的類型簽名
 - **要求** 所有 return 值都有明確的回傳類型
 <!-- END:typescript-typecheck-rule -->
+
+## 用語與寫作
+
+- 遵循 [用語與寫作規範](./docs/用語與寫作規範.md)。適用於開發更新、程式註解、介面、提示詞及專案文件。
+- 使用繁體中文。英文採 ASD-STE100 務實模式。每句寫一個重點。用主動語態。
+- 提交文案變更前，執行 `npm run lint:terms`。人工核對術語、操作步驟和錯誤訊息。
