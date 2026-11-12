@@ -153,7 +153,7 @@ async function evidence(req, res, url) {
   const file = indexedFile(readState(), url.searchParams.get("file"));
   const ext = path.extname(file).toLowerCase();
   if (url.searchParams.has("preview") && [".docx", ".xls", ".xlsx", ".xlsm"].includes(ext)) {
-    if (statSync(file).size > 20_000_000) throw new Error("附件過大。請下載原始檔。");
+    if (statSync(file).size > 20_000_000) throw new Error("附件過大。請匯出原始檔。");
     let text;
     if (ext === ".docx") text = (await mammoth.extractRawText({ path: file })).value;
     else {

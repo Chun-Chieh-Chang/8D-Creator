@@ -532,7 +532,7 @@ export default function MainForm({ onReportGenerated, selectedHistory, caseConte
                     />
                     <Upload className="w-6 h-6 mx-auto mb-2 text-[var(--accent)] opacity-80" />
                     <p className="text-sm font-medium text-[var(--text-primary)]">
-                      {isReadingFile ? "讀取中..." : "選取檔案，或將檔案拖到此處"}
+                      {isReadingFile ? "匯入中…" : "選取檔案以匯入"}
                     </p>
                     <p className="text-[13px] text-[var(--text-secondary)] mt-1">支援 Excel / Word / PDF / TXT</p>
                   </div>
@@ -763,6 +763,7 @@ export default function MainForm({ onReportGenerated, selectedHistory, caseConte
                 <CheckCircle className="w-5 h-5 text-green-600 shrink-0" />
                 <div>
                   <h2 className="text-sm sm:text-base font-semibold text-[var(--text-primary)]">8D 報告</h2>
+                  {onSaveCaseDraft && caseId && <p className="text-xs text-[var(--text-secondary)]">Obsidian 知識庫</p>}
                 </div>
               </div>
               <div className="flex flex-wrap items-center gap-2 [&>button]:whitespace-nowrap">
@@ -787,14 +788,19 @@ export default function MainForm({ onReportGenerated, selectedHistory, caseConte
                   <FileText className="w-4 h-4 mr-1.5" />匯出 HTML
                 </button>
                 <button onClick={downloadKnowledgeDraft} disabled={isLoading || !reportContent.trim()} className="btn btn-secondary text-sm flex-1 sm:flex-none disabled:opacity-50">
-                  <FileDown className="w-4 h-4 mr-1.5" />匯出知識庫草稿
+                  <FileDown className="w-4 h-4 mr-1.5" />匯出 Obsidian 草稿 JSON
                 </button>
                 <button onClick={downloadPdf} className="btn btn-primary text-sm w-full sm:w-auto font-semibold">
                   <FileDown className="w-4 h-4 mr-1.5" />匯出 PDF
                 </button>
               </div>
             </div>
-            {savedDraft && <p role="status" className="px-4 pt-3 text-sm">已儲存 8D 草稿。</p>}
+            {savedDraft && <p role="status" className="px-4 pt-3 text-sm">已將 8D 草稿儲存至案件的 Obsidian 知識庫。</p>}
+            {onSaveCaseDraft && !caseId && !isLoading && reportContent.trim() && (
+              <p className="px-4 pt-3 text-sm text-[var(--text-secondary)]">
+                要將這份報告存入 Obsidian，請匯出草稿 JSON，再到對應案件選取「匯入 8D 草稿」。
+              </p>
+            )}
 
             {/* Loading State */}
             {isLoading ? (

@@ -58,7 +58,7 @@ export function render(root, state) {
     "- [[待處理]] · [[8D 草稿總覽]]",
     "## 複核方式",
     "打開案件下的複核筆記。從來源連結查證後，在屬性填入詞彙 ID、相對證據路徑、頁碼／列號／圖號和判定。將狀態設為 reviewed。結案另填確效證據與實測結果，再設為 closed。",
-    "在 8D Creator 選取「匯出知識庫草稿」。從專案執行 \`npm run kb -- attach <案件ID> <JSON路徑>\`。更新來源或複核屬性後，執行 \`npm run kb -- sync\`。證據路徑使用 /。可從案件附件清單複製相對路徑。",
+    "若手上已有草稿 JSON，請在案件的「8D 草稿」選取「匯入 8D 草稿」。也可從專案執行 \`npm run kb -- attach <案件ID> <JSON路徑>\`。更新來源或複核屬性後，執行 \`npm run kb -- sync\`。證據路徑使用 /。可從案件附件清單複製相對路徑。",
     "先從重複編號、同品號及缺陷線索找舊案。涉及生產條件、原因或對策效力時，回到複核與原始證據。"
   ].join("\n\n")));
   generated.set("案件總覽.md", page("案件總覽", Object.entries(categories).map(([key, label]) => {

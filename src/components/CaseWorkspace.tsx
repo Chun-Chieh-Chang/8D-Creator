@@ -294,7 +294,7 @@ export default function CaseWorkspace({ version, onReport, navigation, onPositio
                   onClick={(): void => setPreview(file)}>{fieldName(file)}</button>)}
                 {!current.evidence.length && <p className="text-sm text-[var(--text-secondary)]">目前沒有附件。</p>}
               </div>
-              {current.upload && <label className="label mt-3 block">補充附件
+              {current.upload && <label className="label mt-3 block">匯入附件
                 <input type="file" className="mt-1 block max-w-full text-sm" disabled={busy} onChange={(event): void => {
                   const file = event.target.files?.[0];
                   event.target.value = "";
@@ -304,7 +304,7 @@ export default function CaseWorkspace({ version, onReport, navigation, onPositio
                       method: "POST", headers: { "Content-Type": "application/octet-stream" }, body: file,
                     }));
                     setCatalog(await kbRequest<CaseCatalog>("cases"));
-                  }, "已加入附件。");
+                  }, "已匯入附件。");
                 }} />
               </label>}
             </details>
@@ -334,7 +334,7 @@ export default function CaseWorkspace({ version, onReport, navigation, onPositio
                       if (file.size > 2_000_000) throw new Error("知識庫草稿不得超過 2 MB。");
                       await kbPost("draft", { id: current.id, draft: JSON.parse(await file.text()) });
                       await load();
-                    }, "已儲存 8D 草稿。");
+                    }, "已匯入 8D 草稿。");
                   }} />
                 </label>
               </div>
@@ -359,7 +359,7 @@ export default function CaseWorkspace({ version, onReport, navigation, onPositio
         {/(\.(png|jpg|jpeg|gif|webp|avif|pdf|txt|csv|mp4|mov|m4a|xlsx?|xlsm|docx))$/i.test(preview) &&
           <iframe className="min-h-[50vh] w-full rounded border border-[var(--border-color)] bg-white" title="附件預覽"
             src={kbBase + endpoint("file", { file: preview, preview: "1" })} />}
-        <a className="btn btn-secondary mt-3 inline-flex" href={kbBase + endpoint("file", { file: preview })} download>下載原始檔</a>
+        <a className="btn btn-secondary mt-3 inline-flex" href={kbBase + endpoint("file", { file: preview })} download>匯出原始檔</a>
       </WorkspaceDialog>}
       {reading && <WorkspaceDialog title={reading.name || "新增經驗筆記"} onClose={(): void => setReading(null)}>
         {message && <p role="alert" className="mb-3 text-sm text-red-700">{message}</p>}
