@@ -15,6 +15,8 @@ import { kbPost, kbRequest, type CaseDetail, type CaseDraft, type KnowledgeDraft
 import { Menu, Plus, FileText, Power } from "lucide-react";
 
 type WorkspaceView = "cases" | "report" | "map";
+const localWorkspaceUrl = "http://127.0.0.1:3188/8D-Creator/";
+const caseDestinations: CaseDestination[] = ["search", "new", "nca", "case-report", "knowledge"];
 
 export default function Home() {
   const [history, setHistory] = useState<ReportHistoryItem[]>([]);
@@ -78,6 +80,17 @@ export default function Home() {
     void kbRequest<{ local: boolean }>("status", { signal: controller.signal }).then((status: { local: boolean }): void => {
       if (status.local) {
         setLocalWorkspace(true);
+        const url = new URL(window.location.href);
+        const requestedTask = url.searchParams.get("caseTask");
+        const destination = caseDestinations.find((task: CaseDestination): boolean => task === requestedTask);
+        if (destination) {
+          setCaseNavigation({ destination });
+          setView("cases");
+          url.searchParams.delete("caseTask");
+          url.hash = "";
+          window.history.replaceState(window.history.state, "", url);
+          return;
+        }
         setView((current: WorkspaceView): WorkspaceView => current === "map" ? current : "cases");
       }
     }).catch((): void => {});
@@ -140,6 +153,12 @@ export default function Home() {
   const navigateFromMap = (destination: MapDestination): void => {
     if (destination === "report") {
       showView("report");
+      return;
+    }
+    if (!localWorkspace) {
+      const url = new URL(localWorkspaceUrl);
+      url.searchParams.set("caseTask", destination);
+      window.location.assign(url);
       return;
     }
     setCaseNavigation({ destination });
@@ -222,8 +241,11 @@ export default function Home() {
         <nav aria-label="工作區" className="flex shrink-0 flex-wrap items-center gap-1 border-b border-[var(--border-color)] bg-[var(--bg-surface)] px-3 py-2 sm:gap-2 sm:px-4">
           <button type="button" aria-pressed={view === "map"} className={view === "map" ? "btn btn-primary text-sm" : "btn btn-ghost text-sm"}
             onClick={(): void => showView("map")}>專案地圖</button>
-          {localWorkspace && <button type="button" aria-pressed={view === "cases"} className={view === "cases" ? "btn btn-primary text-sm" : "btn btn-ghost text-sm"}
-            onClick={(): void => showView("cases")}>案件工作區</button>}
+          <button type="button" aria-pressed={view === "cases"} className={view === "cases" ? "btn btn-primary text-sm" : "btn btn-ghost text-sm"}
+            onClick={(): void => {
+              if (localWorkspace) showView("cases");
+              else navigateFromMap("search");
+            }}>案件工作區</button>
           <button type="button" aria-pressed={view === "report"} className={view === "report" ? "btn btn-primary text-sm" : "btn btn-ghost text-sm"}
             onClick={(): void => showView("report")}>8D 報告</button>
           {localWorkspace && <button type="button" disabled={serverState !== "running"} onClick={(): void => void shutdownServer()}

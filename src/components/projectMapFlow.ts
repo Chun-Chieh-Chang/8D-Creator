@@ -10,7 +10,6 @@ export const flowLayout = {
   edgeClearance: 20,
   arrowGap: 2,
   canvasPadding: 12,
-  reportViewX: 420,
 } as const;
 
 export interface FlowNode {

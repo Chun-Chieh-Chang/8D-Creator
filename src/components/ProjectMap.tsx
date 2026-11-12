@@ -48,8 +48,11 @@ export default function ProjectMap({ localWorkspace, onNavigate, onResume }: Pro
           <div className="min-w-0">
             <h1 id="project-map-title" className="text-xl font-semibold sm:text-2xl">專案地圖</h1>
             <p className="mt-1 text-sm text-[var(--text-secondary)]">
-              {localWorkspace ? "追蹤案件資料如何進入 8D 報告、匯出檔案或存入 Obsidian。" : "追蹤報告資料如何產生草稿與匯出檔案。案件工作區與 Obsidian 知識庫可在本機模式使用。"}
+              追蹤案件資料如何進入 8D 報告、匯出檔案或存入 Obsidian。
             </p>
+            {!localWorkspace && <p className="mt-1 text-sm text-[var(--text-secondary)]">
+              案件操作會開啟本機工作區。請先執行 <code>npm run local</code> 啟動本機服務。
+            </p>}
           </div>
           {onResume && <button type="button" className="btn btn-secondary text-sm" onClick={onResume}>繼續目前任務</button>}
         </header>
@@ -58,33 +61,31 @@ export default function ProjectMap({ localWorkspace, onNavigate, onResume }: Pro
 
         <section aria-labelledby="map-shortcuts" className="mx-auto mt-6 max-w-4xl">
           <h2 id="map-shortcuts" className="mb-3 text-base font-semibold">快速入口</h2>
-          {localWorkspace && <>
-            <section aria-labelledby="map-entry" className="card p-4">
-              <h3 id="map-entry" className="mb-3 text-sm font-semibold">登錄或查找案件</h3>
-              <div className="grid gap-2 sm:grid-cols-2">
-                <MapAction icon={Plus} title="新增案件" description="登錄廠內、供應商或客戶異常。" onClick={(): void => onNavigate("new")} />
-                <MapAction icon={FolderSearch} title="搜尋案件" description="依品號、缺陷、案件 ID 或 NCA 單號查找。" onClick={(): void => onNavigate("search")} />
-              </div>
-            </section>
+          <section aria-labelledby="map-entry" className="card p-4">
+            <h3 id="map-entry" className="mb-3 text-sm font-semibold">登錄或查找案件</h3>
+            <div className="grid gap-2 sm:grid-cols-2">
+              <MapAction icon={Plus} title="新增案件" description="登錄廠內、供應商或客戶異常。" onClick={(): void => onNavigate("new")} />
+              <MapAction icon={FolderSearch} title="搜尋案件" description="依品號、缺陷、案件 ID 或 NCA 單號查找。" onClick={(): void => onNavigate("search")} />
+            </div>
+          </section>
 
-            <FlowArrow>開啟案件後，依需要選擇</FlowArrow>
+          <FlowArrow>開啟案件後，依需要選擇</FlowArrow>
 
-            <section aria-label="案件處理" className="grid gap-2 sm:grid-cols-2">
-              <MapAction icon={ClipboardCheck} title="複核與列管 NCA" description="查閱附件。記錄參考案件、NCA 狀態、期限或 CAPA。" onClick={(): void => onNavigate("nca")} />
-              <MapAction icon={FileText} title="從案件製作 8D 報告" description="手寫草稿或執行 5-Why。將報告存回原案件。" onClick={(): void => onNavigate("case-report")} />
-            </section>
+          <section aria-label="案件處理" className="grid gap-2 sm:grid-cols-2">
+            <MapAction icon={ClipboardCheck} title="複核與列管 NCA" description="查閱附件。記錄參考案件、NCA 狀態、期限或 CAPA。" onClick={(): void => onNavigate("nca")} />
+            <MapAction icon={FileText} title="從案件製作 8D 報告" description="手寫草稿或執行 5-Why。將報告存回原案件。" onClick={(): void => onNavigate("case-report")} />
+          </section>
 
-            <FlowArrow>將可沿用的經驗留給下一案</FlowArrow>
+          <FlowArrow>將可沿用的經驗留給下一案</FlowArrow>
 
-            <MapAction icon={BookOpen} title="查閱經驗筆記" description="查閱已整理的經驗。可補充筆記或更新缺陷詞彙。" onClick={(): void => onNavigate("knowledge")} />
-          </>}
+          <MapAction icon={BookOpen} title="查閱經驗筆記" description="查閱已整理的經驗。可補充筆記或更新缺陷詞彙。" onClick={(): void => onNavigate("knowledge")} />
 
           <div className="mt-5 flex flex-wrap items-center gap-2 text-sm">
-            {localWorkspace && <ArrowDownRight size={16} className="text-[var(--text-secondary)]" aria-hidden="true" />}
-            <button type="button" className={localWorkspace ? "btn btn-ghost" : "btn btn-primary"} onClick={(): void => onNavigate("report")}>
-              {localWorkspace ? "直接開啟 8D 報告" : "開啟 8D 報告"}
+            <ArrowDownRight size={16} className="text-[var(--text-secondary)]" aria-hidden="true" />
+            <button type="button" className="btn btn-ghost" onClick={(): void => onNavigate("report")}>
+              直接開啟 8D 報告
             </button>
-            {localWorkspace && <span className="text-[var(--text-secondary)]">可直接填寫或開啟歷史報告。</span>}
+            <span className="text-[var(--text-secondary)]">可直接填寫或開啟歷史報告。</span>
           </div>
         </section>
       </div>

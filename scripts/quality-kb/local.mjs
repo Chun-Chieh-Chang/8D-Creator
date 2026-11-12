@@ -300,10 +300,13 @@ const server = createServer(async (req, res) => {
   res.setHeader("X-Content-Type-Options", "nosniff");
   res.setHeader("Cross-Origin-Resource-Policy", "same-origin");
   try {
-    if (req.headers.host !== host || ["cross-site", "same-site"].includes(req.headers["sec-fetch-site"])) {
+    const url = new URL(req.url, origin);
+    const crossSite = ["cross-site", "same-site"].includes(req.headers["sec-fetch-site"]);
+    const opensWorkspace = req.method === "GET" && url.pathname === base + "/"
+      && req.headers["sec-fetch-mode"] === "navigate" && req.headers["sec-fetch-dest"] === "document";
+    if (req.headers.host !== host || (crossSite && !opensWorkspace)) {
       return respond(res, { error: "只允許本機工作區的操作。" }, 403);
     }
-    const url = new URL(req.url, origin);
     if (url.pathname.startsWith(api)) return await handleApi(req, res, url);
     if (req.method !== "GET") return respond(res, { error: "找不到操作。" }, 404);
     if (url.pathname === "/") {

@@ -3,7 +3,7 @@ import { ArrowRight, Minus, Plus, RotateCcw } from "lucide-react";
 import { canvasWidth, edgePoints, edges, flowLayout, groups, nodeIndex, nodes, type FlowEdge, type FlowGroup, type FlowNode } from "./projectMapFlow";
 import type { MapDestination } from "./ProjectMap";
 
-const { nodeWidth, nodeHeight, arrowGap, reportViewX } = flowLayout;
+const { nodeWidth, nodeHeight, arrowGap } = flowLayout;
 const centerX = nodeWidth / 2;
 const centerY = nodeHeight / 2;
 
@@ -28,16 +28,11 @@ export default function ProjectFlow({ localWorkspace, onNavigate }: {
   const [zoom, setZoom] = useState(100);
   const viewport = useRef<HTMLDivElement>(null);
   const drag = useRef<{ x: number; y: number; left: number; top: number } | null>(null);
-  const graphLeft = localWorkspace ? 0 : reportViewX;
-  const graphWidth = canvasWidth - graphLeft;
-  const activeNodes = nodes.filter((node: FlowNode): boolean => localWorkspace || !node.local);
-  const visibleIds = new Set(activeNodes.map((node: FlowNode): string => node.id));
-  const activeEdges = edges.filter((edge: FlowEdge): boolean => visibleIds.has(edge.from) && visibleIds.has(edge.to));
-  const selected = selection && visibleIds.has(selection) ? nodeIndex.get(selection) : undefined;
+  const selected = selection ? nodeIndex.get(selection) : undefined;
   const isRelated = (edge: FlowEdge): boolean => edge.from === selected?.id || edge.to === selected?.id;
-  const relatedEdges = activeEdges.filter(isRelated);
-  const paintOrder = [...activeEdges.filter((edge: FlowEdge): boolean => !isRelated(edge)), ...relatedEdges];
-  const flowGroups: FlowGroup[] = localWorkspace ? ["intake", "case", "report", "output"] : ["report", "output"];
+  const relatedEdges = edges.filter(isRelated);
+  const paintOrder = [...edges.filter((edge: FlowEdge): boolean => !isRelated(edge)), ...relatedEdges];
+  const flowGroups: FlowGroup[] = ["intake", "case", "report", "output"];
 
   useEffect((): (() => void) | undefined => {
     const element = viewport.current;
@@ -93,9 +88,9 @@ export default function ProjectFlow({ localWorkspace, onNavigate }: {
         <div ref={viewport} tabIndex={0} role="region" aria-label="資料流程圖畫布"
           className="max-h-[27rem] min-w-0 cursor-grab select-none overflow-auto bg-[var(--bg-base)] active:cursor-grabbing focus-visible:outline-2 focus-visible:-outline-offset-2 sm:max-h-[40rem]"
           onPointerDown={startPan} onPointerMove={pan} onLostPointerCapture={endPan}>
-          <svg viewBox={`${graphLeft} 0 ${graphWidth} ${localWorkspace ? 634 : 490}`} role="group" aria-label="8D Creator 資料流程"
+          <svg viewBox={`0 0 ${canvasWidth} 634`} role="group" aria-label="8D Creator 資料流程"
             className="mx-auto block max-w-none"
-            style={{ width: `min(${zoom}%, ${graphWidth * zoom / 100}px)`, minWidth: (localWorkspace ? 820 : 530) * zoom / 100 }}>
+            style={{ width: `min(${zoom}%, ${canvasWidth * zoom / 100}px)`, minWidth: 820 * zoom / 100 }}>
             <defs>
               <marker id="flow-arrow" viewBox="0 0 12 10" refX="9" refY="5"
                 markerWidth="12" markerHeight="10" markerUnits="userSpaceOnUse" orient="auto">
@@ -105,7 +100,7 @@ export default function ProjectFlow({ localWorkspace, onNavigate }: {
             {flowGroups.map((id: FlowGroup): ReactNode => {
               const group = groups[id];
               return <g key={id} aria-hidden="true">
-                <rect x={group.x} y={12} width={group.width} height={localWorkspace ? 610 : 466} rx={12}
+                <rect x={group.x} y={12} width={group.width} height={610} rx={12}
                   fill={`color-mix(in srgb, ${group.color} 6%, var(--bg-surface))`} stroke="var(--border-color)" />
                 <text x={group.x + 16} y={39} fill="var(--text-primary)" fontSize={14} fontWeight={600}>{group.name}</text>
               </g>;
@@ -119,7 +114,7 @@ export default function ProjectFlow({ localWorkspace, onNavigate }: {
                   fill="var(--text-primary)" stroke="var(--bg-surface)" strokeWidth={5} paintOrder="stroke">{edge.label[0]}</text>}
               </g>;
             })}
-            {activeNodes.map((node: FlowNode): ReactNode => {
+            {nodes.map((node: FlowNode): ReactNode => {
               const active = selected?.id === node.id;
               const color = groups[node.group].color;
               const shape = {
@@ -161,7 +156,7 @@ export default function ProjectFlow({ localWorkspace, onNavigate }: {
           </div>
           {selected?.action && <button type="button" className="btn btn-primary mt-4 text-sm"
             onClick={(): void => { if (selected.action) onNavigate(selected.action[0]); }}>
-            {selected.action[1]}<ArrowRight size={15} aria-hidden="true" />
+            {!localWorkspace && selected.local && "在本機"}{selected.action[1]}<ArrowRight size={15} aria-hidden="true" />
           </button>}
           {selected && relatedEdges.length > 0 && <ul aria-label="相連節點" className="mt-4 flex flex-wrap gap-2 border-t border-[var(--border-color)] pt-3">
             {relatedEdges.map((edge: FlowEdge): ReactNode => {
