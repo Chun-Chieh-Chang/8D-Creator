@@ -189,7 +189,7 @@ export const edges: FlowEdge[] = [
   { from: "case", to: "decision", sides: ["bottom", "top"] },
   { from: "case", to: "input", sides: ["right", "left"] },
   { from: "decision", to: "reference", sides: ["left", "top"], via: [[216, 338], [216, 398], [112, 398]], label: ["僅供參考", 164, 390] },
-  { from: "decision", to: "nca", sides: ["bottom", "top"], label: ["需開立／已開立", 320, 404] },
+  { from: "decision", to: "nca", sides: ["bottom", "top"], label: ["需開立／已開立", 373, 404] },
   { from: "decision", to: "pending", sides: ["right", "top"], via: [[528, 338]], label: ["待判定", 465, 326] },
   { from: "history", to: "draft", sides: ["top", "top"], via: [[528, 52], [944, 52]] },
   { from: "input", to: "why", sides: ["top", "left"], via: [[528, 162], [632, 162], [632, 108]] },

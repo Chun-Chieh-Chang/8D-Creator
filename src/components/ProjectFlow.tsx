@@ -102,7 +102,7 @@ export default function ProjectFlow({ localWorkspace, onNavigate }: {
               return <g key={id} aria-hidden="true">
                 <rect x={group.x} y={12} width={group.width} height={610} rx={12}
                   fill={`color-mix(in srgb, ${group.color} 6%, var(--bg-surface))`} stroke="var(--border-color)" />
-                <text x={group.x + 16} y={39} fill="var(--text-primary)" fontSize={14} fontWeight={600}>{group.name}</text>
+                <text x={group.x + 16} y={39} fill="var(--text-primary)" fontSize={14} fontWeight={500}>{group.name}</text>
               </g>;
             })}
             {paintOrder.map((edge: FlowEdge): ReactNode => {
@@ -110,8 +110,8 @@ export default function ProjectFlow({ localWorkspace, onNavigate }: {
               return <g key={edge.from + "-" + edge.to} aria-hidden="true">
                 <path d={edgePath(edge)} stroke={connected ? "var(--accent)" : "var(--text-secondary)"}
                   strokeWidth={connected ? 2.5 : 1.5} strokeLinejoin="round" fill="none" markerEnd="url(#flow-arrow)" />
-                {edge.label && <text x={edge.label[1]} y={edge.label[2]} textAnchor="middle" fontSize={12} fontWeight={600}
-                  fill="var(--text-primary)" stroke="var(--bg-surface)" strokeWidth={5} paintOrder="stroke">{edge.label[0]}</text>}
+                {edge.label && <text x={edge.label[1]} y={edge.label[2]} textAnchor="middle" fontSize={12} fontWeight={400}
+                  fill="var(--text-primary)" stroke="var(--bg-surface)" strokeWidth={2} paintOrder="stroke">{edge.label[0]}</text>}
               </g>;
             })}
             {nodes.map((node: FlowNode): ReactNode => {
@@ -137,8 +137,8 @@ export default function ProjectFlow({ localWorkspace, onNavigate }: {
                 {node.decision
                   ? <polygon points={`${centerX},0 ${nodeWidth},${centerY} ${centerX},${nodeHeight} 0,${centerY}`} {...shape} />
                   : <rect width={nodeWidth} height={nodeHeight} rx={10} {...shape} />}
-                <text x={centerX} y={node.decision ? 30 : 27} textAnchor="middle" fill="var(--text-primary)" fontSize={15} fontWeight={650}>{node.name}</text>
-                <text x={centerX} y={node.decision ? 43 : 47} textAnchor="middle" fill="var(--text-secondary)" fontSize={node.decision ? 10 : 12}>{node.caption}</text>
+                <text x={centerX} y={node.decision ? 30 : 27} textAnchor="middle" fill="var(--text-primary)" fontSize={15} fontWeight={500}>{node.name}</text>
+                <text x={centerX} y={node.decision ? 43 : 47} textAnchor="middle" fill="var(--text-secondary)" fontSize={node.decision ? 11 : 12} fontWeight={400}>{node.caption}</text>
               </g>;
             })}
           </svg>
