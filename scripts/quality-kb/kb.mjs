@@ -1,6 +1,6 @@
 import {
   closeSync, existsSync, mkdirSync, openSync, readFileSync, realpathSync,
-  renameSync, statSync, unlinkSync, writeFileSync,
+  readdirSync, renameSync, statSync, unlinkSync, writeFileSync,
 } from "node:fs";
 import { randomUUID } from "node:crypto";
 import path from "node:path";
@@ -10,6 +10,7 @@ import yaml from "js-yaml";
 import { assertVaultPath, caseId, draftKey, load, parseDraft, readLocal, vocabulary } from "./model.mjs";
 import { marker, render, reviewTemplate } from "./render.mjs";
 import { digest, scan } from "./source.mjs";
+import { noteMigrations } from "./notePaths.mjs";
 
 export function resolved(file) {
   if (existsSync(file)) return realpathSync(file);
@@ -77,12 +78,11 @@ export function withLock(vault, work) {
   }
 }
 
-function obsoleteOutputs(vault, generated) {
-  const previous = JSON.parse(readLocal(vault, ".quality-kb/outputs.json") ?? "{}");
+function obsoleteOutputs(vault, previous, generated, migrations) {
   const obsolete = [];
   for (const [file, checksum] of Object.entries(previous)) {
     if (generated.has(file)) continue;
-    if (!/^(?:缺陷\/[a-z][a-z0-9-]{0,47}|8D 草稿\/QA-[a-f0-9]{16}-[a-f0-9]{24})\.md$/.test(file)) {
+    if (!migrations.has(file) && !/^(?:缺陷\/[a-z][a-z0-9-]{0,47}|8D 草稿\/(?:QA-[a-f0-9]{16}-|8D 草稿 [^/\\]+ · )[a-f0-9]{24})\.md$/.test(file)) {
       throw new Error(`無法移除非衍生頁面 ${file}`);
     }
     const before = readLocal(vault, file);
@@ -93,9 +93,35 @@ function obsoleteOutputs(vault, generated) {
   return obsolete;
 }
 
+function previousOutputs(vault) {
+  return JSON.parse(readLocal(vault, ".quality-kb/outputs.json") ?? "{}");
+}
+
+function updateLegacyLinks(vault, previous, generated, migrations, folder = "") {
+  const dir = assertVaultPath(vault, folder || ".");
+  if (!existsSync(dir)) return;
+  for (const entry of readdirSync(dir, { withFileTypes: true })) {
+    if (entry.name.startsWith(".")) continue;
+    const file = folder ? `${folder}/${entry.name}` : entry.name;
+    if (entry.isDirectory()) {
+      updateLegacyLinks(vault, previous, generated, migrations, file);
+    } else if (entry.isFile() && file.endsWith(".md") && !Object.hasOwn(previous, file) && !generated.has(file)) {
+      const raw = readLocal(vault, file);
+      const updated = raw.replace(/(?<!\\)\[\[([^\]|#]+)(?=[\]|#])/g, (link, target) => {
+        const replacement = migrations.get(target.endsWith(".md") ? target : `${target}.md`);
+        return replacement ? `[[${replacement.slice(0, -3)}` : link;
+      });
+      if (raw !== updated) put(vault, file, updated);
+    }
+  }
+}
+
 export function sync(root, vault, state) {
   const generated = render(root, state);
-  const obsolete = obsoleteOutputs(vault, generated);
+  const previous = previousOutputs(vault);
+  const migrations = noteMigrations(state.items);
+  const obsolete = obsoleteOutputs(vault, previous, generated, migrations);
+  if (new Set(migrations.values()).size !== migrations.size) throw new Error("知識庫筆記名稱重複。");
   for (const [file, content] of generated) {
     const before = readLocal(vault, file);
     if (before !== null && before !== content && !before.split(/\r?\n/).includes(marker)) {
@@ -106,7 +132,19 @@ export function sync(root, vault, state) {
   put(vault, ".quality-kb/registry.json", JSON.stringify(state.registry, null, 2) + "\n");
   writeNew(vault, "詞彙表.yml", yaml.dump(vocabulary, { lineWidth: -1 }));
   writeNew(vault, "source-aliases.json", "{}\n");
-  for (const item of state.items) writeNew(vault, item.reviewPath, reviewTemplate(item));
+  for (const item of state.items) {
+    if (item.reviewWritePath === item.legacyReviewPath) {
+      renameSync(assertVaultPath(vault, item.legacyReviewPath), assertVaultPath(vault, item.reviewPath));
+    } else {
+      writeNew(vault, item.reviewPath, reviewTemplate(item));
+    }
+  }
+  if ([...migrations.keys()].some((file) => Object.hasOwn(previous, file))
+    || state.items.some((item) => item.reviewWritePath === item.legacyReviewPath)) {
+    const targets = new Map(migrations);
+    for (const [from, to] of migrations) targets.set(path.posix.basename(from), to);
+    updateLegacyLinks(vault, previous, generated, targets);
+  }
   let updated = 0;
   for (const [file, content] of generated) updated += Number(put(vault, file, content));
   for (const file of obsolete) unlinkSync(assertVaultPath(vault, file));
@@ -116,8 +154,8 @@ export function sync(root, vault, state) {
 
 export function verify(root, vault, state) {
   const generated = render(root, state);
-  const problems = obsoleteOutputs(vault, generated);
-  const notes = new Set([...generated.keys(), ...state.items.filter((item) => item.reviewRaw !== null).map((item) => item.reviewPath)]);
+  const problems = obsoleteOutputs(vault, previousOutputs(vault), generated, noteMigrations(state.items));
+  const notes = new Set([...generated.keys(), ...state.items.filter((item) => item.reviewRaw !== null).map((item) => item.reviewWritePath)]);
   for (const [file, content] of generated) {
     if (readLocal(vault, file) !== content) problems.push(`索引缺少或過期 ${file}`);
     if (file.startsWith("8D 草稿/")) continue;

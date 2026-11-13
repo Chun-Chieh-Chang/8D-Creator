@@ -128,7 +128,7 @@ function saveReview(state, item, payload) {
   const affected = candidate.items.filter((other) => other.id === item.id || other.review.duplicate_of === item.id);
   const errors = affected.flatMap((other) => other.errors);
   if (errors.length) throw new Error(errors.join("。"));
-  put(vault, item.reviewPath, raw);
+  put(vault, item.reviewWritePath, raw);
   sync(root, vault, candidate);
   return detail(candidate, next);
 }

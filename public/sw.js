@@ -69,7 +69,7 @@ self.addEventListener("fetch", (event) => {
           caches.open(CACHE_NAME).then((cache) => cache.put(SHELL_URL, copy));
           return response;
         })
-        .catch(() => caches.match(SHELL_URL))
+        .catch(async () => (await caches.match(SHELL_URL)) ?? Response.error())
     );
     return;
   }
@@ -85,7 +85,7 @@ self.addEventListener("fetch", (event) => {
           }
           return response;
         })
-        .catch(() => cached);
+        .catch(() => cached ?? Response.error());
       return cached || networkFetch;
     })
   );

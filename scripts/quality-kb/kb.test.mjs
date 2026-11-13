@@ -7,6 +7,8 @@ import { test } from "node:test";
 import { fileURLToPath } from "node:url";
 import XLSX from "xlsx";
 import yaml from "js-yaml";
+import { caseNotePath, reviewNotePath } from "./notePaths.mjs";
+import { digest } from "./source.mjs";
 
 const cli = fileURLToPath(new URL("./kb.mjs", import.meta.url));
 
@@ -28,7 +30,7 @@ test("同步、複核、8D 版本、來源異動與本體投影", () => {
   const put = (relative, text) => writeFileSync(path.join(vault, relative), text);
   const registry = () => JSON.parse(read(".quality-kb/registry.json"));
   const review = (id, values, body = "人工新增的現場紀錄") => {
-    put(`複核/${id}-review.md`, `---\n${yaml.dump(values)}---\n\n${body}\n`);
+    put(reviewNotePath(registry()[id]), `---\n${yaml.dump(values)}---\n\n${body}\n`);
   };
   try {
     for (const dir of ["1. 歷史", primary, supplier, customer]) {
@@ -49,8 +51,10 @@ test("同步、複核、8D 版本、來源異動與本體投影", () => {
     const index = registry();
     const id = Object.keys(index).find((key) => index[key].key === primary);
     const duplicate = Object.keys(index).find((key) => index[key].key === supplier);
-    const caseNote = `案件/${id}.md`;
     assert.ok(id);
+    const caseNote = caseNotePath(index[id]);
+    const reviewNote = reviewNotePath(index[id]);
+    assert.match(caseNote, /2026-05-01 R1-15198_色差/);
     assert.match(read("品號線索.md"), /R1-15198/);
     assert.match(read("待處理.md"), /C24001/);
     assert.match(read("待處理.md"), /NCA-2605001/);
@@ -58,6 +62,28 @@ test("同步、複核、8D 版本、來源異動與本體投影", () => {
     run(0, "verify");
     assert.match(run(0, "sync"), /更新索引頁 0/);
     assert.deepEqual(readFileSync(path.join(source, register)), original);
+
+    const legacyCase = `案件/${id}.md`;
+    const legacyReview = `複核/${id}-review.md`;
+    const legacyLink = `[[${legacyCase.slice(0, -3)}#複核結果|現場紀錄]]`;
+    const legacyContent = `---\nreview_status: pending\n---\n\n${legacyLink}\n`;
+    renameSync(path.join(vault, caseNote), path.join(vault, legacyCase));
+    renameSync(path.join(vault, reviewNote), path.join(vault, legacyReview));
+    put(legacyReview, legacyContent);
+    put("手寫筆記.md", legacyLink);
+    const outputs = JSON.parse(read(".quality-kb/outputs.json"));
+    delete outputs[caseNote];
+    outputs[legacyCase] = digest(read(legacyCase));
+    put(".quality-kb/outputs.json", JSON.stringify(outputs));
+    delete index[id].noteName;
+    put(".quality-kb/registry.json", JSON.stringify(index));
+    run(0, "sync");
+    run(0, "verify");
+    const currentLink = `[[${caseNote.slice(0, -3)}#複核結果|現場紀錄]]`;
+    assert.equal(read("手寫筆記.md"), currentLink);
+    assert.equal(read(reviewNote), legacyContent.replace(legacyLink, currentLink));
+    assert.throws(() => read(legacyCase), { code: "ENOENT" });
+    assert.throws(() => read(legacyReview), { code: "ENOENT" });
 
     const report = path.join(fixture, "draft.json");
     writeFileSync(report, JSON.stringify({ format: "8d-creator.quality-kb", version: 1, fields: {}, markdown: "" }));
@@ -85,10 +111,10 @@ test("同步、複核、8D 版本、來源異動與本體投影", () => {
     fields.review_status = "reviewed";
     review(id, fields);
     review(duplicate, { review_status: "pending", duplicate_of: id });
-    const manual = read(`複核/${id}-review.md`);
+    const manual = read(reviewNote);
     run(0, "sync");
     run(0, "verify");
-    assert.equal(read(`複核/${id}-review.md`), manual);
+    assert.equal(read(reviewNote), manual);
     const sql = path.join(fixture, "reviewed.sql");
     assert.match(run(0, "export-sql", sql), /1 筆/);
     assert.doesNotMatch(readFileSync(sql, "utf8"), /R1-15198|比對證據|僅留本機|D4/);

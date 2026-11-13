@@ -3,6 +3,7 @@ import path from "node:path";
 import yaml from "js-yaml";
 import { digest, hints, isoDate } from "./source.mjs";
 import { controlPath, emptyControl, parseControl } from "./control.mjs";
+import { caseNoteName, reviewNotePath } from "./notePaths.mjs";
 
 export const vocabulary = [
   { id: "color", label: "色差", definition: "顏色與參考樣品或色彩規格不同。", aliases: ["色差", "顏色異常", "顏色不符", "discoloration", "colour difference", "color difference"] },
@@ -68,10 +69,12 @@ export function load(vault, data, reviewOverrides = new Map()) {
     const id = alias ?? prior ?? `QA-${digest(item.key).slice(0, 16)}`;
     if (current.has(id)) throw new Error(`來源識別碰撞 ${id}（${item.key}）`);
     current.add(id);
-    registry[id] = { ...item, keys: [...new Set([...(registry[id]?.keys ?? []), item.key])] };
+    registry[id] = { ...item, keys: [...new Set([...(registry[id]?.keys ?? []), item.key])],
+      noteName: registry[id]?.noteName ?? caseNoteName(item, id) };
   }
   const items = Object.entries(registry).map(([id, item]) => ({
-    ...item, id, available: current.has(id), ...hints(item, terms), errors: [],
+    ...item, id, noteName: item.noteName ?? caseNoteName(item, id),
+    available: current.has(id), ...hints(item, terms), errors: [],
   })).sort((a, b) => b.day.localeCompare(a.day) || a.id.localeCompare(b.id));
 
   const byId = new Map(items.map((item) => [item.id, item]));
@@ -86,8 +89,15 @@ export function load(vault, data, reviewOverrides = new Map()) {
       if (draftKey(draft) !== file.slice(0, -5)) throw new Error(`草稿指紋不符 ${file}`);
       return { file, draft };
     }) : [];
-    item.reviewPath = `複核/${item.id}-review.md`;
-    item.reviewRaw = reviewOverrides.get(item.id) ?? readLocal(vault, item.reviewPath);
+    item.reviewPath = reviewNotePath(item);
+    item.legacyReviewPath = `複核/${item.id}-review.md`;
+    const reviewRaw = readLocal(vault, item.reviewPath);
+    const legacyReviewRaw = readLocal(vault, item.legacyReviewPath);
+    if (reviewRaw !== null && legacyReviewRaw !== null) {
+      throw new Error(`複核筆記有兩份，請先合併 ${item.id}`);
+    }
+    item.reviewWritePath = legacyReviewRaw === null ? item.reviewPath : item.legacyReviewPath;
+    item.reviewRaw = reviewOverrides.get(item.id) ?? reviewRaw ?? legacyReviewRaw;
     item.review = readReview(item.reviewRaw, item.errors);
     item.controlRaw = readLocal(vault, controlPath(item.id));
     item.control = item.controlRaw === null ? { ...emptyControl } : parseControl(JSON.parse(item.controlRaw));

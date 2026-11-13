@@ -2,18 +2,19 @@ import path from "node:path";
 import { pathToFileURL } from "node:url";
 import yaml from "js-yaml";
 import { categories } from "./model.mjs";
+import { caseNotePath, draftNotePath } from "./notePaths.mjs";
 
 export const marker = "<!-- quality-kb:generated -->";
 const note = (folder, name) => `[[${folder}/${name}]]`;
-const linkCase = (id) => note("案件", id);
+const linkPath = (file) => `[[${file.slice(0, -3)}]]`;
+const linkCase = (item) => linkPath(caseNotePath(item));
 const linkTerm = (term) => note("缺陷", term.id);
 const safe = (value) => String(value).replace(/[\r\n]+/g, " ").replace(/[\\[\]*_`<>|!#~]/g, "\\$&");
 const linkSource = (root, file, label) => `[${safe(label)}](${pathToFileURL(path.join(root, file)).href.replaceAll("(", "%28").replaceAll(")", "%29")})`;
-const entry = (item) => `- ${linkCase(item.id)} ${item.day} · ${categories[item.category]} · ${safe(item.title)}`;
+const entry = (item) => `- ${linkCase(item)} · ${categories[item.category]}`;
 const bullets = (lines) => lines.length ? lines.join("\n") : "無。";
 const page = (title, body) => `${marker}\n# ${title}\n\n${body}\n`;
 const properties = (fields) => `---\n${yaml.dump(fields, { lineWidth: -1 })}---\n`;
-const draftNote = (id, key) => `${id}-${key}`;
 
 export function reviewTemplate(item) {
   return properties({
@@ -26,7 +27,7 @@ export function reviewTemplate(item) {
     verification_locator: null,
     verification_result: null,
     duplicate_of: null,
-  }) + `\n# 複核 ${item.id}\n\n${linkCase(item.id)} · [[首頁#複核方式|複核方式]]\n\n## 問題與影響範圍\n\n## 圍堵與矯正\n\n## 發生原因與流出原因\n\n## 措施確效與復發追蹤\n\n## 可重用經驗與適用條件\n`;
+  }) + `\n# 複核 ${safe(item.title)}\n\n${linkCase(item)} · [[首頁#複核方式|複核方式]]\n\n## 問題與影響範圍\n\n## 圍堵與矯正\n\n## 發生原因與流出原因\n\n## 措施確效與復發追蹤\n\n## 可重用經驗與適用條件\n`;
 }
 
 function fenced(markdown) {
@@ -43,6 +44,7 @@ function addTo(groups, key, item) {
 
 export function render(root, state) {
   const generated = new Map();
+  const byId = new Map(state.items.map((item) => [item.id, item]));
   const active = state.items.filter((item) => item.available);
   const pending = active.filter((item) => !item.certified && !item.review.duplicate_of);
   const refs = new Map();
@@ -68,14 +70,14 @@ export function render(root, state) {
 
   const collisions = [...refs].filter(([, cases]) => cases.filter((item) => !item.review.duplicate_of || item.errors.length).length > 1);
   generated.set("待處理.md", page("待處理", [
-    `## 複核屬性有誤（${state.items.filter((item) => item.errors.length).length}）\n\n${bullets(state.items.filter((item) => item.errors.length).map((item) => `- ${linkCase(item.id)} ${safe(item.errors.join("；"))}`))}`,
+    `## 複核屬性有誤（${state.items.filter((item) => item.errors.length).length}）\n\n${bullets(state.items.filter((item) => item.errors.length).map((item) => `- ${linkCase(item)} ${safe(item.errors.join("；"))}`))}`,
     `## 來源失聯\n\n${bullets(state.items.filter((item) => !item.available).map(entry))}`,
-    `## 同編號待比對（${collisions.length} 組）\n\n${bullets(collisions.map(([id, cases]) => `- ${safe(id)} · ${cases.map((item) => linkCase(item.id)).join("、")}`))}`,
+    `## 同編號待比對（${collisions.length} 組）\n\n${bullets(collisions.map(([id, cases]) => `- ${safe(id)} · ${cases.map(linkCase).join("、")}`))}`,
     `## 未歸檔來源及解析缺口\n\n${bullets([
       ...state.issues.map((issue) => `- ${safe(issue)}`),
       ...state.skipped.map((file) => `- 跳過連結或特殊檔案 ${safe(file)}`),
       ...state.unmapped.map((file) => `- ${linkSource(root, file, file)}`),
-      ...active.filter((item) => !item.files.length).map((item) => `- ${linkCase(item.id)} 無附件`),
+      ...active.filter((item) => !item.files.length).map((item) => `- ${linkCase(item)} 無附件`),
     ])}`,
     `## 待複核（${pending.length} 筆）\n\n${bullets(pending.map(entry))}`,
   ].join("\n\n")));
@@ -85,30 +87,30 @@ export function render(root, state) {
     const evidence = (file, locator) => state.files.has(file) && typeof locator === "string"
       ? `${linkSource(root, file, file)} · ${safe(locator)}` : "待補";
     const notes = item.drafts.map(({ file, draft }) => {
-      const name = draftNote(item.id, file.slice(0, -5));
-      generated.set(`8D 草稿/${name}.md`, page("8D 草稿", [
-        `案件 ${linkCase(item.id)}`,
+      const draftPath = draftNotePath(item, file);
+      generated.set(draftPath, page("8D 草稿", [
+        `案件 ${linkCase(item)}`,
         "此快照來自 8D Creator。複核時查證原始證據。",
         ...Object.entries(draft.fields).map(([key, value]) => `- ${safe(key)} · ${safe(value)}`),
         fenced(draft.markdown),
       ].join("\n\n")));
-      return `- ${note("8D 草稿", name)}`;
+      return `- ${linkPath(draftPath)}`;
     });
     const concepts = item.concepts.map((term) => `${linkTerm(term)} ${safe(term.label)}`);
     const confirmed = state.terms.find((term) => term.id === item.review.defect);
     const status = !item.available ? "missing" : item.errors.length ? "invalid" : item.review.duplicate_of ? "duplicate" : item.review.review_status;
-    generated.set(`案件/${item.id}.md`, properties({
+    generated.set(caseNotePath(item), properties({
       case_id: item.id, source_category: item.category, source_date: item.day, kb_status: status,
       product_hints: item.products, defect_hints: item.concepts.map((term) => term.id),
       confirmed_defect: item.certified ? confirmed.id : null,
     }) + page(safe(item.title), [
       `${item.id} · ${categories[item.category]} · ${item.day} · ${status}`,
-      `複核筆記 ${note("複核", `${item.id}-review`)}`,
+      `複核筆記 ${linkPath(item.reviewPath)}`,
       item.available ? `來源 ${linkSource(root, item.source, item.source)}${item.locator ? ` · ${safe(item.locator)}` : ""}` : `來源失聯 ${safe(item.source)}`,
       item.closedInSource ? `來源表所載結案日期 ${item.closedInSource}` : "",
-      `## 檢索線索\n\n- 參考編號 ${item.ids.join("、") || "待補"}\n- 品號 ${item.products.join("、") || "待補"}\n- 缺陷 ${concepts.join("、") || "待補"}\n- 同編號候選 ${[...new Set(relations)].map((other) => linkCase(other.id)).join("、") || "無"}`,
+      `## 檢索線索\n\n- 參考編號 ${item.ids.join("、") || "待補"}\n- 品號 ${item.products.join("、") || "待補"}\n- 缺陷 ${concepts.join("、") || "待補"}\n- 同編號候選 ${[...new Set(relations)].map(linkCase).join("、") || "無"}`,
       `## 複核結果\n\n${bullets([
-        ...(item.review.duplicate_of && !item.errors.length ? [`- 合併至 ${linkCase(item.review.duplicate_of)}`] : []),
+        ...(item.review.duplicate_of && !item.errors.length ? [`- 合併至 ${linkCase(byId.get(item.review.duplicate_of))}`] : []),
         ...item.errors.map((message) => `- ${safe(message)}`),
         ...(item.certified ? [
           `- 缺陷 ${linkTerm(confirmed)} ${safe(confirmed.label)}`,
